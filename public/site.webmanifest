@@ -1,0 +1,10 @@
+{
+  "name": "Moonweave",
+  "short_name": "Moonweave",
+  "description": "A focused 4K falling-note rhythm chart editor",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#070911",
+  "theme_color": "#070911",
+  "icons": [{ "src": "./moonweave-logo.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" }]
+}
