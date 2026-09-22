@@ -35,6 +35,7 @@ interface PlaytestRendererOptions {
   getTime(): number
   getPlaying(): boolean
   autoplay: boolean
+  transparentBackground?: boolean
   initialRenderScale?: number
   onStats(stats: PlaytestStats): void
   onAutoplayHit?(lane: number): void
@@ -329,7 +330,7 @@ export class PlaytestRenderer {
 
   constructor(private readonly options: PlaytestRendererOptions) {
     const gl = options.canvas.getContext('webgl2', {
-      alpha: true,
+      alpha: options.transparentBackground === true,
       antialias: true,
       depth: false,
       powerPreference: 'high-performance',
@@ -723,7 +724,8 @@ export class PlaytestRenderer {
     gl.disable(gl.DEPTH_TEST)
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-    gl.clearColor(0, 0, 0, 0)
+    if (this.options.transparentBackground) gl.clearColor(0, 0, 0, 0)
+    else gl.clearColor(0.012, 0.018, 0.045, 1)
     gl.clear(gl.COLOR_BUFFER_BIT)
     this.drawTrack()
     this.drawLaneGlows()

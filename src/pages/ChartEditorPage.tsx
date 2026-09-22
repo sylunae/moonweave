@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ClipboardPaste, Copy, FileDown, FileUp, FlipHorizontal2, Pause, Play, Redo2, Settings2, Trash2, Undo2 } from 'lucide-react'
+import { ClipboardPaste, Copy, FileDown, FileUp, FlipHorizontal2, Redo2, Settings2, Trash2, Undo2 } from 'lucide-react'
 import { navigate } from '@/app/navigation'
 import { Button } from '@/components/ui/button'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
@@ -113,6 +113,5 @@ export default function ChartEditorPage() {
         <section className="shortcut-card"><span className="section-label">快捷键</span><div><kbd>Q</kbd><span>播放 / 暂停</span></div><div><kbd>Space</kbd><span>前进主拍</span></div><div><kbd>↑ ↓</kbd><span>分拍步进</span></div><div><kbd>Ctrl + 滚轮</kbd><span>缩放轨道</span></div><div><kbd>Ctrl + S</kbd><span>保存谱面</span></div></section>
       </aside>
     </div>
-    <footer className="editor-transport"><span>{formatTime(currentTime).slice(0, -4)} <i>/ {formatTime(chart.duration).slice(0, -4)}</i></span><Button size="icon" className="transport-play" onClick={() => void togglePlay(playbackRate, subdivision)}>{isPlaying ? <Pause fill="currentColor" /> : <Play fill="currentColor" />}</Button><div className="mini-wave">{Array.from({ length: 38 }, (_, index) => <i key={index} style={{ height: `${8 + (Math.sin(index * 1.7) + 1) * 8}px` }} />)}</div></footer>
   </div>
 }

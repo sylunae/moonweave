@@ -20,6 +20,8 @@ export default function PlaytestPage() {
   const notesByTime = useMemo(() => [...notes].sort((a, b) => a.time - b.time), [notes])
   const notesByLane = useMemo(() => [0, 1, 2, 3].map((lane) => notes.filter((note) => note.lane === lane).sort((a, b) => a.time - b.time)), [notes])
   const noteById = useMemo(() => new Map(notes.map((note) => [note.id, note])), [notes])
+  const hasCustomBackground = Boolean(backgroundUrl && chart.backgroundType)
+  const hasVideoBackground = Boolean(backgroundUrl && chart.backgroundType === 'video')
   const duration = chart.duration
   const holdTickMs = 60_000 / chart.bpm / 2
   const totalTicks = useMemo(() => notes.reduce((sum, note) => sum + countNoteTicks(note, holdTickMs), 0), [holdTickMs, notes])
@@ -190,11 +192,14 @@ export default function PlaytestPage() {
       canvas, notes, laneTilt: chart.settings.laneTilt, scrollSpeed: chart.settings.scrollSpeed,
       bpm: chart.bpm, offset: chart.offset, getTime: getRenderTime,
       getPlaying: () => playingRef.current,
-      autoplay: false, initialRenderScale: chart.backgroundType === 'video' ? 0.9 : 1, onStats: setStats,
+      autoplay: false,
+      transparentBackground: hasCustomBackground,
+      initialRenderScale: hasVideoBackground ? 0.9 : 1,
+      onStats: setStats,
     })
     rendererRef.current = renderer
     return () => { rendererRef.current = null; renderer.destroy() }
-  }, [chart.backgroundType, chart.bpm, chart.offset, chart.settings.laneTilt, chart.settings.scrollSpeed, getRenderTime, notes])
+  }, [chart.bpm, chart.offset, chart.settings.laneTilt, chart.settings.scrollSpeed, getRenderTime, hasCustomBackground, hasVideoBackground, notes])
 
   useEffect(() => {
     resetRun(Math.max(0, Math.min(currentTime, chart.duration)))
