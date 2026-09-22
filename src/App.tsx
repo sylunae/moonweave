@@ -8,6 +8,8 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { ChartProvider } from '@/features/chart/ChartProvider'
 
 const pages = {
+  home: lazy(() => import('@/pages/HomePage')),
+  manage: lazy(() => import('@/pages/ChartManagementPage')),
   editor: lazy(() => import('@/pages/ChartEditorPage')),
   playtest: lazy(() => import('@/pages/PlaytestPage')),
 } satisfies Record<RouteId, React.LazyExoticComponent<React.ComponentType>>
@@ -15,7 +17,7 @@ const SettingsDialog = lazy(() => import('@/components/SettingsDialog').then((mo
 
 function initialRoute(): RouteId {
   const value = new URLSearchParams(window.location.search).get('page')
-  return value && isRouteId(value) ? value : 'editor'
+  return value && isRouteId(value) ? value : 'home'
 }
 
 export default function App() {
@@ -30,7 +32,7 @@ export default function App() {
 
   useEffect(() => {
     const url = new URL(window.location.href)
-    if (route === 'editor') url.searchParams.delete('page')
+    if (route === 'home') url.searchParams.delete('page')
     else url.searchParams.set('page', route)
     window.history.replaceState(null, '', url)
     setPageScrolled(false)

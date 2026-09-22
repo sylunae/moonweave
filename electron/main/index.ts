@@ -3,6 +3,8 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameS
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ChartLibraryItem, ManagedChart, TitlebarTheme } from '../../src/shared/electron'
+import { createChartPackage, readChartPackage } from '../../src/features/chart/chartPackage'
+import type { Chart } from '../../src/features/chart/types'
 
 const TITLEBAR_HEIGHT = 42
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.ogg', '.m4a', '.flac'])
@@ -14,10 +16,12 @@ const libraryRoot = () => path.join(app.getPath('userData'), 'library')
 const chartsDirectory = () => path.join(libraryRoot(), 'charts')
 const audioDirectory = () => path.join(libraryRoot(), 'audio')
 const backgroundDirectory = () => path.join(libraryRoot(), 'backgrounds')
+const coverDirectory = () => path.join(libraryRoot(), 'covers')
 const chartFile = (id: string) => path.join(chartsDirectory(), `${id}.json`)
-const ensureLibrary = () => { mkdirSync(chartsDirectory(), { recursive: true }); mkdirSync(audioDirectory(), { recursive: true }); mkdirSync(backgroundDirectory(), { recursive: true }) }
+const ensureLibrary = () => { mkdirSync(chartsDirectory(), { recursive: true }); mkdirSync(audioDirectory(), { recursive: true }); mkdirSync(backgroundDirectory(), { recursive: true }); mkdirSync(coverDirectory(), { recursive: true }) }
 const audioUrlFor = (id: string, audioPath: string) => `moon-audio://library/${id}/${encodeURIComponent(path.basename(audioPath))}`
 const backgroundUrlFor = (id: string, backgroundPath: string, version: number) => `moon-media://library/${id}/${encodeURIComponent(path.basename(backgroundPath))}?v=${version}`
+const coverUrlFor = (id: string, coverPath: string, version: number) => `moon-cover://library/${id}/${encodeURIComponent(path.basename(coverPath))}?v=${version}`
 
 interface StoredChart { id: string; chart: Record<string, unknown>; updatedAt: number }
 
@@ -32,6 +36,8 @@ function parseStoredChart(id: string): StoredChart | null {
 
 function summaryOf(record: StoredChart): ChartLibraryItem {
   const chart = record.chart
+  const coverPath = typeof chart.coverPath === 'string' ? chart.coverPath : ''
+  const resolvedCover = coverPath ? path.join(coverDirectory(), path.basename(coverPath)) : ''
   return {
     id: record.id,
     title: typeof chart.title === 'string' ? chart.title : 'Untitled constellation',
@@ -39,6 +45,7 @@ function summaryOf(record: StoredChart): ChartLibraryItem {
     audioName: typeof chart.audioName === 'string' ? chart.audioName : '',
     noteCount: Array.isArray(chart.notes) ? chart.notes.length : 0,
     updatedAt: record.updatedAt,
+    coverUrl: resolvedCover && existsSync(resolvedCover) ? coverUrlFor(record.id, coverPath, statSync(resolvedCover).mtimeMs) : '',
   }
 }
 
@@ -47,10 +54,13 @@ function managedChart(record: StoredChart): ManagedChart {
   const resolved = audioPath ? path.join(audioDirectory(), path.basename(audioPath)) : ''
   const backgroundPath = typeof record.chart.backgroundPath === 'string' ? record.chart.backgroundPath : ''
   const resolvedBackground = backgroundPath ? path.join(backgroundDirectory(), path.basename(backgroundPath)) : ''
+  const coverPath = typeof record.chart.coverPath === 'string' ? record.chart.coverPath : ''
+  const resolvedCover = coverPath ? path.join(coverDirectory(), path.basename(coverPath)) : ''
   return {
     id: record.id, chart: record.chart, updatedAt: record.updatedAt,
     audioUrl: resolved && existsSync(resolved) ? audioUrlFor(record.id, audioPath) : '',
     backgroundUrl: resolvedBackground && existsSync(resolvedBackground) ? backgroundUrlFor(record.id, backgroundPath, record.updatedAt) : '',
+    coverUrl: resolvedCover && existsSync(resolvedCover) ? coverUrlFor(record.id, coverPath, statSync(resolvedCover).mtimeMs) : '',
   }
 }
 
@@ -83,6 +93,20 @@ function copyAudioIntoLibrary(id: string, source: string) {
   return name
 }
 
+function storeAudioBytes(id: string, originalName: string, bytes: Uint8Array) {
+  const extension = path.extname(originalName).toLowerCase()
+  if (!AUDIO_EXTENSIONS.has(extension)) throw new Error('不支持的音频文件')
+  ensureLibrary()
+  const name = `${id}${extension}`
+  const target = path.join(audioDirectory(), name)
+  const temporary = `${target}.${process.pid}.tmp`
+  writeFileSync(temporary, bytes)
+  if (existsSync(target)) unlinkSync(target)
+  renameSync(temporary, target)
+  removeManagedAudio(id, name)
+  return name
+}
+
 function removeManagedBackground(id: string, except = '') {
   ensureLibrary()
   for (const name of readdirSync(backgroundDirectory())) if (name.startsWith(`${id}.`) && name !== except) unlinkSync(path.join(backgroundDirectory(), name))
@@ -103,9 +127,49 @@ function copyBackgroundIntoLibrary(id: string, source: string) {
   return { name, backgroundType }
 }
 
+function storeBackgroundBytes(id: string, originalName: string, bytes: Uint8Array) {
+  const extension = path.extname(originalName).toLowerCase()
+  const backgroundType = VIDEO_EXTENSIONS.has(extension) ? 'video' as const : IMAGE_EXTENSIONS.has(extension) ? 'image' as const : null
+  if (!backgroundType) throw new Error('不支持的背景媒体文件')
+  ensureLibrary()
+  const name = `${id}${extension}`
+  const target = path.join(backgroundDirectory(), name)
+  const temporary = `${target}.${process.pid}.tmp`
+  writeFileSync(temporary, bytes)
+  if (existsSync(target)) unlinkSync(target)
+  renameSync(temporary, target)
+  removeManagedBackground(id, name)
+  return { name, backgroundType }
+}
+
+function removeManagedCover(id: string, except = '') {
+  ensureLibrary()
+  for (const name of readdirSync(coverDirectory())) if (name.startsWith(`${id}.`) && name !== except) unlinkSync(path.join(coverDirectory(), name))
+}
+
+function storeCoverBytes(id: string, originalName: string, bytes: Uint8Array) {
+  const extension = path.extname(originalName).toLowerCase()
+  if (!IMAGE_EXTENSIONS.has(extension)) throw new Error('不支持的封面图片文件')
+  ensureLibrary()
+  const name = `${id}${extension}`
+  const target = path.join(coverDirectory(), name)
+  const temporary = `${target}.${process.pid}.tmp`
+  writeFileSync(temporary, bytes)
+  if (existsSync(target)) unlinkSync(target)
+  renameSync(temporary, target)
+  removeManagedCover(id, name)
+  return name
+}
+
+function copyCoverIntoLibrary(id: string, source: string) {
+  if (!statSync(source).isFile()) throw new Error('无效的封面图片文件')
+  return storeCoverBytes(id, source, readFileSync(source))
+}
+
 protocol.registerSchemesAsPrivileged([
   { scheme: 'moon-audio', privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true } },
   { scheme: 'moon-media', privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true } },
+  { scheme: 'moon-cover', privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true } },
 ])
 
 function titlebarOverlay(theme: TitlebarTheme) {
@@ -158,6 +222,7 @@ function registerIpc(): void {
     if (existsSync(target)) unlinkSync(target)
     removeManagedAudio(id)
     removeManagedBackground(id)
+    removeManagedCover(id)
     return true
   })
   ipcMain.handle('library:choose-audio', async (event, id: unknown) => {
@@ -184,15 +249,47 @@ function registerIpc(): void {
     if (!validId(id)) return false
     removeManagedBackground(id); return true
   })
+  ipcMain.handle('library:choose-cover', async (event, id: unknown) => {
+    if (!validId(id)) return null
+    const owner = BrowserWindow.fromWebContents(event.sender)
+    if (!owner) return null
+    const result = await dialog.showOpenDialog(owner, { properties: ['openFile'], filters: [{ name: 'Cover image', extensions: ['png', 'jpg', 'jpeg', 'webp', 'avif'] }] })
+    if (result.canceled) return null
+    const source = result.filePaths[0]
+    const coverPath = copyCoverIntoLibrary(id, source)
+    return { coverPath, url: coverUrlFor(id, coverPath, Date.now()), name: path.basename(source) }
+  })
+  ipcMain.handle('library:remove-cover', (_event, id: unknown) => {
+    if (!validId(id)) return false
+    removeManagedCover(id); return true
+  })
   ipcMain.handle('library:import', async (event) => {
     const owner = BrowserWindow.fromWebContents(event.sender)
     if (!owner) return null
-    const result = await dialog.showOpenDialog(owner, { properties: ['openFile'], filters: [{ name: 'Moonweave Chart', extensions: ['json'] }] })
+    const result = await dialog.showOpenDialog(owner, { properties: ['openFile'], filters: [{ name: 'Moonweave Chart Package', extensions: ['mwchart'] }, { name: 'Legacy Moonweave Chart', extensions: ['json'] }] })
     if (result.canceled) return null
     const sourceFile = result.filePaths[0]
+    const id = crypto.randomUUID()
+    if (path.extname(sourceFile).toLowerCase() === '.mwchart') {
+      const packaged = await readChartPackage(readFileSync(sourceFile))
+      if (!packaged.chart || typeof packaged.chart !== 'object') throw new Error('谱面文件格式无效')
+      const chart = packaged.chart as Record<string, unknown>
+      if (packaged.assets.audio) {
+        chart.audioPath = storeAudioBytes(id, packaged.assets.audio.name, packaged.assets.audio.data)
+        chart.audioName = packaged.assets.audio.name
+      } else { chart.audioPath = ''; chart.audioName = '' }
+      if (packaged.assets.background) {
+        const stored = storeBackgroundBytes(id, packaged.assets.background.name, packaged.assets.background.data)
+        chart.backgroundPath = stored.name; chart.backgroundName = packaged.assets.background.name; chart.backgroundType = stored.backgroundType
+      } else { chart.backgroundPath = ''; chart.backgroundName = ''; chart.backgroundType = '' }
+      if (packaged.assets.cover) {
+        chart.coverPath = storeCoverBytes(id, packaged.assets.cover.name, packaged.assets.cover.data)
+        chart.coverName = packaged.assets.cover.name
+      } else { chart.coverPath = ''; chart.coverName = '' }
+      return managedChart(writeStoredChart(id, chart))
+    }
     const chart = JSON.parse(readFileSync(sourceFile, 'utf8')) as Record<string, unknown>
     if (!chart || typeof chart !== 'object') throw new Error('谱面文件格式无效')
-    const id = crypto.randomUUID()
     const storedPath = typeof chart.audioPath === 'string' ? chart.audioPath : ''
     const audioName = typeof chart.audioName === 'string' ? chart.audioName : ''
     const candidates = [path.isAbsolute(storedPath) ? storedPath : '', storedPath && !path.isAbsolute(storedPath) ? path.resolve(path.dirname(sourceFile), storedPath) : '', audioName ? path.join(path.dirname(sourceFile), audioName) : '']
@@ -206,6 +303,12 @@ function registerIpc(): void {
       const copied = copyBackgroundIntoLibrary(id, sourceBackground)
       chart.backgroundPath = copied.name; chart.backgroundType = copied.backgroundType
     } else { chart.backgroundPath = ''; chart.backgroundName = ''; chart.backgroundType = '' }
+    const storedCoverPath = typeof chart.coverPath === 'string' ? chart.coverPath : ''
+    const coverName = typeof chart.coverName === 'string' ? chart.coverName : ''
+    const coverCandidates = [path.isAbsolute(storedCoverPath) ? storedCoverPath : '', storedCoverPath && !path.isAbsolute(storedCoverPath) ? path.resolve(path.dirname(sourceFile), storedCoverPath) : '', coverName ? path.join(path.dirname(sourceFile), coverName) : '']
+    const sourceCover = coverCandidates.find((candidate) => { try { return Boolean(candidate) && statSync(candidate).isFile() } catch { return false } })
+    chart.coverPath = sourceCover ? copyCoverIntoLibrary(id, sourceCover) : ''
+    if (!sourceCover) chart.coverName = ''
     return managedChart(writeStoredChart(id, chart))
   })
   ipcMain.handle('library:export', async (event, input: unknown) => {
@@ -214,11 +317,24 @@ function registerIpc(): void {
     if (!validId(payload.id) || !payload.chart || typeof payload.chart !== 'object') return null
     const owner = BrowserWindow.fromWebContents(event.sender)
     if (!owner) return null
-    const chart = payload.chart as Record<string, unknown>
+    const chart = payload.chart as Chart
     const title = typeof chart.title === 'string' ? chart.title : 'untitled'
-    const suggested = `${title.replace(/[<>:\"/\\|?*]/g, '_') || 'untitled'}.moon.json`
-    const result = await dialog.showSaveDialog(owner, { defaultPath: suggested, filters: [{ name: 'Moonweave Chart', extensions: ['moon.json'] }, { name: 'JSON', extensions: ['json'] }] })
+    const suggested = `${title.replace(/[<>:\"/\\|?*]/g, '_') || 'untitled'}.mwchart`
+    const result = await dialog.showSaveDialog(owner, { defaultPath: suggested, filters: [{ name: 'Moonweave Chart Package', extensions: ['mwchart'] }, { name: 'Legacy JSON', extensions: ['json'] }] })
     if (result.canceled || !result.filePath) return null
+    if (path.extname(result.filePath).toLowerCase() === '.mwchart') {
+      const assets: Parameters<typeof createChartPackage>[1] = {}
+      const addManagedAsset = (kind: 'audio' | 'background' | 'cover', directory: string, storedPath: string, originalName: string) => {
+        const managedName = path.basename(storedPath)
+        const source = managedName ? path.join(directory, managedName) : ''
+        if (source && existsSync(source)) assets[kind] = { data: readFileSync(source), name: path.basename(originalName) || managedName }
+      }
+      addManagedAsset('audio', audioDirectory(), chart.audioPath, chart.audioName)
+      addManagedAsset('background', backgroundDirectory(), chart.backgroundPath, chart.backgroundName)
+      addManagedAsset('cover', coverDirectory(), chart.coverPath, chart.coverName)
+      writeFileSync(result.filePath, await createChartPackage(chart, assets))
+      return result.filePath
+    }
     const exported = { ...chart }
     const managedName = typeof chart.audioPath === 'string' ? path.basename(chart.audioPath) : ''
     const managedSource = managedName ? path.join(audioDirectory(), managedName) : ''
@@ -233,6 +349,13 @@ function registerIpc(): void {
       const backgroundName = typeof chart.backgroundName === 'string' && chart.backgroundName ? path.basename(chart.backgroundName) : managedBackgroundName
       copyFileSync(managedBackgroundSource, path.join(path.dirname(result.filePath), backgroundName))
       exported.backgroundPath = backgroundName
+    }
+    const managedCoverName = path.basename(chart.coverPath)
+    const managedCoverSource = managedCoverName ? path.join(coverDirectory(), managedCoverName) : ''
+    if (managedCoverSource && existsSync(managedCoverSource)) {
+      const coverName = chart.coverName ? path.basename(chart.coverName) : managedCoverName
+      copyFileSync(managedCoverSource, path.join(path.dirname(result.filePath), coverName))
+      exported.coverPath = coverName
     }
     writeFileSync(result.filePath, JSON.stringify(exported, null, 2), 'utf8')
     return result.filePath
@@ -263,6 +386,7 @@ app.whenReady().then(() => {
   }
   protocol.handle('moon-audio', (request) => serveManagedAsset(request, audioDirectory(), 'library'))
   protocol.handle('moon-media', (request) => serveManagedAsset(request, backgroundDirectory(), 'library'))
+  protocol.handle('moon-cover', (request) => serveManagedAsset(request, coverDirectory(), 'library'))
   registerIpc(); createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })

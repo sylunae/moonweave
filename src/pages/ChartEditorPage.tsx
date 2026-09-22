@@ -1,19 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  BookOpen, ClipboardPaste, Copy, FileUp, FlipHorizontal2, FolderOpen, Gamepad2, Gauge, ImagePlus, Library,
-  Music2, Pause, Play, Plus, Redo2, Save, ScanSearch, SlidersHorizontal, Trash2,
+  BookOpen, ClipboardPaste, Copy, FlipHorizontal2, Gamepad2, Gauge, ImagePlus,
+  Music2, Pause, Play, Plus, Redo2, ScanSearch, SlidersHorizontal, Trash2,
   Undo2, Upload, X,
 } from 'lucide-react'
 import { navigate } from '@/app/navigation'
 import { usePreferences } from '@/app/preferences'
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ChartEditor } from '@/features/chart/ChartEditor'
@@ -50,9 +46,9 @@ const playCopyConfirmation = () => {
 
 export default function ChartEditorPage() {
   const {
-    chart, setChart, activeChartId, charts, libraryReady, storageStatus, currentTime, setCurrentTime,
-    isPlaying, historyLength, futureLength, commitNotes, undo, redo, loadChart, saveChart, togglePlay,
-    chooseAudio, chooseBackground, removeBackground, createChart, selectChart, deleteChart, revealLibrary, showToast,
+    chart, setChart, activeChartId, storageStatus, coverUrl, currentTime, setCurrentTime,
+    isPlaying, historyLength, futureLength, commitNotes, undo, redo, flushActiveChart, togglePlay,
+    chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, showToast,
   } = useChart()
   const { preferences, setPreferences } = usePreferences()
   const playbackRate = preferences.playbackRate
@@ -66,11 +62,11 @@ export default function ChartEditorPage() {
   const feedbackTimerRef = useRef(0)
   const feedbackIdRef = useRef(0)
   const [openSheet, setOpenSheet] = useState<'info' | 'tempo' | 'settings' | 'playtest' | null>(null)
-  const [deleteId, setDeleteId] = useState('')
   const [tempoTime, setTempoTime] = useState<number | null>(null)
   const [tempoDraft, setTempoDraft] = useState('')
   const [bpmDraft, setBpmDraft] = useState(String(chart.bpm))
   const [offsetDraft, setOffsetDraft] = useState(String(chart.offset))
+  const [backgroundVideoStartDraft, setBackgroundVideoStartDraft] = useState(String(chart.backgroundVideoStartTime))
   const regionNotes = useMemo(() => !region || region.end === null ? [] : notesInRegion(chart.notes, region.start, region.end), [chart.notes, region])
   const selectedNotes = useMemo(() => chart.notes.filter((note) => selectedIds.has(note.id)), [chart.notes, selectedIds])
   const regionStatus = useMemo(() => {
@@ -85,6 +81,7 @@ export default function ChartEditorPage() {
 
   useEffect(() => setBpmDraft(String(chart.bpm)), [chart.bpm])
   useEffect(() => setOffsetDraft(String(chart.offset)), [chart.offset])
+  useEffect(() => setBackgroundVideoStartDraft(String(chart.backgroundVideoStartTime)), [chart.backgroundVideoStartTime])
   useEffect(() => () => window.clearTimeout(feedbackTimerRef.current), [])
 
   const showEditorFeedback = useCallback((title: string, detail: string, tone: 'action' | 'empty' | 'ready' = 'ready') => {
@@ -184,7 +181,11 @@ export default function ChartEditorPage() {
     const keydown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement
       const editing = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target.isContentEditable
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); void saveChart(); return }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+        event.preventDefault()
+        void flushActiveChart().then((saved) => { if (saved) showToast('已保存到内部谱面库') })
+        return
+      }
       if (editing) return
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); event.shiftKey ? redo() : undo(); return }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') { event.preventDefault(); setRegion(null); setSelectedIds(new Set(chart.notes.map((note) => note.id))); return }
@@ -199,7 +200,9 @@ export default function ChartEditorPage() {
     }
     window.addEventListener('keydown', keydown)
     return () => window.removeEventListener('keydown', keydown)
-  }, [chart, clipboard, copySelection, currentTime, deleteSelection, pasteAtCurrentBeat, playbackRate, redo, saveChart, selectedIds.size, selectedNotes.length, setCurrentTime, subdivision, togglePlay, undo])
+  }, [chart, clipboard, copySelection, currentTime, deleteSelection, flushActiveChart, pasteAtCurrentBeat, playbackRate, redo, selectedIds.size, selectedNotes.length, setCurrentTime, showToast, subdivision, togglePlay, undo])
+
+  if (!activeChartId) return <div className="editor-empty page-enter"><BookOpen /><h1>未选择谱面</h1><Button onClick={() => navigate('manage')}>前往谱面管理</Button></div>
 
   return <div className="editor-page page-enter">
     <div className="editor-workspace">
@@ -238,7 +241,6 @@ export default function ChartEditorPage() {
         <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('info')} aria-label="谱面信息"><span className="editor-dock-label">谱面信息</span><BookOpen /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>谱面信息</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('tempo')} aria-label="BPM 变速"><span className="editor-dock-label">BPM 变速</span><Gauge /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>BPM 变速</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('settings')} aria-label="谱面设置"><span className="editor-dock-label">谱面设置</span><SlidersHorizontal /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>谱面设置</TooltipContent></Tooltip>
-        <Tooltip><TooltipTrigger asChild><button onClick={() => void saveChart()} aria-label="保存谱面"><span className="editor-dock-label">保存谱面</span><Save /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>保存谱面</TooltipContent></Tooltip>
       </aside>
       <Button className="editor-playtest-cta" onClick={() => setOpenSheet('playtest')}><Gamepad2 />谱面试玩</Button>
       {regionStatus && <div key={actionFeedback?.id} className="region-workflow-status" data-tone={regionStatus.tone} data-feedback={Boolean(actionFeedback)}><span><ScanSearch /></span><div><strong>{regionStatus.title}</strong><small>{regionStatus.detail}</small></div></div>}
@@ -246,13 +248,8 @@ export default function ChartEditorPage() {
 
     <Sheet open={openSheet === 'info'} onOpenChange={(open) => setOpenSheet(open ? 'info' : null)}>
       <SheetContent className="editor-sheet">
-        <SheetHeader><SheetTitle>谱面信息</SheetTitle><SheetDescription>管理谱面、歌曲信息与关联媒体。</SheetDescription></SheetHeader>
+        <SheetHeader><SheetTitle>谱面信息</SheetTitle><SheetDescription>{storageStatus === 'saving' ? '正在保存到内部谱面库' : storageStatus === 'error' ? '内部保存失败' : '已自动保存到内部谱面库'}</SheetDescription></SheetHeader>
         <div className="editor-sheet-scroll">
-          <section className="sheet-section">
-            <div className="sheet-section-heading"><span><Library /></span><div><h3>谱面库</h3><p>{libraryReady ? `${charts.length} 份谱面` : '正在读取谱面库…'} · {storageStatus === 'saving' ? '正在保存' : storageStatus === 'error' ? '保存失败' : '已自动保存'}</p></div></div>
-            <div className="sheet-inline-actions"><Button variant="outline" size="sm" onClick={() => void revealLibrary()}><FolderOpen />存储位置</Button><Button size="sm" onClick={() => void createChart()}><Plus />新建谱面</Button></div>
-            <div className="sheet-chart-list">{charts.map((item) => <div key={item.id} className={item.id === activeChartId ? 'active' : ''}><button disabled={item.id === activeChartId} onClick={() => void selectChart(item.id)}><strong>{item.title || '未命名谱面'}</strong><small>{item.artist || '未知艺术家'} · {item.noteCount} NOTES</small></button><Button variant="ghost" size="icon-sm" title="删除谱面" onClick={() => setDeleteId(item.id)}><Trash2 /></Button></div>)}</div>
-          </section>
           <section className="sheet-section">
             <div className="sheet-section-heading"><span><Music2 /></span><div><h3>歌曲信息</h3><p>修改初始 BPM 时会保持音符相对节拍位置。</p></div></div>
             <div className="config-form">
@@ -263,9 +260,10 @@ export default function ChartEditorPage() {
             </div>
             <button className="audio-drop" onClick={() => void chooseAudio()}><span className="audio-icon"><Upload /></span><span><strong>{chart.audioName || '上传音频文件'}</strong><small>MP3、WAV、OGG、M4A 或 FLAC</small></span><b>{chart.audioName ? '替换' : '上传'}</b></button>
             <div className="managed-media-row"><button className="audio-drop" onClick={() => void chooseBackground()}><span className="audio-icon"><ImagePlus /></span><span><strong>{chart.backgroundName || '上传试玩背景'}</strong><small>图片或 MP4 / WebM 视频</small></span><b>{chart.backgroundName ? '替换' : '上传'}</b></button>{chart.backgroundName && <Button variant="outline" size="icon" title="移除背景" onClick={() => void removeBackground()}><X /></Button>}</div>
+            {chart.backgroundType === 'video' && <label className="video-start-setting"><span><strong>视频起始偏移（ms）</strong><small>正数延后开始，负数提前播放</small></span><Input inputMode="numeric" value={backgroundVideoStartDraft} onChange={(event) => setBackgroundVideoStartDraft(event.target.value)} onBlur={() => { const value = Number(backgroundVideoStartDraft); if (!Number.isFinite(value)) { showToast('视频起始偏移必须是有效毫秒数'); setBackgroundVideoStartDraft(String(chart.backgroundVideoStartTime)); return } const backgroundVideoStartTime = Math.round(value); setBackgroundVideoStartDraft(String(backgroundVideoStartTime)); setChart((current) => ({ ...current, backgroundVideoStartTime })) }} /></label>}
+            <div className="managed-media-row"><button className="audio-drop" onClick={() => void chooseCover()}><span className="audio-icon cover-preview">{coverUrl ? <img src={coverUrl} alt="" /> : <ImagePlus />}</span><span><strong>{chart.coverName || '上传曲目封面'}</strong><small>PNG、JPG、WebP 或 AVIF</small></span><b>{chart.coverName ? '替换' : '上传'}</b></button>{chart.coverName && <Button variant="outline" size="icon" title="移除封面" onClick={() => void removeCover()}><X /></Button>}</div>
           </section>
         </div>
-        <SheetFooter className="editor-sheet-footer"><Button variant="outline" onClick={() => void loadChart()}><FileUp />导入谱面</Button><Button onClick={() => void saveChart()}><Save />导出谱面</Button></SheetFooter>
       </SheetContent>
     </Sheet>
 
@@ -308,9 +306,6 @@ export default function ChartEditorPage() {
       </SheetContent>
     </Sheet>
 
-    <AlertDialog open={Boolean(deleteId)} onOpenChange={(open) => { if (!open) setDeleteId('') }}>
-      <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>删除这份谱面？</AlertDialogTitle><AlertDialogDescription>谱面数据与内部保存的音频、背景媒体都会被永久删除。此操作无法撤销。</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>取消</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => { const id = deleteId; setDeleteId(''); void deleteChart(id) }}>删除谱面</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-    </AlertDialog>
     <Dialog open={tempoTime !== null} onOpenChange={(open) => { if (!open) setTempoTime(null) }}>
       <DialogContent className="tempo-dialog">
         <DialogHeader><DialogTitle>设置 BPM 变速</DialogTitle><DialogDescription>{tempoTime === null ? '' : `从 ${formatTime(tempoTime)} 的节拍线开始使用新速度。`}</DialogDescription></DialogHeader>

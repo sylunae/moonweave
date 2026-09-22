@@ -27,6 +27,9 @@ export interface Chart {
   backgroundPath: string
   backgroundName: string
   backgroundType: 'image' | 'video' | ''
+  backgroundVideoStartTime: number
+  coverPath: string
+  coverName: string
   bpm: number
   bpmChanges: BpmChange[]
   offset: number
@@ -44,6 +47,9 @@ export const DEFAULT_CHART: Chart = {
   backgroundPath: '',
   backgroundName: '',
   backgroundType: '',
+  backgroundVideoStartTime: 0,
+  coverPath: '',
+  coverName: '',
   bpm: 120,
   bpmChanges: [],
   offset: 0,
@@ -83,6 +89,9 @@ export function normalizeChart(input: unknown): Chart {
     backgroundPath: typeof value.backgroundPath === 'string' ? value.backgroundPath : '',
     backgroundName: typeof value.backgroundName === 'string' ? value.backgroundName : '',
     backgroundType: value.backgroundType === 'image' || value.backgroundType === 'video' ? value.backgroundType : '',
+    backgroundVideoStartTime: Number.isFinite(value.backgroundVideoStartTime) ? value.backgroundVideoStartTime! : 0,
+    coverPath: typeof value.coverPath === 'string' ? value.coverPath : '',
+    coverName: typeof value.coverName === 'string' ? value.coverName : '',
     bpm: Number.isFinite(value.bpm) && value.bpm! >= 20 && value.bpm! <= 400 ? value.bpm! : DEFAULT_CHART.bpm,
     bpmChanges,
     offset: Number.isFinite(value.offset) ? value.offset! : 0,

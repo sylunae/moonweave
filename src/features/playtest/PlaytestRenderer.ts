@@ -760,8 +760,8 @@ export class PlaytestRenderer {
       if (longFramePercent >= 12 || frameTimeMax >= 50) { this.slowWindows++; this.fastWindows = 0 }
       else if (longFramePercent <= 3) { this.fastWindows++; this.slowWindows = 0 }
       else { this.slowWindows = 0; this.fastWindows = 0 }
-      if (this.slowWindows >= 2 && this.renderScale > 0.72) { this.renderScale = Math.max(0.72, this.renderScale - 0.1); this.slowWindows = 0; this.resize() }
-      if (this.fastWindows >= 5 && this.renderScale < 1) { this.renderScale = Math.min(1, this.renderScale + 0.05); this.fastWindows = 0; this.resize() }
+      if (this.slowWindows >= 2 && this.renderScale > 0.72) { this.renderScale = Math.max(0.72, this.renderScale - 0.1); this.slowWindows = 0 }
+      if (this.fastWindows >= 5 && this.renderScale < 1) { this.renderScale = Math.min(1, this.renderScale + 0.05); this.fastWindows = 0 }
       this.options.onStats({ fps, backend: 'WebGL2', renderScale: this.renderScale, notes: this.visibleCount, particles: this.activeParticles, drawCalls: this.drawCalls, frameTimeP95, frameTimeMax, longFramePercent, clockStalls: this.clockStalls })
       this.statsFrames = 0
       this.frameTimeCount = 0

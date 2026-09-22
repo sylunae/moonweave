@@ -6,6 +6,7 @@ export interface WebChartRecord {
   updatedAt: number
   audio?: Blob
   background?: Blob
+  cover?: Blob
 }
 
 const DATABASE_NAME = 'moonweave-library'
@@ -44,12 +45,13 @@ export const readWebChart = (id: string) => transact<WebChartRecord | undefined>
   request.onerror = () => reject(request.error)
 })
 
-export async function writeWebChart(id: string, chart: Chart, assets: { audio?: Blob; background?: Blob | null } = {}) {
+export async function writeWebChart(id: string, chart: Chart, assets: { audio?: Blob; background?: Blob | null; cover?: Blob | null } = {}) {
   const existing = await readWebChart(id)
   const record: WebChartRecord = {
     id, chart, updatedAt: Date.now(),
     audio: assets.audio === undefined ? existing?.audio : assets.audio,
     background: assets.background === undefined ? existing?.background : assets.background ?? undefined,
+    cover: assets.cover === undefined ? existing?.cover : assets.cover ?? undefined,
   }
   return transact<WebChartRecord>('readwrite', (store, resolve, reject) => {
     const request = store.put(record)

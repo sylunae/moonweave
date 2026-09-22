@@ -24,6 +24,8 @@ contextBridge.exposeInMainWorld('moonweave', Object.freeze({
   chooseAudio: (id: string) => ipcRenderer.invoke('library:choose-audio', id),
   chooseBackground: (id: string) => ipcRenderer.invoke('library:choose-background', id),
   removeBackground: (id: string) => ipcRenderer.invoke('library:remove-background', id),
+  chooseCover: (id: string) => ipcRenderer.invoke('library:choose-cover', id),
+  removeCover: (id: string) => ipcRenderer.invoke('library:remove-cover', id),
   importChart: () => ipcRenderer.invoke('library:import'),
   exportChart: (payload: unknown) => ipcRenderer.invoke('library:export', payload),
   revealLibrary: () => ipcRenderer.invoke('library:reveal'),

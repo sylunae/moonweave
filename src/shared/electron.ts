@@ -18,6 +18,7 @@ export interface ChartLibraryItem {
   audioName: string
   noteCount: number
   updatedAt: number
+  coverUrl: string
 }
 
 export interface ManagedChart {
@@ -26,6 +27,7 @@ export interface ManagedChart {
   updatedAt: number
   audioUrl: string
   backgroundUrl: string
+  coverUrl: string
 }
 
 export interface MoonweaveAPI {
@@ -36,6 +38,8 @@ export interface MoonweaveAPI {
   chooseAudio(id: string): Promise<{ audioPath: string; url: string; name: string } | null>
   chooseBackground(id: string): Promise<{ backgroundPath: string; backgroundType: 'image' | 'video'; url: string; name: string } | null>
   removeBackground(id: string): Promise<boolean>
+  chooseCover(id: string): Promise<{ coverPath: string; url: string; name: string } | null>
+  removeCover(id: string): Promise<boolean>
   importChart(): Promise<ManagedChart | null>
   exportChart(payload: { id: string; chart: Chart }): Promise<string | null>
   revealLibrary(): Promise<string>

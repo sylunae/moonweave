@@ -92,20 +92,21 @@ export const Sidebar = memo(function Sidebar({
     <button className="mobile-menu" onClick={onOpenMobile} aria-label="打开导航"><Menu size={20} /></button>
     {mobileOpen && <button className="sidebar-backdrop" onClick={onCloseMobile} aria-label="关闭导航" />}
     <aside className={`sidebar${collapsed ? ' collapsed' : ''}${mobileOpen ? ' mobile-open' : ''}`} inert={mobileViewport && !mobileOpen ? true : undefined}>
-      <button className="brand" onClick={() => select('editor')} aria-label="打开制谱编辑器">
+      <button className="brand" onClick={() => select('home')} aria-label="返回主页">
         <BrandMark />
         <span className="brand-copy"><strong>{appConfig.name}</strong><small>{appConfig.eyebrow}</small></span>
       </button>
 
       <nav aria-label="主导航">
-        <div className="nav-caption">工作区</div>
-        {appConfig.navigation.map(({ id, label, icon: Icon }) => <button
-          key={id}
-          className={active === id || (id === 'editor' && active === 'playtest') ? 'active' : ''}
-          onClick={() => select(id)}
-          title={label}
-          aria-current={active === id || (id === 'editor' && active === 'playtest') ? 'page' : undefined}
-        ><Icon size={19} strokeWidth={1.7} /><span>{label}</span></button>)}
+        {appConfig.navigation.map((group) => <div className="nav-group" key={group.label}>
+          <div className="nav-caption">{group.label}</div>
+          {group.items.map(({ id, label, icon: Icon }) => {
+            const selected = active === id || (id === 'editor' && active === 'playtest')
+            return <button key={id} className={selected ? 'active' : ''} onClick={() => select(id)} title={label} aria-current={selected ? 'page' : undefined}>
+              <Icon size={19} strokeWidth={1.7} /><span>{label}</span>
+            </button>
+          })}
+        </div>)}
       </nav>
 
       <div className="sidebar-footer">

@@ -100,6 +100,15 @@ export default function PlaytestPage() {
     setActiveHoldLanes(lanes)
   }, [noteById])
 
+  const syncBackgroundVideoTime = useCallback((chartTime: number) => {
+    const video = backgroundVideoRef.current
+    if (!video) return
+    const requestedTime = Math.max(0, chartTime - chart.backgroundVideoStartTime) / 1000
+    const targetTime = Number.isFinite(video.duration) && video.duration > 0 ? requestedTime % video.duration : requestedTime
+    if (Math.abs(video.currentTime - targetTime) > 0.05) video.currentTime = targetTime
+    video.playbackRate = audioRef.current?.playbackRate ?? 1
+  }, [audioRef, chart.backgroundVideoStartTime])
+
   const resetRun = useCallback((startTime = 0) => {
     prerollEpochRef.current += 1; cancelAnimationFrame(prerollFrameRef.current)
     judgedRef.current.clear(); holdStartsRef.current.clear(); holdTicksRef.current.clear(); droppedHoldsRef.current.clear()
@@ -122,8 +131,9 @@ export default function PlaytestPage() {
     setDisplayTime(startTime)
     const audio = audioRef.current
     if (audio) { audio.pause(); audio.currentTime = startTime / 1000 }
+    syncBackgroundVideoTime(startTime)
     playingRef.current = false; setPlaying(false)
-  }, [audioRef, holdTicksById, notesByTime])
+  }, [audioRef, holdTicksById, notesByTime, syncBackgroundVideoTime])
 
   const processFrame = useCallback((now: number) => {
     timeRef.current = now
@@ -158,7 +168,9 @@ export default function PlaytestPage() {
         judgedRef.current.set(note.id, 'Miss'); rendererRef.current?.hideNote(note.id)
       }
     }
-  }, [holdTicksById, noteById, notesByTime, registerJudgment, updateActiveHoldLanes, windows])
+    const video = backgroundVideoRef.current
+    if (video && now >= chart.backgroundVideoStartTime && video.paused && !document.hidden) void video.play().catch(() => undefined)
+  }, [chart.backgroundVideoStartTime, holdTicksById, noteById, notesByTime, registerJudgment, updateActiveHoldLanes, windows])
 
   useEffect(() => {
     if (!playing) return
@@ -193,13 +205,14 @@ export default function PlaytestPage() {
     const video = backgroundVideoRef.current
     if (!video) return
     const syncPlayback = () => {
-      if (playing && !document.hidden) void video.play().catch(() => undefined)
+      syncBackgroundVideoTime(audioRef.current?.currentTime ? audioRef.current.currentTime * 1000 : timeRef.current)
+      if (playing && prerollTimeRef.current === null && audioRef.current && audioRef.current.currentTime * 1000 >= chart.backgroundVideoStartTime && !document.hidden) void video.play().catch(() => undefined)
       else video.pause()
     }
     syncPlayback()
     document.addEventListener('visibilitychange', syncPlayback)
     return () => { document.removeEventListener('visibilitychange', syncPlayback); video.pause() }
-  }, [backgroundUrl, playing])
+  }, [audioRef, backgroundUrl, chart.backgroundVideoStartTime, playing, syncBackgroundVideoTime])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -316,7 +329,7 @@ export default function PlaytestPage() {
 
   return <div className="playtest-page page-enter">
     {backgroundUrl && chart.backgroundType === 'image' && <img key={backgroundUrl} className="playtest-background" src={backgroundUrl} alt="" decoding="async" />}
-    {backgroundUrl && chart.backgroundType === 'video' && <video key={backgroundUrl} ref={backgroundVideoRef} className="playtest-background" src={backgroundUrl} muted loop playsInline preload="metadata" disablePictureInPicture />}
+    {backgroundUrl && chart.backgroundType === 'video' && <video key={backgroundUrl} ref={backgroundVideoRef} className="playtest-background" data-active={displayTime >= chart.backgroundVideoStartTime} src={backgroundUrl} muted loop playsInline preload="metadata" disablePictureInPicture onLoadedMetadata={() => syncBackgroundVideoTime(timeRef.current)} />}
     <canvas ref={canvasRef} className="playtest-canvas" aria-label="WebGL2 谱面试玩画面" />
     <div className="playtest-vignette" /><div className="playtest-judgment-line" />
     <header className="playtest-header">
