@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChartLibraryItem } from '@/shared/electron'
+import { PlaybackClock } from '@/features/playtest/PlaybackClock'
 import { deleteWebChart, listWebCharts, readWebChart, writeWebChart } from './webLibrary'
 import { DEFAULT_CHART, normalizeChart, type Chart, type ChartNote } from './types'
 
@@ -70,6 +71,9 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const objectUrlRef = useRef('')
   const backgroundObjectUrlRef = useRef('')
   const animationRef = useRef(0)
+  const playbackClockRef = useRef(new PlaybackClock())
+  const playbackQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const playbackEpochRef = useRef(0)
   const toastTimerRef = useRef(0)
   const chartRef = useRef(chart)
   const activeIdRef = useRef(activeChartId)
@@ -84,7 +88,14 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     toastTimerRef.current = window.setTimeout(() => setToast(''), 2600)
   }, [])
   const stopPlayback = useCallback(() => {
-    cancelAnimationFrame(animationRef.current); audioRef.current?.pause(); setIsPlaying(false)
+    playbackEpochRef.current += 1
+    cancelAnimationFrame(animationRef.current)
+    const audio = audioRef.current
+    if (audio) {
+      audio.pause()
+      playbackClockRef.current.stop(audio.currentTime * 1000)
+    }
+    setIsPlaying(false)
   }, [])
   const replaceAudioUrl = useCallback((url: string, revoke = false) => {
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
@@ -292,9 +303,14 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   }, [showToast])
 
   const setCurrentTime = useCallback((time: number) => {
-    const value = clamp(time, 0, chart.duration); setCurrentTimeState(value)
-    if (audioRef.current) audioRef.current.currentTime = value / 1000
-  }, [chart.duration])
+    const value = clamp(time, 0, chartRef.current.duration)
+    setCurrentTimeState(value)
+    const audio = audioRef.current
+    if (!audio) return
+    audio.currentTime = value / 1000
+    if (audio.paused) playbackClockRef.current.reset(value)
+    else playbackClockRef.current.start(value, performance.now(), audio.playbackRate)
+  }, [])
   const commitNotes = useCallback((notes: ChartNote[]) => {
     setChart((previous) => {
       setHistory((items) => [...items.slice(-79), previous.notes]); setFuture([])
@@ -315,23 +331,47 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   }), [])
   const tick = useCallback(() => {
     const audio = audioRef.current
-    if (!audio) return
-    setCurrentTimeState(audio.currentTime * 1000)
-    if (!audio.paused) animationRef.current = requestAnimationFrame(tick)
+    if (!audio || audio.paused || audio.ended) return
+    const time = playbackClockRef.current.getTime(audio.currentTime * 1000)
+    setCurrentTimeState(clamp(time, 0, chartRef.current.duration))
+    animationRef.current = requestAnimationFrame(tick)
   }, [])
-  const togglePlay = useCallback(async (playbackRate: number, subdivision: number) => {
-    const audio = audioRef.current
-    if (!audioUrl || !audio) { showToast('请先在配置页选择歌曲音频'); return }
-    if (!audio.paused) {
-      audio.pause(); cancelAnimationFrame(animationRef.current)
-      const step = 60000 / chart.bpm / subdivision
-      const value = clamp(Math.round((audio.currentTime * 1000 - chart.offset) / step) * step + chart.offset, 0, chart.duration)
-      audio.currentTime = value / 1000; setCurrentTimeState(value); setIsPlaying(false); return
+  const togglePlay = useCallback((playbackRate: number, subdivision: number) => {
+    const epoch = playbackEpochRef.current
+    const toggle = async () => {
+      if (epoch !== playbackEpochRef.current) return
+      const audio = audioRef.current
+      if (!audioUrl || !audio) { showToast('请先在配置页选择歌曲音频'); return }
+      if (!audio.paused && !audio.ended) {
+        audio.pause()
+        cancelAnimationFrame(animationRef.current)
+        const currentChart = chartRef.current
+        const step = 60000 / currentChart.bpm / subdivision
+        const value = clamp(Math.round((audio.currentTime * 1000 - currentChart.offset) / step) * step + currentChart.offset, 0, currentChart.duration)
+        audio.currentTime = value / 1000
+        playbackClockRef.current.stop(value)
+        setCurrentTimeState(value)
+        setIsPlaying(false)
+        return
+      }
+
+      audio.playbackRate = playbackRate
+      try {
+        await audio.play()
+        if (epoch !== playbackEpochRef.current || audio.paused) return
+        cancelAnimationFrame(animationRef.current)
+        playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
+        setIsPlaying(true)
+        animationRef.current = requestAnimationFrame(tick)
+      } catch {
+        setIsPlaying(false)
+        showToast('音频无法播放，请重新选择文件')
+      }
     }
-    audio.playbackRate = playbackRate
-    try { await audio.play(); setIsPlaying(true); animationRef.current = requestAnimationFrame(tick) }
-    catch { showToast('音频无法播放，请重新选择文件') }
-  }, [audioUrl, chart.bpm, chart.duration, chart.offset, showToast, tick])
+    const queued = playbackQueueRef.current.then(toggle, toggle)
+    playbackQueueRef.current = queued.catch(() => undefined)
+    return queued
+  }, [audioUrl, showToast, tick])
 
   useEffect(() => () => {
     cancelAnimationFrame(animationRef.current); window.clearTimeout(toastTimerRef.current)
@@ -358,7 +398,14 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
           showToast('内部音频已不可用，请重新上传'); return ''
         })
       }, 0)
-    }} onEnded={() => { setIsPlaying(false); setCurrentTimeState(chart.duration); cancelAnimationFrame(animationRef.current) }} />
+    }} onPlay={() => setIsPlaying(true)} onPause={(event) => {
+      cancelAnimationFrame(animationRef.current)
+      playbackClockRef.current.stop(event.currentTarget.currentTime * 1000)
+      setIsPlaying(false)
+    }} onEnded={() => {
+      playbackClockRef.current.stop(chart.duration)
+      setIsPlaying(false); setCurrentTimeState(chart.duration); cancelAnimationFrame(animationRef.current)
+    }} />
     {children}
     {toast && <div className="chart-toast" role="status">{toast}</div>}
   </ChartContext.Provider>

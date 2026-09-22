@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createEditorNoteIndex, visibleEditorNotes } from './editorTimeline'
 import type { Chart, ChartNote, ToolMode } from './types'
 
 const LANE_COLORS = ['#31d7ff', '#b788ff', '#b788ff', '#31d7ff']
@@ -26,28 +27,48 @@ interface EditorProps {
 export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, selectedIds, region, isPlaying, onSeek, onNotesChange, onHoldStart, onSelectionChange, onRegionLine, onPasteLine, onZoomChange }: EditorProps) {
   const laneRef = useRef<HTMLDivElement>(null)
   const [laneHeight, setLaneHeight] = useState(700)
+  const [viewportTime, setViewportTime] = useState(currentTime)
   const [dragPreview, setDragPreview] = useState<Record<string, { lane: number; time: number; endTime?: number }>>({})
   const dragPreviewRef = useRef<Record<string, { lane: number; time: number; endTime?: number }>>({})
+  const viewportTimeRef = useRef(currentTime)
+  const previewingSeekRef = useRef(false)
+  const seekCommitTimerRef = useRef(0)
+  const seekFrameRef = useRef(0)
+  const pendingViewportTimeRef = useRef(currentTime)
   const pps = chart.settings.editorZoom
   const headerHeight = 34
   const judgmentY = Math.max(300, laneHeight - headerHeight - 18)
   const beat = 60000 / chart.bpm
   const step = beat / subdivision
+  const timelineTime = previewingSeekRef.current ? viewportTime : currentTime
+  if (!previewingSeekRef.current) {
+    viewportTimeRef.current = currentTime
+    pendingViewportTimeRef.current = currentTime
+  }
+  const noteIndex = useMemo(() => createEditorNoteIndex(chart.notes), [chart.notes])
+  const visibleRange = useMemo(() => ({
+    from: timelineTime - ((laneHeight - headerHeight - judgmentY + 160) / pps * 1000),
+    to: timelineTime + ((judgmentY + 160) / pps * 1000),
+  }), [judgmentY, laneHeight, pps, timelineTime])
+  const visibleNotes = useMemo(
+    () => visibleEditorNotes(noteIndex, visibleRange.from, visibleRange.to),
+    [noteIndex, visibleRange],
+  )
   const lines = useMemo(() => {
-    const from = currentTime - ((laneHeight - headerHeight - judgmentY + 120) / pps * 1000)
-    const to = currentTime + ((judgmentY + 120) / pps * 1000)
+    const from = timelineTime - ((laneHeight - headerHeight - judgmentY + 120) / pps * 1000)
+    const to = timelineTime + ((judgmentY + 120) / pps * 1000)
     const first = Math.floor((from - chart.offset) / step)
     const result: { time: number; major: boolean; index: number }[] = []
     for (let index = first; chart.offset + index * step <= to; index += 1) {
       if (chart.offset + index * step >= 0) result.push({ time: chart.offset + index * step, major: index % subdivision === 0, index })
     }
     return result
-  }, [currentTime, chart.offset, step, subdivision, laneHeight, judgmentY, pps])
+  }, [timelineTime, chart.offset, step, subdivision, laneHeight, judgmentY, pps])
 
-  const yAt = (time: number) => judgmentY - (time - currentTime) / 1000 * pps
+  const yAt = (time: number) => judgmentY - (time - timelineTime) / 1000 * pps
   const pointerTime = (clientY: number) => {
     const rect = laneRef.current!.getBoundingClientRect()
-    const raw = currentTime + (judgmentY - (clientY - rect.top - headerHeight)) / pps * 1000
+    const raw = viewportTimeRef.current + (judgmentY - (clientY - rect.top - headerHeight)) / pps * 1000
     return clamp(Math.round((raw - chart.offset) / step) * step + chart.offset, 0, chart.duration)
   }
   const laneClick = (event: React.MouseEvent, lane: number) => {
@@ -137,32 +158,72 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
     observer.observe(laneRef.current)
     return () => observer.disconnect()
   }, [])
+
+  const renderSeekPreview = useCallback((time: number) => {
+    const value = clamp(time, 0, chart.duration)
+    previewingSeekRef.current = true
+    pendingViewportTimeRef.current = value
+    viewportTimeRef.current = value
+    if (!seekFrameRef.current) {
+      seekFrameRef.current = requestAnimationFrame(() => {
+        seekFrameRef.current = 0
+        setViewportTime(pendingViewportTimeRef.current)
+      })
+    }
+  }, [chart.duration])
+
+  const commitSeekPreview = useCallback(() => {
+    window.clearTimeout(seekCommitTimerRef.current)
+    if (seekFrameRef.current) {
+      cancelAnimationFrame(seekFrameRef.current)
+      seekFrameRef.current = 0
+      setViewportTime(pendingViewportTimeRef.current)
+    }
+    previewingSeekRef.current = false
+    onSeek(pendingViewportTimeRef.current)
+  }, [onSeek])
+
   const handleWheel = useCallback((event: WheelEvent) => {
     event.preventDefault()
     if (event.ctrlKey) onZoomChange(clamp(Math.round(pps * (event.deltaY < 0 ? 1.12 : 1 / 1.12)), 90, 1320))
-    else onSeek(currentTime - event.deltaY / pps * 1000)
-  }, [currentTime, onSeek, onZoomChange, pps])
+    else {
+      renderSeekPreview(viewportTimeRef.current - event.deltaY / pps * 1000)
+      window.clearTimeout(seekCommitTimerRef.current)
+      seekCommitTimerRef.current = window.setTimeout(commitSeekPreview, 90)
+    }
+  }, [commitSeekPreview, onZoomChange, pps, renderSeekPreview])
   useEffect(() => {
     const element = laneRef.current
     if (!element) return
     element.addEventListener('wheel', handleWheel, { passive: false })
     return () => element.removeEventListener('wheel', handleWheel)
   }, [handleWheel])
+  useEffect(() => () => {
+    window.clearTimeout(seekCommitTimerRef.current)
+    cancelAnimationFrame(seekFrameRef.current)
+  }, [])
+
+  const minimapNotes = useMemo(() => chart.notes.map((note) => <i key={note.id} style={{
+    bottom: `${note.time / chart.duration * 100}%`,
+    left: `${10 + note.lane * 11}px`,
+    height: note.kind === 'hold' ? `${Math.max(3, ((note.endTime! - note.time) / chart.duration) * 100)}%` : 2,
+    background: LANE_COLORS[note.lane],
+  }} />), [chart.duration, chart.notes])
 
   return <section className="chart-editor-stage">
     <div className="stage-caption"><span>OVERVIEW</span><span>4K TIMELINE · CTRL + WHEEL {Math.round(pps / 2.3)}%</span><span>{selectedIds.size ? `SELECTED ${selectedIds.size}` : isPlaying ? 'RECORDING INPUT' : `SNAP 1/${subdivision}`}</span></div>
     <div className="editor-body">
       <div className="minimap" onMouseDown={(event) => {
         event.preventDefault(); const minimap = event.currentTarget
-        const seekAtPointer = (clientY: number) => { const rect = minimap.getBoundingClientRect(); onSeek((rect.bottom - clientY) / rect.height * chart.duration) }
+        const seekAtPointer = (clientY: number) => { const rect = minimap.getBoundingClientRect(); renderSeekPreview((rect.bottom - clientY) / rect.height * chart.duration) }
         seekAtPointer(event.clientY)
         const move = (moveEvent: MouseEvent) => seekAtPointer(moveEvent.clientY)
-        const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up) }
+        const up = () => { commitSeekPreview(); window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up) }
         window.addEventListener('mousemove', move); window.addEventListener('mouseup', up)
       }}>
         <div className="minimap-beats" style={{ backgroundSize: `100% ${Math.max(.5, (60000 / chart.bpm) / chart.duration * 100)}%` }} />
-        {chart.notes.map((note) => <i key={note.id} style={{ bottom: `${note.time / chart.duration * 100}%`, left: `${10 + note.lane * 11}px`, height: note.kind === 'hold' ? `${Math.max(3, ((note.endTime! - note.time) / chart.duration) * 100)}%` : 2, background: LANE_COLORS[note.lane] }} />)}
-        <div className="minimap-window" style={{ bottom: `${clamp(currentTime / chart.duration * 100, 0, 94)}%` }} />
+        {minimapNotes}
+        <div className="minimap-window" style={{ bottom: `${clamp(timelineTime / chart.duration * 100, 0, 94)}%` }} />
       </div>
       <div className={`lane-editor ${tool === 'region' || tool === 'paste' ? 'region-mode' : ''}`} ref={laneRef}>
         <div className="lane-header">{chart.settings.keys.map((key, index) => <div key={index}><span>{index + 1}</span><b>{key}</b></div>)}</div>
@@ -173,7 +234,7 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
           return <div key={line.index} className={`beat-line ${tone}`} style={{ top: y }}><span>{line.major ? Math.floor((line.time - chart.offset) / beat) + 1 : ''}</span></div>
         })}</div>
         <div className="lanes">{[0, 1, 2, 3].map((lane) => <div className={`edit-lane lane-${lane}`} key={lane} onMouseDown={(event) => laneClick(event, lane)} />)}</div>
-        <div className="notes-layer">{chart.notes.map((originalNote) => {
+        <div className="notes-layer">{visibleNotes.map((originalNote) => {
           const note = dragPreview[originalNote.id] ? { ...originalNote, ...dragPreview[originalNote.id] } : originalNote
           const y = yAt(note.time); const endY = note.kind === 'hold' ? yAt(note.endTime!) : y
           if (y < -150 || endY > laneHeight) return null

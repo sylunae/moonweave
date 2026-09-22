@@ -99,7 +99,7 @@ void main() {
   float bottomY = visualScreenY(startTime);
   float topY = kind > 0.5
     ? visualScreenY(endTime)
-    : bottomY - (18.0 / uViewportHeight) * trackScaleAt(bottomY);
+    : bottomY - (36.0 / uViewportHeight) * trackScaleAt(bottomY);
   // Long holds can extend far past the top of the viewport. Once their
   // projected scale crosses zero the left and right vertices swap, turning
   // the quad into large triangles. Trim only the off-screen portion; track
