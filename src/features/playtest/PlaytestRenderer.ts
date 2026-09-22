@@ -1,4 +1,5 @@
-import type { ChartNote } from '@/features/chart/types'
+import { beatLinesInRange, scrollPositionAtTime, timeAtScrollPosition } from '@/features/chart/tempoMap'
+import type { BpmChange, ChartNote } from '@/features/chart/types'
 
 const NOTE_STRIDE = 6
 const PARTICLE_STRIDE = 8
@@ -31,7 +32,9 @@ interface PlaytestRendererOptions {
   laneTilt: number
   scrollSpeed: number
   bpm: number
+  bpmChanges: BpmChange[]
   offset: number
+  duration: number
   getTime(): number
   getPlaying(): boolean
   autoplay: boolean
@@ -556,8 +559,11 @@ export class PlaytestRenderer {
 
   private uploadVisibleNotes(time: number) {
     const horizon = HORIZON_MS * (7 / Math.max(4, this.options.scrollSpeed))
-    const first = Math.max(0, lowerBound(this.notes, time - horizon * (100 / 86 - 1)) - 8)
-    const last = Math.min(this.notes.length, lowerBound(this.notes, time + horizon) + 2)
+    const position = scrollPositionAtTime(this.options, time)
+    const fromTime = timeAtScrollPosition(this.options, position - horizon * (100 / 86 - 1))
+    const toTime = timeAtScrollPosition(this.options, position + horizon)
+    const first = Math.max(0, lowerBound(this.notes, fromTime) - 8)
+    const last = Math.min(this.notes.length, lowerBound(this.notes, toTime) + 2)
     const key = `${first}:${last}:${this.hiddenNotes.size}:${[...this.startedHolds].join(',')}:${[...this.activeHolds].join(',')}`
     if (key === this.lastVisibleKey) return
     this.lastVisibleKey = key
@@ -566,13 +572,13 @@ export class PlaytestRenderer {
       const note = this.notes.find((candidate) => candidate.id === id)
       if (note && !candidates.includes(note)) candidates.push(note)
     }
-    const visible = candidates.filter((note) => !this.hiddenNotes.has(note.id) && (note.endTime ?? note.time) >= time - 260)
+    const visible = candidates.filter((note) => !this.hiddenNotes.has(note.id) && scrollPositionAtTime(this.options, note.endTime ?? note.time) >= position - 260)
     const data = new Float32Array(visible.length * NOTE_STRIDE)
     visible.forEach((note, index) => {
       const offset = index * NOTE_STRIDE
       data[offset] = note.lane
-      data[offset + 1] = note.time
-      data[offset + 2] = note.endTime ?? note.time
+      data[offset + 1] = scrollPositionAtTime(this.options, note.time)
+      data[offset + 2] = scrollPositionAtTime(this.options, note.endTime ?? note.time)
       data[offset + 3] = note.kind === 'hold' ? 1 : 0
       data[offset + 4] = note.lane
       data[offset + 5] = this.activeHolds.has(note.id) ? 1 : 0
@@ -628,14 +634,12 @@ export class PlaytestRenderer {
 
   private drawBeats(time: number) {
     const horizon = HORIZON_MS * (7 / Math.max(4, this.options.scrollSpeed))
-    const beatMs = 60_000 / this.options.bpm
-    const first = Math.ceil((time - 120 - this.options.offset) / beatMs)
-    const last = Math.floor((time + horizon - this.options.offset) / beatMs)
+    const position = scrollPositionAtTime(this.options, time)
+    const fromTime = timeAtScrollPosition(this.options, position - 120)
+    const toTime = timeAtScrollPosition(this.options, position + horizon)
     let floatCount = 0
-    for (let beat = first; beat <= last; beat++) {
-      const beatTime = this.options.offset + beat * beatMs
-      if (beatTime < 0) continue
-      const depth = (beatTime - time) / horizon
+    for (const line of beatLinesInRange(this.options, fromTime, toTime, 1)) {
+      const depth = (scrollPositionAtTime(this.options, line.time) - position) / horizon
       if (floatCount + 4 > this.beatVertices.length) break
       this.beatVertices[floatCount++] = -1
       this.beatVertices[floatCount++] = depth
@@ -666,7 +670,7 @@ export class PlaytestRenderer {
     const { program, uniforms } = this.noteProgram
     gl.useProgram(program)
     gl.bindVertexArray(this.noteVao)
-    gl.uniform1f(uniforms.uTime, time)
+    gl.uniform1f(uniforms.uTime, scrollPositionAtTime(this.options, time))
     gl.uniform1f(uniforms.uHorizon, HORIZON_MS * (7 / Math.max(4, this.options.scrollSpeed)))
     gl.uniform1f(uniforms.uTilt, this.options.laneTilt / 45)
     gl.uniform1f(uniforms.uViewportHeight, Math.max(1, this.options.canvas.clientHeight))

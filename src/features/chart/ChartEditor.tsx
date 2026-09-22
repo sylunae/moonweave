@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { createEditorNoteIndex, visibleEditorNotes } from './editorTimeline'
+import { adjacentBeatLine, beatAtTime, beatLinesInRange, bpmAtTime, scrollPositionAtTime, snapToBeatLine, timeAtScrollPosition } from './tempoMap'
 import { usePreferences } from '@/app/preferences'
 import type { Chart, ChartNote, ToolMode } from './types'
 
@@ -22,7 +23,7 @@ interface EditorProps {
   onHoldStart(value: { lane: number; time: number } | null): void
   onSelectionChange(ids: Set<string>): void
   onRegionLine(time: number): void
-  onPasteLine(time: number): void
+  onTempoLine(time: number): void
   onZoomChange(value: number): void
   onSubdivisionChange(direction: -1 | 1): void
 }
@@ -32,7 +33,7 @@ const formatOverviewTime = (milliseconds: number) => {
   return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`
 }
 
-export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, selectedIds, region, isPlaying, onSeek, onNotesChange, onHoldStart, onSelectionChange, onRegionLine, onPasteLine, onZoomChange, onSubdivisionChange }: EditorProps) {
+export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, selectedIds, region, isPlaying, onSeek, onNotesChange, onHoldStart, onSelectionChange, onRegionLine, onTempoLine, onZoomChange, onSubdivisionChange }: EditorProps) {
   const { preferences } = usePreferences()
   const laneRef = useRef<HTMLDivElement>(null)
   const [laneHeight, setLaneHeight] = useState(700)
@@ -46,46 +47,41 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
   const pendingViewportTimeRef = useRef(currentTime)
   const pps = chart.settings.editorZoom
   const judgmentY = clamp(laneHeight - preferences.judgmentLineHeight, 120, Math.max(120, laneHeight - 80))
-  const beat = 60000 / chart.bpm
-  const step = beat / subdivision
   const timelineTime = previewingSeekRef.current ? viewportTime : currentTime
+  const timelinePosition = scrollPositionAtTime(chart, timelineTime)
   if (!previewingSeekRef.current) {
     viewportTimeRef.current = currentTime
     pendingViewportTimeRef.current = currentTime
   }
   const noteIndex = useMemo(() => createEditorNoteIndex(chart.notes), [chart.notes])
   const visibleRange = useMemo(() => ({
-    from: timelineTime - ((laneHeight - judgmentY + 160) / pps * 1000),
-    to: timelineTime + ((judgmentY + 160) / pps * 1000),
-  }), [judgmentY, laneHeight, pps, timelineTime])
+    from: timeAtScrollPosition(chart, timelinePosition - ((laneHeight - judgmentY + 160) / pps * 1000)),
+    to: timeAtScrollPosition(chart, timelinePosition + ((judgmentY + 160) / pps * 1000)),
+  }), [chart, judgmentY, laneHeight, pps, timelinePosition])
   const visibleNotes = useMemo(
     () => visibleEditorNotes(noteIndex, visibleRange.from, visibleRange.to),
     [noteIndex, visibleRange],
   )
   const lines = useMemo(() => {
-    const from = timelineTime - ((laneHeight - judgmentY + 120) / pps * 1000)
-    const to = timelineTime + ((judgmentY + 120) / pps * 1000)
-    const first = Math.floor((from - chart.offset) / step)
-    const result: { time: number; major: boolean; index: number }[] = []
-    for (let index = first; chart.offset + index * step <= to; index += 1) {
-      if (chart.offset + index * step >= 0) result.push({ time: chart.offset + index * step, major: index % subdivision === 0, index })
-    }
-    return result
-  }, [timelineTime, chart.offset, step, subdivision, laneHeight, judgmentY, pps])
+    const from = timeAtScrollPosition(chart, timelinePosition - ((laneHeight - judgmentY + 120) / pps * 1000))
+    const to = timeAtScrollPosition(chart, timelinePosition + ((judgmentY + 120) / pps * 1000))
+    return beatLinesInRange(chart, from, to, subdivision)
+  }, [timelinePosition, chart, subdivision, laneHeight, judgmentY, pps])
 
-  const yAt = (time: number) => judgmentY - (time - timelineTime) / 1000 * pps
+  const yAt = (time: number) => judgmentY - (scrollPositionAtTime(chart, time) - timelinePosition) / 1000 * pps
   const pointerTime = (clientY: number) => {
     const rect = laneRef.current!.getBoundingClientRect()
-    const raw = viewportTimeRef.current + (judgmentY - (clientY - rect.top)) / pps * 1000
-    return clamp(Math.round((raw - chart.offset) / step) * step + chart.offset, 0, chart.duration)
+    const viewportPosition = scrollPositionAtTime(chart, viewportTimeRef.current)
+    const raw = timeAtScrollPosition(chart, viewportPosition + (judgmentY - (clientY - rect.top)) / pps * 1000)
+    return snapToBeatLine(chart, raw, subdivision)
   }
   const laneClick = (event: React.MouseEvent, lane: number) => {
     const time = pointerTime(event.clientY)
     if (tool === 'region') { onRegionLine(time); return }
-    if (tool === 'paste') { onPasteLine(time); return }
+    if (tool === 'tempo') { onTempoLine(time); return }
     if (tool === 'delete') return
-    const beatIndex = Math.round((time - chart.offset) / step)
-    const noteOnBeat = chart.notes.find((note) => note.lane === lane && Math.round((note.time - chart.offset) / step) === beatIndex)
+    const beatIndex = Math.round(beatAtTime(chart, time) * subdivision)
+    const noteOnBeat = chart.notes.find((note) => note.lane === lane && Math.round(beatAtTime(chart, note.time) * subdivision) === beatIndex)
     if (noteOnBeat) {
       const next = new Set(selectedIds)
       if (next.has(noteOnBeat.id)) next.delete(noteOnBeat.id); else next.add(noteOnBeat.id)
@@ -97,7 +93,7 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
     else {
       const start = Math.min(holdStart.time, time)
       const end = Math.max(holdStart.time, time)
-      if (end - start >= step * .5) onNotesChange([...chart.notes, { id: uid(), lane: holdStart.lane, time: start, endTime: end, kind: 'hold' }])
+      if (Math.abs(beatAtTime(chart, end) - beatAtTime(chart, start)) >= 0.5 / subdivision) onNotesChange([...chart.notes, { id: uid(), lane: holdStart.lane, time: start, endTime: end, kind: 'hold' }])
       onHoldStart(null)
     }
   }
@@ -105,7 +101,7 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
     if (event.button !== 0) return
     event.stopPropagation(); event.preventDefault()
     if (tool === 'region') { onRegionLine(pointerTime(event.clientY)); return }
-    if (tool === 'paste') { onPasteLine(pointerTime(event.clientY)); return }
+    if (tool === 'tempo') { onTempoLine(pointerTime(event.clientY)); return }
     if (tool === 'delete') { onNotesChange(chart.notes.filter((note) => note.id !== id)); return }
     const wasSelected = selectedIds.has(id)
     const nextSelection = new Set(selectedIds)
@@ -121,7 +117,8 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
       if (!didDrag && Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) < 3) return
       didDrag = true
       const laneDelta = Math.round((moveEvent.clientX - startX) / (rect.width / 4))
-      const requestedTimeDelta = Math.round((-(moveEvent.clientY - startY) / pps * 1000) / step) * step
+      const requestedPosition = scrollPositionAtTime(chart, earliest) - (moveEvent.clientY - startY) / pps * 1000
+      const requestedTimeDelta = snapToBeatLine(chart, timeAtScrollPosition(chart, requestedPosition), subdivision) - earliest
       const timeDelta = clamp(requestedTimeDelta, -earliest, chart.duration - latest)
       const preview: Record<string, { lane: number; time: number; endTime?: number }> = {}
       selectedNotes.forEach((note) => { preview[note.id] = { lane: clamp(note.lane + laneDelta, 0, 3), time: note.time + timeDelta, endTime: note.endTime === undefined ? undefined : note.endTime + timeDelta } })
@@ -143,9 +140,12 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
     if (!holds.length) return
     const startY = event.clientY
     const move = (moveEvent: MouseEvent) => {
-      const requestedDelta = Math.round((-(moveEvent.clientY - startY) / pps * 1000) / step) * step
-      const minDelta = edge === 'end' ? Math.max(...holds.map((note) => note.time + step - note.endTime!)) : Math.max(...holds.map((note) => -note.time))
-      const maxDelta = edge === 'end' ? Math.min(...holds.map((note) => chart.duration - note.endTime!)) : Math.min(...holds.map((note) => note.endTime! - step - note.time))
+      const anchor = edge === 'end' ? holds[0].endTime! : holds[0].time
+      const requestedPosition = scrollPositionAtTime(chart, anchor) - (moveEvent.clientY - startY) / pps * 1000
+      const requestedDelta = snapToBeatLine(chart, timeAtScrollPosition(chart, requestedPosition), subdivision) - anchor
+      const minimumLength = 60_000 / bpmAtTime(chart, anchor) / subdivision
+      const minDelta = edge === 'end' ? Math.max(...holds.map((note) => note.time + minimumLength - note.endTime!)) : Math.max(...holds.map((note) => -note.time))
+      const maxDelta = edge === 'end' ? Math.min(...holds.map((note) => chart.duration - note.endTime!)) : Math.min(...holds.map((note) => note.endTime! - minimumLength - note.time))
       const delta = clamp(requestedDelta, minDelta, maxDelta)
       const preview: Record<string, { lane: number; time: number; endTime?: number }> = {}
       holds.forEach((note) => { preview[note.id] = { lane: note.lane, time: edge === 'start' ? note.time + delta : note.time, endTime: edge === 'end' ? note.endTime! + delta : note.endTime } })
@@ -195,11 +195,12 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
     event.preventDefault()
     if (event.ctrlKey) onZoomChange(clamp(Math.round(pps * (event.deltaY < 0 ? 1.12 : 1 / 1.12)), 90, 1320))
     else {
-      renderSeekPreview(viewportTimeRef.current - event.deltaY / pps * 1000)
+      const direction = event.deltaY < 0 ? 1 : -1
+      renderSeekPreview(adjacentBeatLine(chart, viewportTimeRef.current, subdivision, direction))
       window.clearTimeout(seekCommitTimerRef.current)
       seekCommitTimerRef.current = window.setTimeout(commitSeekPreview, 90)
     }
-  }, [commitSeekPreview, onZoomChange, pps, renderSeekPreview])
+  }, [chart, commitSeekPreview, onZoomChange, pps, renderSeekPreview, subdivision])
   useEffect(() => {
     const element = laneRef.current
     if (!element) return
@@ -239,18 +240,19 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
           const up = () => { commitSeekPreview(); window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up) }
           window.addEventListener('mousemove', move); window.addEventListener('mouseup', up)
         }}>
-          <div className="minimap-beats" style={{ backgroundSize: `100% ${Math.max(.5, (60000 / chart.bpm) / chart.duration * 100)}%` }} />
+          <div className="minimap-beats" />
           <div className="density-bars">{densityBins.map((density, index) => <i key={index} style={{ width: `${density * 100}%`, opacity: density > 0 ? 1 : 0 }} />)}</div>
           <div className="minimap-window" style={{ bottom: `${clamp(timelineTime / chart.duration * 100, 0, 94)}%` }} />
         </div>
         <time>{formatOverviewTime(timelineTime)} / {formatOverviewTime(chart.duration)}</time>
       </aside>
-      <div className={`lane-editor ${tool === 'region' || tool === 'paste' ? 'region-mode' : ''}`} ref={laneRef}>
-        {region && <div className="region-overlay" style={{ top: yAt(region.end ?? region.start), height: Math.max(2, ((region.end ?? region.start) - region.start) / 1000 * pps) }} />}
+      <div className={`lane-editor ${tool === 'region' || tool === 'tempo' ? 'region-mode' : ''}`} ref={laneRef}>
+        {region && <div className="region-overlay" style={{ top: yAt(region.end ?? region.start), height: Math.max(2, (scrollPositionAtTime(chart, region.end ?? region.start) - scrollPositionAtTime(chart, region.start)) / 1000 * pps) }} />}
         <div className="beat-layer">{lines.map((line) => {
           const y = yAt(line.time); const position = ((line.index % subdivision) + subdivision) % subdivision
           const tone = line.major ? 'major' : subdivision === 3 || (subdivision % 2 === 0 && position === subdivision / 2) ? 'blue' : 'violet'
-          return <div key={line.index} className={`beat-line ${tone}`} style={{ top: y }}><span>{line.major ? Math.floor((line.time - chart.offset) / beat) + 1 : ''}</span></div>
+          const tempo = chart.bpmChanges.find((change) => Math.abs(change.time - line.time) < 0.01)
+          return <div key={line.index} className={`beat-line ${tone}${tempo ? ' tempo-change' : ''}`} style={{ top: y }}><span>{line.major ? Math.floor(line.beat) + 1 : ''}</span>{tempo && <b>{tempo.bpm} BPM</b>}</div>
         })}</div>
         <div className="lanes">{[0, 1, 2, 3].map((lane) => <div className={`edit-lane lane-${lane}`} key={lane} onMouseDown={(event) => laneClick(event, lane)} />)}</div>
         <div className="notes-layer">{visibleNotes.map((originalNote) => {

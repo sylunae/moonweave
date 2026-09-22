@@ -5,9 +5,10 @@ import { usePreferences } from '@/app/preferences'
 import { Button } from '@/components/ui/button'
 import { useChart } from '@/features/chart/ChartProvider'
 import type { ChartNote } from '@/features/chart/types'
+import { holdTickTimes } from '@/features/chart/tempoMap'
 import { PlaybackClock } from '@/features/playtest/PlaybackClock'
 import { PlaytestRenderer, type PlaytestStats } from '@/features/playtest/PlaytestRenderer'
-import { accuracyFromUnits, countNoteTicks, judgmentUnits, scoreFromUnits, type Judgment } from '@/features/playtest/scoring'
+import { accuracyFromUnits, judgmentUnits, scoreFromUnits, type Judgment } from '@/features/playtest/scoring'
 
 const INITIAL_STATS: PlaytestStats = { fps: 0, backend: 'WebGL2', renderScale: 1, notes: 0, particles: 0, drawCalls: 0, frameTimeP95: 0, frameTimeMax: 0, longFramePercent: 0, clockStalls: 0 }
 const PREROLL_MS = 1000
@@ -16,6 +17,7 @@ const effectTexture = (lane: number, result: Judgment = 'Perfect') => `${import.
 export default function PlaytestPage() {
   const { chart, audioUrl, backgroundUrl, audioRef, currentTime, setCurrentTime, showToast } = useChart()
   const { preferences } = usePreferences()
+  const playbackRate = preferences.playbackRate
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const backgroundVideoRef = useRef<HTMLVideoElement>(null)
   const rendererRef = useRef<PlaytestRenderer | null>(null)
@@ -26,8 +28,8 @@ export default function PlaytestPage() {
   const hasCustomBackground = Boolean(backgroundUrl && chart.backgroundType)
   const hasVideoBackground = Boolean(backgroundUrl && chart.backgroundType === 'video')
   const duration = chart.duration
-  const holdTickMs = 60_000 / chart.bpm / 2
-  const totalTicks = useMemo(() => notes.reduce((sum, note) => sum + countNoteTicks(note, holdTickMs), 0), [holdTickMs, notes])
+  const holdTicksById = useMemo(() => new Map(notes.filter((note) => note.kind === 'hold' && note.endTime).map((note) => [note.id, holdTickTimes(chart, note.time, note.endTime!)])), [chart, notes])
+  const totalTicks = useMemo(() => notes.reduce((sum, note) => sum + 1 + (holdTicksById.get(note.id)?.length ?? 0), 0), [holdTicksById, notes])
   const windows = useMemo(() => preferences.timingWindow === 'strict' ? [55, 105, 145] : preferences.timingWindow === 'relaxed' ? [95, 180, 240] : [75, 140, 190], [preferences.timingWindow])
 
   const playingRef = useRef(false)
@@ -112,7 +114,7 @@ export default function PlaytestPage() {
       if (note.time >= startTime) break
       judgedRef.current.set(note.id, 'Miss')
       missCursorRef.current++
-      scoringRef.current.judgedTicks += countNoteTicks(note, holdTickMs)
+      scoringRef.current.judgedTicks += 1 + (holdTicksById.get(note.id)?.length ?? 0)
       rendererRef.current?.hideNote(note.id)
     }
     timeRef.current = startTime
@@ -121,7 +123,7 @@ export default function PlaytestPage() {
     const audio = audioRef.current
     if (audio) { audio.pause(); audio.currentTime = startTime / 1000 }
     playingRef.current = false; setPlaying(false)
-  }, [audioRef, holdTickMs, notesByTime])
+  }, [audioRef, holdTicksById, notesByTime])
 
   const processFrame = useCallback((now: number) => {
     timeRef.current = now
@@ -129,12 +131,13 @@ export default function PlaytestPage() {
       const note = noteById.get(id)
       if (!note || judgedRef.current.has(id)) continue
       const endTime = note.endTime ?? note.time
-      let nextTick = holdTicksRef.current.get(id) ?? note.time + holdTickMs
-      while (nextTick <= now && nextTick + holdTickMs < endTime - 0.01) {
+      const ticks = holdTicksById.get(id) ?? []
+      let nextTickIndex = holdTicksRef.current.get(id) ?? 0
+      while (nextTickIndex < ticks.length && ticks[nextTickIndex] <= now) {
         registerJudgment(note.lane, pressedRef.current.has(note.lane) && !droppedHoldsRef.current.has(id) ? 'Perfect' : 'Miss')
-        nextTick += holdTickMs
+        nextTickIndex += 1
       }
-      holdTicksRef.current.set(id, nextTick)
+      holdTicksRef.current.set(id, nextTickIndex)
       if (now >= endTime) {
         judgedRef.current.set(id, startedAs)
         holdStartsRef.current.delete(id); holdTicksRef.current.delete(id); droppedHoldsRef.current.delete(id)
@@ -148,14 +151,14 @@ export default function PlaytestPage() {
       registerJudgment(note.lane, 'Miss')
       if (note.kind === 'hold') {
         holdStartsRef.current.set(note.id, 'Miss')
-        holdTicksRef.current.set(note.id, note.time + holdTickMs)
+        holdTicksRef.current.set(note.id, 0)
         droppedHoldsRef.current.add(note.id)
         rendererRef.current?.setHoldStarted(note.id)
       } else {
         judgedRef.current.set(note.id, 'Miss'); rendererRef.current?.hideNote(note.id)
       }
     }
-  }, [holdTickMs, noteById, notesByTime, registerJudgment, updateActiveHoldLanes, windows])
+  }, [holdTicksById, noteById, notesByTime, registerJudgment, updateActiveHoldLanes, windows])
 
   useEffect(() => {
     if (!playing) return
@@ -203,7 +206,7 @@ export default function PlaytestPage() {
     if (!canvas) return
     const renderer = new PlaytestRenderer({
       canvas, notes, laneTilt: preferences.laneTilt, scrollSpeed: preferences.noteScrollSpeed,
-      bpm: chart.bpm, offset: chart.offset, getTime: getRenderTime,
+      bpm: chart.bpm, bpmChanges: chart.bpmChanges, offset: chart.offset, duration: chart.duration, getTime: getRenderTime,
       getPlaying: () => playingRef.current,
       autoplay: false,
       transparentBackground: hasCustomBackground,
@@ -212,7 +215,7 @@ export default function PlaytestPage() {
     })
     rendererRef.current = renderer
     return () => { rendererRef.current = null; renderer.destroy() }
-  }, [chart.bpm, chart.offset, getRenderTime, hasCustomBackground, hasVideoBackground, notes, preferences.laneTilt, preferences.noteScrollSpeed])
+  }, [chart.bpm, chart.bpmChanges, chart.duration, chart.offset, getRenderTime, hasCustomBackground, hasVideoBackground, notes, preferences.laneTilt, preferences.noteScrollSpeed])
 
   useEffect(() => {
     resetRun(Math.max(0, Math.min(currentTime, chart.duration)))
@@ -233,7 +236,7 @@ export default function PlaytestPage() {
     }
     const startAudio = async () => {
       prerollTimeRef.current = null
-      audio.playbackRate = 1
+      audio.playbackRate = playbackRate
       try {
         await audio.play()
         playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
@@ -255,7 +258,7 @@ export default function PlaytestPage() {
       void startAudio()
     }
     prerollFrameRef.current = requestAnimationFrame(advancePreroll)
-  }, [audioRef, audioUrl, resetRun, showToast])
+  }, [audioRef, audioUrl, playbackRate, resetRun, showToast])
 
   const restart = useCallback(() => resetRun(0), [resetRun])
 
@@ -278,11 +281,11 @@ export default function PlaytestPage() {
     if (!candidate) return
     const result: Judgment = closest <= windows[0] ? 'Perfect' : closest <= windows[1] ? 'Good' : 'Miss'
     if (candidate.kind === 'hold') {
-      holdStartsRef.current.set(candidate.id, result); holdTicksRef.current.set(candidate.id, candidate.time + holdTickMs); droppedHoldsRef.current.delete(candidate.id)
+      holdStartsRef.current.set(candidate.id, result); holdTicksRef.current.set(candidate.id, 0); droppedHoldsRef.current.delete(candidate.id)
       rendererRef.current?.setHoldActive(candidate.id, true); updateActiveHoldLanes()
     } else { judgedRef.current.set(candidate.id, result); rendererRef.current?.hideNote(candidate.id) }
     registerJudgment(lane, result)
-  }, [getRenderTime, holdTickMs, notes, notesByLane, registerJudgment, updateActiveHoldLanes, windows])
+  }, [getRenderTime, notes, notesByLane, registerJudgment, updateActiveHoldLanes, windows])
 
   const pressLane = useCallback((lane: number) => {
     if (pressedRef.current.has(lane)) return

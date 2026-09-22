@@ -12,6 +12,7 @@ export interface Preferences {
   reduceMotion: boolean
   playKeys: string[]
   noteScrollSpeed: number
+  playbackRate: number
   laneTilt: number
   timingWindow: TimingWindow
   judgmentLineHeight: number
@@ -32,6 +33,7 @@ export const defaultPreferences: Preferences = {
   reduceMotion: false,
   playKeys: ['D', 'F', 'J', 'K'],
   noteScrollSpeed: 7,
+  playbackRate: 1,
   laneTilt: 0,
   timingWindow: 'standard',
   judgmentLineHeight: 200,
@@ -51,6 +53,9 @@ export function normalizePreferences(input: unknown): Preferences {
   const noteScrollSpeed = typeof value.noteScrollSpeed === 'number' && Number.isFinite(value.noteScrollSpeed)
     ? Math.min(12, Math.max(4, value.noteScrollSpeed))
     : defaultPreferences.noteScrollSpeed
+  const playbackRate = value.playbackRate === 0.5 || value.playbackRate === 0.75 || value.playbackRate === 1
+    ? value.playbackRate
+    : defaultPreferences.playbackRate
   const laneTilt = typeof value.laneTilt === 'number' && Number.isFinite(value.laneTilt)
     ? Math.min(45, Math.max(0, value.laneTilt))
     : defaultPreferences.laneTilt
@@ -68,6 +73,7 @@ export function normalizePreferences(input: unknown): Preferences {
     reduceMotion: Boolean(value.reduceMotion),
     playKeys,
     noteScrollSpeed,
+    playbackRate,
     laneTilt,
     timingWindow,
     judgmentLineHeight,

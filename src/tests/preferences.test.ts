@@ -19,9 +19,15 @@ describe('normalizePreferences', () => {
     })
     expect(normalized.playKeys).toEqual(['A', 'S', 'K', 'L'])
     expect(normalized.noteScrollSpeed).toBe(12)
+    expect(normalized.playbackRate).toBe(defaultPreferences.playbackRate)
     expect(normalized.laneTilt).toBe(0)
     expect(normalized.timingWindow).toBe('relaxed')
     expect(normalized.judgmentLineHeight).toBe(360)
+  })
+
+  it('accepts the editor playback rates used by playtest', () => {
+    expect(normalizePreferences({ playbackRate: 0.5 }).playbackRate).toBe(0.5)
+    expect(normalizePreferences({ playbackRate: 2 }).playbackRate).toBe(defaultPreferences.playbackRate)
   })
 
   it('migrates legacy per-chart play settings only once', () => {

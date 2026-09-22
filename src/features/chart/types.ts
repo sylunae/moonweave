@@ -1,5 +1,5 @@
 export type NoteKind = 'note' | 'hold'
-export type ToolMode = NoteKind | 'delete' | 'region' | 'paste'
+export type ToolMode = NoteKind | 'delete' | 'region' | 'tempo'
 
 export interface ChartNote {
   id: string
@@ -13,6 +13,11 @@ export interface ChartSettings {
   editorZoom: number
 }
 
+export interface BpmChange {
+  time: number
+  bpm: number
+}
+
 export interface Chart {
   version: 1
   title: string
@@ -23,6 +28,7 @@ export interface Chart {
   backgroundName: string
   backgroundType: 'image' | 'video' | ''
   bpm: number
+  bpmChanges: BpmChange[]
   offset: number
   duration: number
   notes: ChartNote[]
@@ -39,6 +45,7 @@ export const DEFAULT_CHART: Chart = {
   backgroundName: '',
   backgroundType: '',
   bpm: 120,
+  bpmChanges: [],
   offset: 0,
   duration: 120000,
   notes: [],
@@ -58,6 +65,15 @@ export function normalizeChart(input: unknown): Chart {
       && (candidate.kind !== 'hold' || (Number.isFinite(candidate.endTime) && candidate.endTime! > candidate.time!))
   }).map((note) => ({ ...note, lane: Math.round(note.lane) })) : []
   const settings: Partial<ChartSettings> = value.settings && typeof value.settings === 'object' ? value.settings : {}
+  const bpmChanges = Array.isArray(value.bpmChanges)
+    ? [...new Map(value.bpmChanges.flatMap((change) => {
+      if (!change || typeof change !== 'object') return []
+      const candidate = change as Partial<BpmChange>
+      if (!Number.isFinite(candidate.time) || candidate.time! < 0 || !Number.isFinite(candidate.bpm) || candidate.bpm! < 20 || candidate.bpm! > 400) return []
+      const normalized: BpmChange = { time: candidate.time!, bpm: candidate.bpm! }
+      return [[normalized.time, normalized] as const]
+    })).values()].sort((a, b) => a.time - b.time)
+    : []
   return {
     ...DEFAULT_CHART, ...value, version: 1,
     title: typeof value.title === 'string' ? value.title : DEFAULT_CHART.title,
@@ -68,6 +84,7 @@ export function normalizeChart(input: unknown): Chart {
     backgroundName: typeof value.backgroundName === 'string' ? value.backgroundName : '',
     backgroundType: value.backgroundType === 'image' || value.backgroundType === 'video' ? value.backgroundType : '',
     bpm: Number.isFinite(value.bpm) && value.bpm! >= 20 && value.bpm! <= 400 ? value.bpm! : DEFAULT_CHART.bpm,
+    bpmChanges,
     offset: Number.isFinite(value.offset) ? value.offset! : 0,
     duration: Number.isFinite(value.duration) && value.duration! > 0 ? value.duration! : DEFAULT_CHART.duration,
     notes,

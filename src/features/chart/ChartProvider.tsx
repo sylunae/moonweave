@@ -4,6 +4,7 @@ import type { ChartLibraryItem } from '@/shared/electron'
 import { PlaybackClock } from '@/features/playtest/PlaybackClock'
 import { deleteWebChart, listWebCharts, readWebChart, writeWebChart } from './webLibrary'
 import { DEFAULT_CHART, normalizeChart, type Chart, type ChartNote } from './types'
+import { snapToBeatLine } from './tempoMap'
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 const freshChart = () => normalizeChart(DEFAULT_CHART)
@@ -356,8 +357,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
         audio.pause()
         cancelAnimationFrame(animationRef.current)
         const currentChart = chartRef.current
-        const step = 60000 / currentChart.bpm / subdivision
-        const value = clamp(Math.round((audio.currentTime * 1000 - currentChart.offset) / step) * step + currentChart.offset, 0, currentChart.duration)
+        const value = snapToBeatLine(currentChart, audio.currentTime * 1000, subdivision)
         audio.currentTime = value / 1000
         playbackClockRef.current.stop(value)
         setCurrentTimeState(value)
