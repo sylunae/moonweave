@@ -2,12 +2,19 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { accessibleForeground, defaultThemePalettes, normalizeThemePalettes, themeColorFields, themeCssVariables, type ThemePalettes } from './theme'
 
 export type ThemeMode = 'system' | 'light' | 'dark'
+export type TimingWindow = 'strict' | 'standard' | 'relaxed'
 
 export interface Preferences {
+  schemaVersion: 0 | 1
   theme: ThemeMode
   sidebarWidth: number
   sidebarCollapsed: boolean
   reduceMotion: boolean
+  playKeys: string[]
+  noteScrollSpeed: number
+  laneTilt: number
+  timingWindow: TimingWindow
+  judgmentLineHeight: number
   themePalettes: ThemePalettes
 }
 
@@ -18,10 +25,16 @@ export const SIDEBAR_COLLAPSED = 70
 export const SIDEBAR_COLLAPSE_THRESHOLD = 176
 
 export const defaultPreferences: Preferences = {
+  schemaVersion: 1,
   theme: 'dark',
   sidebarWidth: 252,
   sidebarCollapsed: false,
   reduceMotion: false,
+  playKeys: ['D', 'F', 'J', 'K'],
+  noteScrollSpeed: 7,
+  laneTilt: 0,
+  timingWindow: 'standard',
+  judgmentLineHeight: 200,
   themePalettes: defaultThemePalettes,
 }
 
@@ -32,13 +45,50 @@ export function normalizePreferences(input: unknown): Preferences {
   const sidebarWidth = typeof value.sidebarWidth === 'number' && Number.isFinite(value.sidebarWidth)
     ? Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, value.sidebarWidth))
     : defaultPreferences.sidebarWidth
+  const playKeys = Array.isArray(value.playKeys) && value.playKeys.length === 4
+    ? value.playKeys.map((key, index) => typeof key === 'string' && key ? key.slice(-1).toUpperCase() : defaultPreferences.playKeys[index])
+    : defaultPreferences.playKeys
+  const noteScrollSpeed = typeof value.noteScrollSpeed === 'number' && Number.isFinite(value.noteScrollSpeed)
+    ? Math.min(12, Math.max(4, value.noteScrollSpeed))
+    : defaultPreferences.noteScrollSpeed
+  const laneTilt = typeof value.laneTilt === 'number' && Number.isFinite(value.laneTilt)
+    ? Math.min(45, Math.max(0, value.laneTilt))
+    : defaultPreferences.laneTilt
+  const timingWindow = value.timingWindow === 'strict' || value.timingWindow === 'relaxed' || value.timingWindow === 'standard'
+    ? value.timingWindow
+    : defaultPreferences.timingWindow
+  const judgmentLineHeight = typeof value.judgmentLineHeight === 'number' && Number.isFinite(value.judgmentLineHeight)
+    ? Math.min(360, Math.max(100, value.judgmentLineHeight))
+    : defaultPreferences.judgmentLineHeight
   return {
+    schemaVersion: value.schemaVersion === 1 ? 1 : 0,
     theme,
     sidebarWidth,
     sidebarCollapsed: Boolean(value.sidebarCollapsed),
     reduceMotion: Boolean(value.reduceMotion),
+    playKeys,
+    noteScrollSpeed,
+    laneTilt,
+    timingWindow,
+    judgmentLineHeight,
     themePalettes: normalizeThemePalettes(value.themePalettes),
   }
+}
+
+export function migrateLegacyChartPreferences(current: Preferences, input: unknown): Preferences {
+  if (current.schemaVersion >= 1) return current
+  const chart = input && typeof input === 'object' ? input as { settings?: unknown } : {}
+  const settings = chart.settings && typeof chart.settings === 'object'
+    ? chart.settings as { keys?: unknown; scrollSpeed?: unknown; laneTilt?: unknown; timingWindow?: unknown }
+    : {}
+  return normalizePreferences({
+    ...current,
+    schemaVersion: 1,
+    playKeys: settings.keys ?? current.playKeys,
+    noteScrollSpeed: settings.scrollSpeed ?? current.noteScrollSpeed,
+    laneTilt: settings.laneTilt ?? current.laneTilt,
+    timingWindow: settings.timingWindow ?? current.timingWindow,
+  })
 }
 
 function loadPreferences(): Preferences {

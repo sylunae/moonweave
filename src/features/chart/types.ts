@@ -10,11 +10,7 @@ export interface ChartNote {
 }
 
 export interface ChartSettings {
-  laneTilt: number
-  scrollSpeed: number
   editorZoom: number
-  timingWindow: 'strict' | 'standard' | 'relaxed'
-  keys: string[]
 }
 
 export interface Chart {
@@ -46,7 +42,7 @@ export const DEFAULT_CHART: Chart = {
   offset: 0,
   duration: 120000,
   notes: [],
-  settings: { laneTilt: 0, scrollSpeed: 7, editorZoom: 230, timingWindow: 'standard', keys: ['D', 'F', 'J', 'K'] },
+  settings: { editorZoom: 230 },
 }
 
 export function normalizeChart(input: unknown): Chart {
@@ -62,10 +58,6 @@ export function normalizeChart(input: unknown): Chart {
       && (candidate.kind !== 'hold' || (Number.isFinite(candidate.endTime) && candidate.endTime! > candidate.time!))
   }).map((note) => ({ ...note, lane: Math.round(note.lane) })) : []
   const settings: Partial<ChartSettings> = value.settings && typeof value.settings === 'object' ? value.settings : {}
-  const timingWindow = settings.timingWindow === 'strict' || settings.timingWindow === 'relaxed' ? settings.timingWindow : 'standard'
-  const keys = Array.isArray(settings.keys) && settings.keys.length === 4
-    ? settings.keys.map((key, index) => typeof key === 'string' && key ? key.slice(-1).toUpperCase() : DEFAULT_CHART.settings.keys[index])
-    : DEFAULT_CHART.settings.keys
   return {
     ...DEFAULT_CHART, ...value, version: 1,
     title: typeof value.title === 'string' ? value.title : DEFAULT_CHART.title,
@@ -80,10 +72,7 @@ export function normalizeChart(input: unknown): Chart {
     duration: Number.isFinite(value.duration) && value.duration! > 0 ? value.duration! : DEFAULT_CHART.duration,
     notes,
     settings: {
-      laneTilt: Number.isFinite(settings.laneTilt) ? Math.max(0, Math.min(45, settings.laneTilt!)) : DEFAULT_CHART.settings.laneTilt,
-      scrollSpeed: Number.isFinite(settings.scrollSpeed) ? Math.max(4, Math.min(12, settings.scrollSpeed!)) : DEFAULT_CHART.settings.scrollSpeed,
       editorZoom: Number.isFinite(settings.editorZoom) ? Math.max(90, Math.min(1320, settings.editorZoom!)) : DEFAULT_CHART.settings.editorZoom,
-      timingWindow, keys,
     },
   }
 }

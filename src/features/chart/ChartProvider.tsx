@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { migrateLegacyChartPreferences, usePreferences } from '@/app/preferences'
 import type { ChartLibraryItem } from '@/shared/electron'
 import { PlaybackClock } from '@/features/playtest/PlaybackClock'
 import { deleteWebChart, listWebCharts, readWebChart, writeWebChart } from './webLibrary'
@@ -55,6 +56,7 @@ function chooseLocalFiles(accept: string, multiple = false) {
 }
 
 export function ChartProvider({ children }: { children: React.ReactNode }) {
+  const { setPreferences } = usePreferences()
   const [chart, setChart] = useState<Chart>(freshChart)
   const [activeChartId, setActiveChartId] = useState('')
   const [charts, setCharts] = useState<ChartLibraryItem[]>([])
@@ -132,21 +134,26 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     return queued
   }, [showToast, updateSummary])
   const flushActive = useCallback(() => persistSnapshot(activeIdRef.current, chartRef.current), [persistSnapshot])
+  const migrateLegacyPreferences = useCallback((input: unknown) => {
+    setPreferences((current) => migrateLegacyChartPreferences(current, input))
+  }, [setPreferences])
 
   const readManagedChart = useCallback(async (id: string) => {
     if (window.moonweave) {
       const record = await window.moonweave.readChart(id)
       if (!record) return null
+      migrateLegacyPreferences(record.chart)
       return { chart: normalizeChart(record.chart), audioUrl: record.audioUrl, backgroundUrl: record.backgroundUrl }
     }
     const record = await readWebChart(id)
     if (!record) return null
+    migrateLegacyPreferences(record.chart)
     return {
       chart: normalizeChart(record.chart),
       audioUrl: record.audio ? URL.createObjectURL(record.audio) : '',
       backgroundUrl: record.background ? URL.createObjectURL(record.background) : '',
     }
-  }, [])
+  }, [migrateLegacyPreferences])
 
   useEffect(() => {
     let cancelled = false
@@ -271,6 +278,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
       if (window.moonweave) {
         const record = await window.moonweave.importChart()
         if (!record) return
+        migrateLegacyPreferences(record.chart)
         const loaded = normalizeChart(record.chart)
         setActiveChartId(record.id); resetSession(loaded, record.audioUrl, record.backgroundUrl)
         updateSummary(webSummary(record.id, loaded, record.updatedAt)); showToast(record.audioUrl ? '谱面与音频已导入内部谱面库' : '谱面已导入内部谱面库')
@@ -279,7 +287,9 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
       const files = await chooseLocalFiles('application/json,.json,audio/*,.flac,.m4a,image/png,image/jpeg,image/webp,image/avif,video/mp4,video/webm', true)
       const json = files.find((file) => file.name.toLowerCase().endsWith('.json'))
       if (!json) return
-      const loaded = normalizeChart(JSON.parse(await json.text()))
+      const imported = JSON.parse(await json.text())
+      migrateLegacyPreferences(imported)
+      const loaded = normalizeChart(imported)
       const expected = (loaded.audioName || loaded.audioPath.split(/[\\/]/).pop() || '').toLowerCase()
       const audio = files.find((file) => file !== json && (file.type.startsWith('audio/') || file.name.toLowerCase() === expected))
       const expectedBackground = (loaded.backgroundName || loaded.backgroundPath.split(/[\\/]/).pop() || '').toLowerCase()
@@ -295,7 +305,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
       setActiveChartId(id); resetSession(loaded, audio ? URL.createObjectURL(audio) : '', background ? URL.createObjectURL(background) : '')
       showToast(audio || background ? '谱面与所选媒体已导入浏览器谱面库' : '谱面已导入；可继续上传媒体')
     } catch (error) { showToast(error instanceof Error ? error.message : '谱面文件格式无效') }
-  }, [flushActive, persistSnapshot, resetSession, showToast, updateSummary])
+  }, [flushActive, migrateLegacyPreferences, persistSnapshot, resetSession, showToast, updateSummary])
 
   const revealLibrary = useCallback(async () => {
     if (window.moonweave) { await window.moonweave.revealLibrary(); return }
@@ -341,7 +351,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     const toggle = async () => {
       if (epoch !== playbackEpochRef.current) return
       const audio = audioRef.current
-      if (!audioUrl || !audio) { showToast('请先在配置页选择歌曲音频'); return }
+      if (!audioUrl || !audio) { showToast('请先在编辑器右侧的谱面信息中选择歌曲音频'); return }
       if (!audio.paused && !audio.ended) {
         audio.pause()
         cancelAnimationFrame(animationRef.current)

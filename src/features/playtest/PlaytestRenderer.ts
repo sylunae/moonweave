@@ -791,6 +791,8 @@ export class PlaytestRenderer {
   }
 
   reset(time = 0) {
+    this.lastTime = time
+    this.lastRenderTime = time
     this.hiddenNotes.clear()
     this.startedHolds.clear()
     this.activeHolds.clear()

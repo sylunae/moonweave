@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Gauge, Pause, Play, RotateCcw, Sparkles } from 'lucide-react'
 import { navigate } from '@/app/navigation'
+import { usePreferences } from '@/app/preferences'
 import { Button } from '@/components/ui/button'
 import { useChart } from '@/features/chart/ChartProvider'
 import type { ChartNote } from '@/features/chart/types'
@@ -9,10 +10,12 @@ import { PlaytestRenderer, type PlaytestStats } from '@/features/playtest/Playte
 import { accuracyFromUnits, countNoteTicks, judgmentUnits, scoreFromUnits, type Judgment } from '@/features/playtest/scoring'
 
 const INITIAL_STATS: PlaytestStats = { fps: 0, backend: 'WebGL2', renderScale: 1, notes: 0, particles: 0, drawCalls: 0, frameTimeP95: 0, frameTimeMax: 0, longFramePercent: 0, clockStalls: 0 }
+const PREROLL_MS = 1000
 const effectTexture = (lane: number, result: Judgment = 'Perfect') => `${import.meta.env.BASE_URL}assets/particle/${result === 'Miss' ? 'challenge_white' : lane === 0 || lane === 3 ? 'note_mirai_light' : 'note_light'}.png`
 
 export default function PlaytestPage() {
   const { chart, audioUrl, backgroundUrl, audioRef, currentTime, setCurrentTime, showToast } = useChart()
+  const { preferences } = usePreferences()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const backgroundVideoRef = useRef<HTMLVideoElement>(null)
   const rendererRef = useRef<PlaytestRenderer | null>(null)
@@ -25,7 +28,7 @@ export default function PlaytestPage() {
   const duration = chart.duration
   const holdTickMs = 60_000 / chart.bpm / 2
   const totalTicks = useMemo(() => notes.reduce((sum, note) => sum + countNoteTicks(note, holdTickMs), 0), [holdTickMs, notes])
-  const windows = useMemo(() => chart.settings.timingWindow === 'strict' ? [55, 105, 145] : chart.settings.timingWindow === 'relaxed' ? [95, 180, 240] : [75, 140, 190], [chart.settings.timingWindow])
+  const windows = useMemo(() => preferences.timingWindow === 'strict' ? [55, 105, 145] : preferences.timingWindow === 'relaxed' ? [95, 180, 240] : [75, 140, 190], [preferences.timingWindow])
 
   const playingRef = useRef(false)
   const timeRef = useRef(currentTime)
@@ -41,6 +44,11 @@ export default function PlaytestPage() {
   const rafRef = useRef(0)
   const lastUiUpdateRef = useRef(0)
   const playbackClockRef = useRef(new PlaybackClock())
+  const prerollTimeRef = useRef<number | null>(null)
+  const prerollTargetRef = useRef(currentTime)
+  const prerollFrameRef = useRef(0)
+  const prerollEpochRef = useRef(0)
+  const needsPrerollRef = useRef(true)
 
   const [playing, setPlaying] = useState(false)
   const [displayTime, setDisplayTime] = useState(currentTime)
@@ -53,6 +61,7 @@ export default function PlaytestPage() {
   const [feedback, setFeedback] = useState<Array<{ id: number; lane: number; result: Judgment }>>([])
 
   const getRenderTime = useCallback(() => {
+    if (prerollTimeRef.current !== null) return prerollTimeRef.current
     const audio = audioRef.current
     return audio ? playbackClockRef.current.getTime(audio.currentTime * 1000) : timeRef.current
   }, [audioRef])
@@ -90,11 +99,15 @@ export default function PlaytestPage() {
   }, [noteById])
 
   const resetRun = useCallback((startTime = 0) => {
+    prerollEpochRef.current += 1; cancelAnimationFrame(prerollFrameRef.current)
     judgedRef.current.clear(); holdStartsRef.current.clear(); holdTicksRef.current.clear(); droppedHoldsRef.current.clear()
     pressedRef.current.clear(); missCursorRef.current = 0; scoringRef.current = { judgedTicks: 0, earnedUnits: 0, combo: 0 }
     feedbackTimersRef.current.forEach(window.clearTimeout); feedbackTimersRef.current.clear()
     setFeedback([]); setPressed(new Set()); setActiveHoldLanes(new Set()); setScore(0); setAccuracy(100); setCombo(0)
-    rendererRef.current?.reset(startTime)
+    prerollTargetRef.current = startTime
+    prerollTimeRef.current = startTime - PREROLL_MS
+    needsPrerollRef.current = true
+    rendererRef.current?.reset(startTime - PREROLL_MS)
     for (const note of notesByTime) {
       if (note.time >= startTime) break
       judgedRef.current.set(note.id, 'Miss')
@@ -148,7 +161,7 @@ export default function PlaytestPage() {
     if (!playing) return
     const tick = (timestamp: number) => {
       const audio = audioRef.current
-      if (!audio || audio.paused) return
+      if (!audio || audio.paused) { rafRef.current = requestAnimationFrame(tick); return }
       const now = audio.currentTime * 1000
       processFrame(now)
       if (timestamp - lastUiUpdateRef.current > 70) { setDisplayTime(now); lastUiUpdateRef.current = timestamp }
@@ -189,7 +202,7 @@ export default function PlaytestPage() {
     const canvas = canvasRef.current
     if (!canvas) return
     const renderer = new PlaytestRenderer({
-      canvas, notes, laneTilt: chart.settings.laneTilt, scrollSpeed: chart.settings.scrollSpeed,
+      canvas, notes, laneTilt: preferences.laneTilt, scrollSpeed: preferences.noteScrollSpeed,
       bpm: chart.bpm, offset: chart.offset, getTime: getRenderTime,
       getPlaying: () => playingRef.current,
       autoplay: false,
@@ -199,36 +212,55 @@ export default function PlaytestPage() {
     })
     rendererRef.current = renderer
     return () => { rendererRef.current = null; renderer.destroy() }
-  }, [chart.bpm, chart.offset, chart.settings.laneTilt, chart.settings.scrollSpeed, getRenderTime, hasCustomBackground, hasVideoBackground, notes])
+  }, [chart.bpm, chart.offset, getRenderTime, hasCustomBackground, hasVideoBackground, notes, preferences.laneTilt, preferences.noteScrollSpeed])
 
   useEffect(() => {
     resetRun(Math.max(0, Math.min(currentTime, chart.duration)))
-    return () => { cancelAnimationFrame(rafRef.current); audioRef.current?.pause(); feedbackTimersRef.current.forEach(window.clearTimeout) }
+    return () => { playingRef.current = false; prerollEpochRef.current += 1; cancelAnimationFrame(prerollFrameRef.current); cancelAnimationFrame(rafRef.current); audioRef.current?.pause(); feedbackTimersRef.current.forEach(window.clearTimeout) }
   // This initializes a run when the playtest mounts; editor time changes are intentionally ignored afterward.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const togglePlayback = useCallback(async () => {
     const audio = audioRef.current
-    if (!audioUrl || !audio) { showToast('请先在谱面配置中选择可用音频'); return }
+    if (!audioUrl || !audio) { showToast('请先在编辑器的谱面信息中选择可用音频'); return }
     if (playingRef.current) {
+      if (prerollTimeRef.current !== null) { resetRun(prerollTargetRef.current); return }
       audio.pause()
       const pausedAt = audio.currentTime * 1000
       playbackClockRef.current.stop(pausedAt)
       playingRef.current = false; setPlaying(false); setDisplayTime(pausedAt); return
     }
-    try {
+    const startAudio = async () => {
+      prerollTimeRef.current = null
       audio.playbackRate = 1
-      await audio.play()
-      playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
-      playingRef.current = true; setPlaying(true)
+      try {
+        await audio.play()
+        playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
+        playingRef.current = true; setPlaying(true)
+      }
+      catch { playingRef.current = false; setPlaying(false); showToast('音频无法播放，请重新选择文件') }
     }
-    catch { showToast('音频无法播放，请重新选择文件') }
-  }, [audioRef, audioUrl, showToast])
+    if (!needsPrerollRef.current) { await startAudio(); return }
+    needsPrerollRef.current = false
+    const targetTime = prerollTargetRef.current
+    const epoch = ++prerollEpochRef.current
+    const startedAt = performance.now()
+    playingRef.current = true; setPlaying(true)
+    const advancePreroll = (timestamp: number) => {
+      if (epoch !== prerollEpochRef.current || !playingRef.current) return
+      const elapsed = Math.min(PREROLL_MS, timestamp - startedAt)
+      prerollTimeRef.current = targetTime - PREROLL_MS + elapsed
+      if (elapsed < PREROLL_MS) { prerollFrameRef.current = requestAnimationFrame(advancePreroll); return }
+      void startAudio()
+    }
+    prerollFrameRef.current = requestAnimationFrame(advancePreroll)
+  }, [audioRef, audioUrl, resetRun, showToast])
 
   const restart = useCallback(() => resetRun(0), [resetRun])
 
   const hitLane = useCallback((lane: number) => {
+    if (prerollTimeRef.current !== null) return
     const now = getRenderTime(); timeRef.current = now
     const reconnecting = notes.find((note) => note.kind === 'hold' && note.lane === lane && holdStartsRef.current.has(note.id) && !judgedRef.current.has(note.id) && now < (note.endTime ?? note.time) && droppedHoldsRef.current.has(note.id))
     if (reconnecting) { droppedHoldsRef.current.delete(reconnecting.id); rendererRef.current?.setHoldActive(reconnecting.id, true); updateActiveHoldLanes(); return }
@@ -265,7 +297,7 @@ export default function PlaytestPage() {
   }, [notes, updateActiveHoldLanes])
 
   useEffect(() => {
-    const keyMap = new Map(chart.settings.keys.map((key, lane) => [key.toLowerCase(), lane]))
+    const keyMap = new Map(preferences.playKeys.map((key, lane) => [key.toLowerCase(), lane]))
     const down = (event: KeyboardEvent) => {
       if (event.repeat) return
       if (event.code === 'Escape') { navigate('editor'); return }
@@ -275,7 +307,7 @@ export default function PlaytestPage() {
     const up = (event: KeyboardEvent) => { const lane = keyMap.get(event.key.toLowerCase()); if (lane !== undefined) releaseLane(lane) }
     window.addEventListener('keydown', down); window.addEventListener('keyup', up)
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
-  }, [chart.settings.keys, pressLane, releaseLane, togglePlayback])
+  }, [preferences.playKeys, pressLane, releaseLane, togglePlayback])
 
   const laneX = (lane: number) => 20 + lane * 20
 
@@ -296,7 +328,7 @@ export default function PlaytestPage() {
     {[...activeHoldLanes].map((lane) => <i key={lane} className={`playtest-hold-effect ${lane === 0 || lane === 3 ? 'light' : 'conflict'}`} style={{ left: `${laneX(lane)}%`, backgroundImage: `url(${effectTexture(lane)})` }} />)}
     {combo > 0 && <div key={combo} className="playtest-combo"><b>{combo}</b><span>COMBO</span></div>}
     {!playing && <Button variant="outline" className="playtest-paused" onClick={() => void togglePlayback()}><Play fill="currentColor" /><b>{displayTime > 0 ? '继续' : '开始试玩'}</b><span>SPACE</span></Button>}
-    <div className="playtest-key-caps">{chart.settings.keys.map((key, lane) => <button key={`${key}-${lane}`} aria-label={`轨道 ${lane + 1}，按键 ${key}`} className={pressed.has(lane) ? 'pressed' : ''} style={{ left: `${laneX(lane)}%` }} onPointerDown={() => pressLane(lane)} onPointerUp={() => releaseLane(lane)} onPointerCancel={() => releaseLane(lane)}>{key}</button>)}</div>
+    <div className="playtest-key-caps">{preferences.playKeys.map((key, lane) => <button key={`${key}-${lane}`} aria-label={`轨道 ${lane + 1}，按键 ${key}`} className={pressed.has(lane) ? 'pressed' : ''} style={{ left: `${laneX(lane)}%` }} onPointerDown={() => pressLane(lane)} onPointerUp={() => releaseLane(lane)} onPointerCancel={() => releaseLane(lane)}>{key}</button>)}</div>
     <div className="playtest-progress"><i style={{ width: `${Math.max(0, Math.min(100, displayTime / Math.max(1, duration) * 100))}%` }} /></div>
   </div>
 }
