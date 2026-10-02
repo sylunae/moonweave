@@ -1,0 +1,300 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
+import { createEditorNoteIndex, visibleEditorNotes } from './editorTimeline'
+import { adjacentBeatLine, beatAtTime, beatLinesInRange, bpmAtTime, scrollPositionAtTime, snapToBeatLine, timeAtScrollPosition } from './tempoMap'
+import { usePreferences } from '@/app/preferences'
+import { useI18n } from '@/app/i18n'
+import type { Chart, ChartNote, ToolMode } from './types'
+
+const LANE_COLORS = ['#31d7ff', '#b788ff', '#b788ff', '#31d7ff']
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
+const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+
+interface EditorProps {
+  chart: Chart
+  currentTime: number
+  subdivision: number
+  tool: ToolMode
+  holdStart: { lane: number; time: number } | null
+  selectedIds: Set<string>
+  region: { start: number; end: number | null } | null
+  isPlaying: boolean
+  onSeek(time: number): void
+  onNotesChange(notes: ChartNote[]): void
+  onHoldStart(value: { lane: number; time: number } | null): void
+  onSelectionChange(ids: Set<string>): void
+  onRegionLine(time: number): void
+  onTempoLine(time: number): void
+  onZoomChange(value: number): void
+  onSubdivisionChange(direction: -1 | 1): void
+}
+
+const formatOverviewTime = (milliseconds: number) => {
+  const seconds = Math.max(0, milliseconds) / 1000
+  return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`
+}
+
+export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, selectedIds, region, isPlaying, onSeek, onNotesChange, onHoldStart, onSelectionChange, onRegionLine, onTempoLine, onZoomChange, onSubdivisionChange }: EditorProps) {
+  const { preferences } = usePreferences()
+  const { text } = useI18n()
+  const laneRef = useRef<HTMLDivElement>(null)
+  const [laneHeight, setLaneHeight] = useState(700)
+  const [viewportTime, setViewportTime] = useState(currentTime)
+  const [dragPreview, setDragPreview] = useState<Record<string, { lane: number; time: number; endTime?: number }>>({})
+  const dragPreviewRef = useRef<Record<string, { lane: number; time: number; endTime?: number }>>({})
+  const viewportTimeRef = useRef(currentTime)
+  const previewingSeekRef = useRef(false)
+  const seekCommitTimerRef = useRef(0)
+  const seekFrameRef = useRef(0)
+  const pendingViewportTimeRef = useRef(currentTime)
+  const pointerCleanupRef = useRef<() => void>(() => undefined)
+  const pps = chart.settings.editorZoom
+  const judgmentY = clamp(laneHeight - preferences.judgmentLineHeight, 120, Math.max(120, laneHeight - 80))
+  const timelineTime = previewingSeekRef.current ? viewportTime : currentTime
+  const timelinePosition = scrollPositionAtTime(chart, timelineTime)
+  if (!previewingSeekRef.current) {
+    viewportTimeRef.current = currentTime
+    pendingViewportTimeRef.current = currentTime
+  }
+  const noteIndex = useMemo(() => createEditorNoteIndex(chart.notes), [chart.notes])
+  const visibleRange = useMemo(() => ({
+    from: timeAtScrollPosition(chart, timelinePosition - ((laneHeight - judgmentY + 160) / pps * 1000)),
+    to: timeAtScrollPosition(chart, timelinePosition + ((judgmentY + 160) / pps * 1000)),
+  }), [chart, judgmentY, laneHeight, pps, timelinePosition])
+  const visibleNotes = useMemo(
+    () => visibleEditorNotes(noteIndex, visibleRange.from, visibleRange.to),
+    [noteIndex, visibleRange],
+  )
+  const lines = useMemo(() => {
+    const from = timeAtScrollPosition(chart, timelinePosition - ((laneHeight - judgmentY + 120) / pps * 1000))
+    const to = timeAtScrollPosition(chart, timelinePosition + ((judgmentY + 120) / pps * 1000))
+    return beatLinesInRange(chart, from, to, subdivision)
+  }, [timelinePosition, chart, subdivision, laneHeight, judgmentY, pps])
+
+  const yAt = (time: number) => judgmentY - (scrollPositionAtTime(chart, time) - timelinePosition) / 1000 * pps
+  const pointerTime = (clientY: number) => {
+    const rect = laneRef.current!.getBoundingClientRect()
+    const viewportPosition = scrollPositionAtTime(chart, viewportTimeRef.current)
+    const raw = timeAtScrollPosition(chart, viewportPosition + (judgmentY - (clientY - rect.top)) / pps * 1000)
+    return snapToBeatLine(chart, raw, subdivision)
+  }
+  const laneClick = (event: React.PointerEvent, lane: number) => {
+    const time = pointerTime(event.clientY)
+    if (tool === 'region') { onRegionLine(time); return }
+    if (tool === 'tempo') { onTempoLine(time); return }
+    if (tool === 'delete') return
+    const beatIndex = Math.round(beatAtTime(chart, time) * subdivision)
+    const noteOnBeat = chart.notes.find((note) => note.lane === lane && Math.round(beatAtTime(chart, note.time) * subdivision) === beatIndex)
+    if (noteOnBeat) {
+      const next = new Set(selectedIds)
+      if (next.has(noteOnBeat.id)) next.delete(noteOnBeat.id); else next.add(noteOnBeat.id)
+      onSelectionChange(next); return
+    }
+    if (selectedIds.size) { onSelectionChange(new Set()); return }
+    if (tool === 'note') onNotesChange([...chart.notes, { id: uid(), lane, time, kind: 'note' }])
+    else if (!holdStart) onHoldStart({ lane, time })
+    else {
+      const start = Math.min(holdStart.time, time)
+      const end = Math.max(holdStart.time, time)
+      if (Math.abs(beatAtTime(chart, end) - beatAtTime(chart, start)) >= 0.5 / subdivision) onNotesChange([...chart.notes, { id: uid(), lane: holdStart.lane, time: start, endTime: end, kind: 'hold' }])
+      onHoldStart(null)
+    }
+  }
+  const notePointerDown = (event: React.PointerEvent<HTMLDivElement>, id: string) => {
+    if (event.button !== 0) return
+    event.stopPropagation(); event.preventDefault()
+    pointerCleanupRef.current()
+    if (tool === 'region') { onRegionLine(pointerTime(event.clientY)); return }
+    if (tool === 'tempo') { onTempoLine(pointerTime(event.clientY)); return }
+    if (tool === 'delete') { onNotesChange(chart.notes.filter((note) => note.id !== id)); return }
+    const wasSelected = selectedIds.has(id)
+    const nextSelection = new Set(selectedIds)
+    if (!wasSelected) { nextSelection.add(id); onSelectionChange(nextSelection) }
+    const startX = event.clientX
+    const startY = event.clientY
+    const pointerId = event.pointerId
+    const dragThreshold = event.pointerType === 'touch' ? 8 : 3
+    const rect = laneRef.current!.getBoundingClientRect()
+    const selectedNotes = chart.notes.filter((note) => nextSelection.has(note.id))
+    const earliest = Math.min(...selectedNotes.map((note) => note.time))
+    const latest = Math.max(...selectedNotes.map((note) => note.endTime ?? note.time))
+    let didDrag = false
+    const move = (moveEvent: globalThis.PointerEvent) => {
+      if (moveEvent.pointerId !== pointerId) return
+      if (!didDrag && Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) < dragThreshold) return
+      didDrag = true
+      const laneDelta = Math.round((moveEvent.clientX - startX) / (rect.width / 4))
+      const requestedPosition = scrollPositionAtTime(chart, earliest) - (moveEvent.clientY - startY) / pps * 1000
+      const requestedTimeDelta = snapToBeatLine(chart, timeAtScrollPosition(chart, requestedPosition), subdivision) - earliest
+      const timeDelta = clamp(requestedTimeDelta, -earliest, chart.duration - latest)
+      const preview: Record<string, { lane: number; time: number; endTime?: number }> = {}
+      selectedNotes.forEach((note) => { preview[note.id] = { lane: clamp(note.lane + laneDelta, 0, 3), time: note.time + timeDelta, endTime: note.endTime === undefined ? undefined : note.endTime + timeDelta } })
+      dragPreviewRef.current = preview; setDragPreview(preview)
+    }
+    const cleanup = () => {
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up)
+      pointerCleanupRef.current = () => undefined
+    }
+    const up = (upEvent: globalThis.PointerEvent) => {
+      if (upEvent.pointerId !== pointerId) return
+      const preview = dragPreviewRef.current
+      if (upEvent.type !== 'pointercancel' && didDrag && Object.keys(preview).length) onNotesChange(chart.notes.map((note) => preview[note.id] ? { ...note, ...preview[note.id] } : note))
+      else if (wasSelected) { const next = new Set(selectedIds); next.delete(id); onSelectionChange(next) }
+      dragPreviewRef.current = {}; setDragPreview({})
+      cleanup()
+    }
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up)
+    pointerCleanupRef.current = cleanup
+  }
+  const resizeHold = (event: React.PointerEvent<HTMLButtonElement>, edge: 'start' | 'end') => {
+    if (event.button !== 0) return
+    event.stopPropagation(); event.preventDefault()
+    pointerCleanupRef.current()
+    const holds = chart.notes.filter((note) => note.kind === 'hold' && selectedIds.has(note.id))
+    if (!holds.length) return
+    const startY = event.clientY
+    const pointerId = event.pointerId
+    const move = (moveEvent: globalThis.PointerEvent) => {
+      if (moveEvent.pointerId !== pointerId) return
+      const anchor = edge === 'end' ? holds[0].endTime! : holds[0].time
+      const requestedPosition = scrollPositionAtTime(chart, anchor) - (moveEvent.clientY - startY) / pps * 1000
+      const requestedDelta = snapToBeatLine(chart, timeAtScrollPosition(chart, requestedPosition), subdivision) - anchor
+      const minimumLength = 60_000 / bpmAtTime(chart, anchor) / subdivision
+      const minDelta = edge === 'end' ? Math.max(...holds.map((note) => note.time + minimumLength - note.endTime!)) : Math.max(...holds.map((note) => -note.time))
+      const maxDelta = edge === 'end' ? Math.min(...holds.map((note) => chart.duration - note.endTime!)) : Math.min(...holds.map((note) => note.endTime! - minimumLength - note.time))
+      const delta = clamp(requestedDelta, minDelta, maxDelta)
+      const preview: Record<string, { lane: number; time: number; endTime?: number }> = {}
+      holds.forEach((note) => { preview[note.id] = { lane: note.lane, time: edge === 'start' ? note.time + delta : note.time, endTime: edge === 'end' ? note.endTime! + delta : note.endTime } })
+      dragPreviewRef.current = preview; setDragPreview(preview)
+    }
+    const cleanup = () => {
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up)
+      pointerCleanupRef.current = () => undefined
+    }
+    const up = (upEvent: globalThis.PointerEvent) => {
+      if (upEvent.pointerId !== pointerId) return
+      const preview = dragPreviewRef.current
+      if (upEvent.type !== 'pointercancel' && Object.keys(preview).length) onNotesChange(chart.notes.map((note) => preview[note.id] ? { ...note, ...preview[note.id] } : note))
+      dragPreviewRef.current = {}; setDragPreview({})
+      cleanup()
+    }
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up)
+    pointerCleanupRef.current = cleanup
+  }
+
+  useEffect(() => {
+    if (!laneRef.current) return
+    const observer = new ResizeObserver((entries) => setLaneHeight(entries[0].contentRect.height))
+    observer.observe(laneRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  const renderSeekPreview = useCallback((time: number) => {
+    const value = clamp(time, 0, chart.duration)
+    previewingSeekRef.current = true
+    pendingViewportTimeRef.current = value
+    viewportTimeRef.current = value
+    if (!seekFrameRef.current) {
+      seekFrameRef.current = requestAnimationFrame(() => {
+        seekFrameRef.current = 0
+        setViewportTime(pendingViewportTimeRef.current)
+      })
+    }
+  }, [chart.duration])
+
+  const commitSeekPreview = useCallback(() => {
+    window.clearTimeout(seekCommitTimerRef.current)
+    if (seekFrameRef.current) {
+      cancelAnimationFrame(seekFrameRef.current)
+      seekFrameRef.current = 0
+      setViewportTime(pendingViewportTimeRef.current)
+    }
+    previewingSeekRef.current = false
+    onSeek(pendingViewportTimeRef.current)
+  }, [onSeek])
+
+  const handleWheel = useCallback((event: WheelEvent) => {
+    event.preventDefault()
+    if (event.ctrlKey) onZoomChange(clamp(Math.round(pps * (event.deltaY < 0 ? 1.12 : 1 / 1.12)), 90, 1320))
+    else {
+      const direction = event.deltaY < 0 ? 1 : -1
+      renderSeekPreview(adjacentBeatLine(chart, viewportTimeRef.current, subdivision, direction))
+      window.clearTimeout(seekCommitTimerRef.current)
+      seekCommitTimerRef.current = window.setTimeout(commitSeekPreview, 90)
+    }
+  }, [chart, commitSeekPreview, onZoomChange, pps, renderSeekPreview, subdivision])
+  useEffect(() => {
+    const element = laneRef.current
+    if (!element) return
+    element.addEventListener('wheel', handleWheel, { passive: false })
+    return () => element.removeEventListener('wheel', handleWheel)
+  }, [handleWheel])
+  useEffect(() => () => {
+    window.clearTimeout(seekCommitTimerRef.current)
+    cancelAnimationFrame(seekFrameRef.current)
+    pointerCleanupRef.current()
+  }, [])
+
+  const densityBins = useMemo(() => {
+    const count = 84
+    const bins = Array.from({ length: count }, () => 0)
+    for (const note of chart.notes) {
+      const start = clamp(Math.floor(note.time / chart.duration * count), 0, count - 1)
+      const end = clamp(Math.floor((note.endTime ?? note.time) / chart.duration * count), start, count - 1)
+      for (let index = start; index <= end; index += 1) bins[index] += note.kind === 'hold' ? .55 : 1
+    }
+    const maximum = Math.max(1, ...bins)
+    return bins.map((value) => value / maximum)
+  }, [chart.duration, chart.notes])
+
+  return <section className="chart-editor-stage">
+    <div className="editor-body">
+      <aside className="density-overview" aria-label={text('音符密集度与吸附精度', 'Note density and snap precision')}>
+        <div className="density-stepper">
+          <button onClick={() => onSubdivisionChange(1)} aria-label={text('提高吸附精度', 'Increase snap precision')}><ChevronUp /></button>
+          <strong>1/{subdivision}</strong>
+          <button onClick={() => onSubdivisionChange(-1)} aria-label={text('降低吸附精度', 'Decrease snap precision')}><ChevronDown /></button>
+        </div>
+        <div className="minimap" onPointerDown={(event) => {
+          event.preventDefault(); pointerCleanupRef.current(); const minimap = event.currentTarget
+          const pointerId = event.pointerId
+          const seekAtPointer = (clientY: number) => { const rect = minimap.getBoundingClientRect(); renderSeekPreview((rect.bottom - clientY) / rect.height * chart.duration) }
+          seekAtPointer(event.clientY)
+          const move = (moveEvent: globalThis.PointerEvent) => { if (moveEvent.pointerId === pointerId) seekAtPointer(moveEvent.clientY) }
+          const cleanup = () => {
+            window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up)
+            pointerCleanupRef.current = () => undefined
+          }
+          const up = (upEvent: globalThis.PointerEvent) => {
+            if (upEvent.pointerId !== pointerId) return
+            commitSeekPreview(); cleanup()
+          }
+          window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up)
+          pointerCleanupRef.current = cleanup
+        }}>
+          <div className="minimap-beats" />
+          <div className="density-bars">{densityBins.map((density, index) => <i key={index} style={{ width: `${density * 100}%`, opacity: density > 0 ? 1 : 0 }} />)}</div>
+          <div className="minimap-window" style={{ bottom: `${clamp(timelineTime / chart.duration * 100, 0, 94)}%` }} />
+        </div>
+        <time>{formatOverviewTime(timelineTime)} / {formatOverviewTime(chart.duration)}</time>
+      </aside>
+      <div className={`lane-editor ${tool === 'region' || tool === 'tempo' ? 'region-mode' : ''}`} ref={laneRef}>
+        {region && <div className="region-overlay" style={{ top: yAt(region.end ?? region.start), height: Math.max(2, (scrollPositionAtTime(chart, region.end ?? region.start) - scrollPositionAtTime(chart, region.start)) / 1000 * pps) }} />}
+        <div className="beat-layer">{lines.map((line) => {
+          const y = yAt(line.time); const position = ((line.index % subdivision) + subdivision) % subdivision
+          const tone = line.major ? 'major' : subdivision === 3 || (subdivision % 2 === 0 && position === subdivision / 2) ? 'blue' : 'violet'
+          const tempo = chart.bpmChanges.find((change) => Math.abs(change.time - line.time) < 0.01)
+          return <div key={line.index} className={`beat-line ${tone}${tempo ? ' tempo-change' : ''}`} style={{ top: y }}><span>{line.major ? Math.floor(line.beat) + 1 : ''}</span>{tempo && <b>{tempo.bpm} BPM</b>}</div>
+        })}</div>
+        <div className="lanes">{[0, 1, 2, 3].map((lane) => <div className={`edit-lane lane-${lane}`} key={lane} onPointerDown={(event) => laneClick(event, lane)} />)}</div>
+        <div className="notes-layer">{visibleNotes.map((originalNote) => {
+          const note = dragPreview[originalNote.id] ? { ...originalNote, ...dragPreview[originalNote.id] } : originalNote
+          const y = yAt(note.time); const endY = note.kind === 'hold' ? yAt(note.endTime!) : y
+          if (y < -150 || endY > laneHeight) return null
+          return <div key={note.id} className={`editor-note ${note.kind} ${selectedIds.has(note.id) ? 'selected' : ''} ${tool === 'delete' ? 'deletable' : ''}`} onPointerDown={(event) => notePointerDown(event, note.id)} style={{ left: `${note.lane * 25 + 1.6}%`, top: note.kind === 'hold' ? endY : y - 7, height: note.kind === 'hold' ? Math.max(16, y - endY + 12) : 14, '--lane': LANE_COLORS[note.lane] } as React.CSSProperties}><i />{note.kind === 'hold' && selectedIds.has(note.id) && <><button className="hold-resize-handle end" aria-label={text('调整 Hold 终点', 'Adjust Hold end')} onPointerDown={(event) => resizeHold(event, 'end')} /><button className="hold-resize-handle start" aria-label={text('调整 Hold 起点', 'Adjust Hold start')} onPointerDown={(event) => resizeHold(event, 'start')} /></>}</div>
+        })}{holdStart && <div className="hold-pending" style={{ left: `${holdStart.lane * 25 + 2}%`, top: yAt(holdStart.time) - 8 }} />}</div>
+        <div className="judgment-line" style={{ top: judgmentY }}><span>{isPlaying ? 'PLAYING' : 'JUDGEMENT'}</span></div>
+      </div>
+    </div>
+  </section>
+}

@@ -1,0 +1,10 @@
+{
+  "name": "织月制谱 | Moonweave Chart Editor",
+  "short_name": "织月制谱",
+  "description": "织月制谱（Moonweave Chart Editor）——专注于 4K 下落式节奏谱面的桌面制谱工具。",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#070911",
+  "theme_color": "#070911",
+  "icons": [{ "src": "./moonweave-logo.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" }]
+}
