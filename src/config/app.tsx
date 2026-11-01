@@ -1,6 +1,11 @@
 import { Library, Piano } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+export const editorEffects = {
+  title: { zh: '特效', en: 'Effects' },
+  scrollSpeed: { zh: '变速', en: 'Scroll speed' },
+} as const
+
 export type RouteId = 'manage' | 'editor' | 'playtest'
 
 export interface NavigationItem {

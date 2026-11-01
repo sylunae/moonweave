@@ -242,7 +242,7 @@ export default function PlaytestPage() {
     if (!canvas) return
     const renderer = new PlaytestRenderer({
       canvas, notes, laneTilt: preferences.laneTilt, scrollSpeed: preferences.noteScrollSpeed,
-      bpm: chart.bpm, bpmChanges: chart.bpmChanges, offset: chart.offset, duration: chart.duration, getTime: getRenderTime,
+      bpm: chart.bpm, bpmChanges: chart.bpmChanges, effects: chart.effects, offset: chart.offset, duration: chart.duration, getTime: getRenderTime,
       getPlaying: () => playingRef.current,
       autoplay: false,
       transparentBackground: hasCustomBackground,
@@ -251,7 +251,7 @@ export default function PlaytestPage() {
     })
     rendererRef.current = renderer
     return () => { rendererRef.current = null; renderer.destroy() }
-  }, [chart.bpm, chart.bpmChanges, chart.duration, chart.offset, getRenderTime, hasCustomBackground, hasVideoBackground, notes, preferences.laneTilt, preferences.noteScrollSpeed])
+  }, [chart.bpm, chart.bpmChanges, chart.effects, chart.duration, chart.offset, getRenderTime, hasCustomBackground, hasVideoBackground, notes, preferences.laneTilt, preferences.noteScrollSpeed])
 
   useEffect(() => {
     resetRun(Math.max(0, Math.min(currentTime, chart.duration)))

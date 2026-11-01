@@ -43,9 +43,9 @@ describe('tempo map', () => {
     expect(holdTickTimes(chart, 1_500, 2_750).map(Math.round)).toEqual([1750, 2000, 2125, 2250, 2375, 2500])
   })
 
-  it('accelerates visual distance after entering a higher BPM segment', () => {
+  it('keeps editor distance linear in time through BPM changes', () => {
     expect(scrollPositionAtTime(chart, 2_000)).toBeCloseTo(2_000)
-    expect(scrollPositionAtTime(chart, 2_500)).toBeCloseTo(3_000)
-    expect(timeAtScrollPosition(chart, 3_000)).toBeCloseTo(2_500)
+    expect(scrollPositionAtTime(chart, 2_500)).toBeCloseTo(2_500)
+    expect(timeAtScrollPosition(chart, 3_000)).toBeCloseTo(3_000)
   })
 })

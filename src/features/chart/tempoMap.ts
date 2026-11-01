@@ -87,13 +87,13 @@ export function timeAtBeat(source: TempoSource, beat: number, min = 0, max = sou
   return clamp(time, min, max)
 }
 
-/** BPM-aware distance in virtual milliseconds; the initial BPM moves at 1x speed. */
+/** Stable editor distance: one virtual millisecond per audio millisecond. */
 export function scrollPositionAtTime(source: TempoSource, time: number) {
-  return beatAtTime(source, time) * 60_000 / source.bpm
+  return time - source.offset
 }
 
 export function timeAtScrollPosition(source: TempoSource, position: number, min = 0, max = source.duration) {
-  return timeAtBeat(source, position * source.bpm / 60_000, min, max)
+  return clamp(position + source.offset, min, max)
 }
 
 export function snapToBeatLine(source: TempoSource, time: number, subdivision: number) {
@@ -149,6 +149,7 @@ export function retimeInitialBpm(chart: Chart, bpm: number): Chart {
   const retime = (time: number) => timeAtBeat(next, beatAtTime(chart, time), Math.min(0, chart.offset), Math.max(chart.duration * 2, time * 2 + 1))
   return {
     ...next,
+    effects: chart.effects.map((effect) => ({ ...effect, time: retime(effect.time), ...(effect.endTime === undefined ? {} : { endTime: retime(effect.endTime) }) })),
     notes: chart.notes.map((note) => ({ ...note, time: retime(note.time), endTime: note.endTime === undefined ? undefined : retime(note.endTime) })),
   }
 }

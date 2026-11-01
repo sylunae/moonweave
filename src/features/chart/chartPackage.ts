@@ -1,3 +1,4 @@
+import { normalizeEffects } from './effects/scrollSpeed'
 import { strFromU8, strToU8, unzip, zip } from 'fflate'
 import type { Chart } from './types'
 
@@ -27,7 +28,7 @@ const safeExtension = (name: string) => {
 export function createChartPackage(chart: Chart, assets: ChartPackageAssets) {
   const files: Record<string, Uint8Array> = {}
   const manifest: ChartPackageManifest = { format: 'moonweave-chart', version: 1, chart: 'chart.json', assets: {} }
-  const packagedChart: Chart = { ...chart }
+  const packagedChart: Chart = { ...chart, effects: normalizeEffects(chart.effects) }
 
   for (const kind of ['audio', 'background', 'cover'] as const) {
     const asset = assets[kind]

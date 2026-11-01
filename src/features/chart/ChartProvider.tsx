@@ -1,3 +1,4 @@
+import { editSnapshot, restoreEdit, type EditSnapshot } from './editHistory'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { migrateLegacyChartPreferences, usePreferences } from '@/app/preferences'
 import type { ChartLibraryItem } from '@/shared/electron'
@@ -37,6 +38,7 @@ interface ChartContextValue {
   toast: string
   setCurrentTime(time: number): void
   commitNotes(notes: ChartNote[]): void
+  commitEdit(update: (chart: Chart) => Chart): void
   undo(): void
   redo(): void
   chooseAudio(): Promise<void>
@@ -79,8 +81,10 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const [coverUrl, setCoverUrl] = useState('')
   const [currentTime, setCurrentTimeState] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [history, setHistory] = useState<ChartNote[][]>([])
-  const [future, setFuture] = useState<ChartNote[][]>([])
+  const [history, setHistory] = useState<EditSnapshot[]>([])
+  const [future, setFuture] = useState<EditSnapshot[]>([])
+  const historyRef = useRef<EditSnapshot[]>([])
+  const futureRef = useRef<EditSnapshot[]>([])
   const [toast, setToast] = useState('')
   const audioRef = useRef<HTMLAudioElement>(null)
   const objectUrlRef = useRef('')
@@ -124,7 +128,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     setBackgroundUrl(url)
   }, [])
   const resetSession = useCallback((loaded: Chart, url = '', background = '', cover = '') => {
-    stopPlayback(); setChart(loaded); setHistory([]); setFuture([]); setCurrentTimeState(0)
+    stopPlayback(); chartRef.current = loaded; setChart(loaded); historyRef.current = []; futureRef.current = []; setHistory([]); setFuture([]); setCurrentTimeState(0)
     replaceAudioUrl(url, url.startsWith('blob:')); replaceBackgroundUrl(background, background.startsWith('blob:')); setCoverUrl(cover)
   }, [replaceAudioUrl, replaceBackgroundUrl, stopPlayback])
 
@@ -436,24 +440,36 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     if (audio.paused) playbackClockRef.current.reset(value)
     else playbackClockRef.current.start(value, performance.now(), audio.playbackRate)
   }, [])
-  const commitNotes = useCallback((notes: ChartNote[]) => {
-    setChart((previous) => {
-      setHistory((items) => [...items.slice(-79), previous.notes]); setFuture([])
-      return { ...previous, notes: [...notes].sort((a, b) => a.time - b.time) }
-    })
+  const commitEdit = useCallback((update: (chart: Chart) => Chart) => {
+    const previous = chartRef.current
+    const next = update(previous)
+    if (next === previous) return
+    historyRef.current = [...historyRef.current.slice(-79), editSnapshot(previous)]
+    futureRef.current = []
+    setHistory(historyRef.current); setFuture([])
+    chartRef.current = next; setChart(next)
   }, [])
-  const undo = useCallback(() => setHistory((items) => {
-    if (!items.length) return items
-    const previous = items[items.length - 1]
-    setChart((current) => { setFuture((next) => [current.notes, ...next]); return { ...current, notes: previous } })
-    return items.slice(0, -1)
-  }), [])
-  const redo = useCallback(() => setFuture((items) => {
-    if (!items.length) return items
-    const next = items[0]
-    setChart((current) => { setHistory((previous) => [...previous, current.notes]); return { ...current, notes: next } })
-    return items.slice(1)
-  }), [])
+  const commitNotes = useCallback((notes: ChartNote[]) => {
+    commitEdit((previous) => ({ ...previous, notes: [...notes].sort((a, b) => a.time - b.time) }))
+  }, [commitEdit])
+  const undo = useCallback(() => {
+    const previous = historyRef.current.at(-1)
+    if (!previous) return
+    futureRef.current = [editSnapshot(chartRef.current), ...futureRef.current]
+    historyRef.current = historyRef.current.slice(0, -1)
+    const next = restoreEdit(chartRef.current, previous)
+    chartRef.current = next; setChart(next)
+    setHistory(historyRef.current); setFuture(futureRef.current)
+  }, [])
+  const redo = useCallback(() => {
+    const next = futureRef.current[0]
+    if (!next) return
+    historyRef.current = [...historyRef.current, editSnapshot(chartRef.current)]
+    futureRef.current = futureRef.current.slice(1)
+    const restored = restoreEdit(chartRef.current, next)
+    chartRef.current = restored; setChart(restored)
+    setHistory(historyRef.current); setFuture(futureRef.current)
+  }, [])
   const tick = useCallback(() => {
     const audio = audioRef.current
     if (!audio || audio.paused || audio.ended) return
@@ -507,8 +523,8 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<ChartContextValue>(() => ({
     chart, setChart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, audioRef, currentTime, isPlaying,
     historyLength: history.length, futureLength: future.length, toast,
-    setCurrentTime, commitNotes, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast,
-  }), [chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, commitNotes, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
+    setCurrentTime, commitNotes, commitEdit, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast,
+  }), [chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, commitNotes, commitEdit, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
   return <ChartContext.Provider value={value}>
     <audio ref={audioRef} src={audioUrl || undefined} preload="auto" onLoadedMetadata={(event) => {
       const duration = event.currentTarget.duration * 1000

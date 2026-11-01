@@ -1,3 +1,5 @@
+import { EffectMarkers } from './effects/EffectMarkers'
+import type { ChartEffect } from './effects/scrollSpeed'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { createEditorNoteIndex, visibleEditorNotes } from './editorTimeline'
@@ -25,6 +27,8 @@ interface EditorProps {
   onSelectionChange(ids: Set<string>): void
   onRegionLine(time: number): void
   onTempoLine(time: number): void
+  onEffectLine(time: number): void
+  onEffectEdit(effect: ChartEffect): void
   onZoomChange(value: number): void
   onSubdivisionChange(direction: -1 | 1): void
 }
@@ -34,7 +38,7 @@ const formatOverviewTime = (milliseconds: number) => {
   return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`
 }
 
-export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, selectedIds, region, isPlaying, onSeek, onNotesChange, onHoldStart, onSelectionChange, onRegionLine, onTempoLine, onZoomChange, onSubdivisionChange }: EditorProps) {
+export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, selectedIds, region, isPlaying, onSeek, onNotesChange, onHoldStart, onSelectionChange, onRegionLine, onTempoLine, onEffectLine, onEffectEdit, onZoomChange, onSubdivisionChange }: EditorProps) {
   const { preferences } = usePreferences()
   const { text } = useI18n()
   const laneRef = useRef<HTMLDivElement>(null)
@@ -82,6 +86,7 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
     const time = pointerTime(event.clientY)
     if (tool === 'region') { onRegionLine(time); return }
     if (tool === 'tempo') { onTempoLine(time); return }
+    if (tool === 'effect') { onEffectLine(time); return }
     if (tool === 'delete') return
     const beatIndex = Math.round(beatAtTime(chart, time) * subdivision)
     const noteOnBeat = chart.notes.find((note) => note.lane === lane && Math.round(beatAtTime(chart, note.time) * subdivision) === beatIndex)
@@ -106,6 +111,7 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
     pointerCleanupRef.current()
     if (tool === 'region') { onRegionLine(pointerTime(event.clientY)); return }
     if (tool === 'tempo') { onTempoLine(pointerTime(event.clientY)); return }
+    if (tool === 'effect') { onEffectLine(pointerTime(event.clientY)); return }
     if (tool === 'delete') { onNotesChange(chart.notes.filter((note) => note.id !== id)); return }
     const wasSelected = selectedIds.has(id)
     const nextSelection = new Set(selectedIds)
@@ -114,7 +120,7 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
     const startY = event.clientY
     const pointerId = event.pointerId
     const dragThreshold = event.pointerType === 'touch' ? 8 : 3
-    const rect = laneRef.current!.getBoundingClientRect()
+    const rect = laneRef.current!.querySelector('.lanes')!.getBoundingClientRect()
     const selectedNotes = chart.notes.filter((note) => nextSelection.has(note.id))
     const earliest = Math.min(...selectedNotes.map((note) => note.time))
     const latest = Math.max(...selectedNotes.map((note) => note.endTime ?? note.time))
@@ -278,7 +284,8 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
         </div>
         <time>{formatOverviewTime(timelineTime)} / {formatOverviewTime(chart.duration)}</time>
       </aside>
-      <div className={`lane-editor ${tool === 'region' || tool === 'tempo' ? 'region-mode' : ''}`} ref={laneRef}>
+      <div className={`lane-editor ${tool === 'region' || tool === 'tempo' || tool === 'effect' ? 'region-mode' : ''}`} ref={laneRef}>
+        <EffectMarkers effects={chart.effects} from={visibleRange.from} to={visibleRange.to} height={laneHeight} yAt={yAt} onEdit={onEffectEdit} />
         {region && <div className="region-overlay" style={{ top: yAt(region.end ?? region.start), height: Math.max(2, (scrollPositionAtTime(chart, region.end ?? region.start) - scrollPositionAtTime(chart, region.start)) / 1000 * pps) }} />}
         <div className="beat-layer">{lines.map((line) => {
           const y = yAt(line.time); const position = ((line.index % subdivision) + subdivision) % subdivision

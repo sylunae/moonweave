@@ -1,7 +1,8 @@
+import { normalizeEffects, type ChartEffect } from './effects/scrollSpeed'
 import { currentText } from '../../app/currentText'
 
 export type NoteKind = 'note' | 'hold'
-export type ToolMode = NoteKind | 'delete' | 'region' | 'tempo'
+export type ToolMode = NoteKind | 'delete' | 'region' | 'tempo' | 'effect'
 
 export interface ChartNote {
   id: string
@@ -34,6 +35,7 @@ export interface Chart {
   coverName: string
   bpm: number
   bpmChanges: BpmChange[]
+  effects: ChartEffect[]
   offset: number
   duration: number
   notes: ChartNote[]
@@ -54,6 +56,7 @@ export const DEFAULT_CHART: Chart = {
   coverName: '',
   bpm: 120,
   bpmChanges: [],
+  effects: [],
   offset: 0,
   duration: 120000,
   notes: [],
@@ -96,6 +99,7 @@ export function normalizeChart(input: unknown): Chart {
     coverName: typeof value.coverName === 'string' ? value.coverName : '',
     bpm: Number.isFinite(value.bpm) && value.bpm! >= 20 && value.bpm! <= 400 ? value.bpm! : DEFAULT_CHART.bpm,
     bpmChanges,
+    effects: normalizeEffects(value.effects),
     offset: Number.isFinite(value.offset) ? value.offset! : 0,
     duration: Number.isFinite(value.duration) && value.duration! > 0 ? value.duration! : DEFAULT_CHART.duration,
     notes,

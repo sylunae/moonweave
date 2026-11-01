@@ -1,8 +1,11 @@
+import { EffectsModule, useEffectsEditor } from '@/features/chart/effects/EffectsModule'
+import { shiftChartOffset } from '@/features/chart/editHistory'
+import { editorEffects } from '@/config/app'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   BookOpen, ClipboardPaste, Copy, FlipHorizontal2, Gamepad2, Gauge, ImagePlus,
   LogOut, Music2, Pause, Play, Plus, Redo2, ScanSearch, SlidersHorizontal, Trash2,
-  Undo2, Upload, X,
+  Undo2, Upload, X, Sparkles,
 } from 'lucide-react'
 import { navigate } from '@/app/navigation'
 import { useI18n } from '@/app/i18n'
@@ -48,7 +51,7 @@ const playCopyConfirmation = () => {
 export default function ChartEditorPage() {
   const { text } = useI18n()
   const {
-    chart, setChart, activeChartId, storageStatus, coverUrl, currentTime, setCurrentTime,
+    chart, setChart, commitEdit, activeChartId, storageStatus, coverUrl, currentTime, setCurrentTime,
     isPlaying, historyLength, futureLength, commitNotes, undo, redo, flushActiveChart, togglePlay,
     chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, showToast,
   } = useChart()
@@ -56,6 +59,7 @@ export default function ChartEditorPage() {
   const playbackRate = preferences.playbackRate
   const [subdivision, setSubdivision] = useState<(typeof SUBDIVISIONS)[number]>(4)
   const [tool, setTool] = useState<ToolMode>('note')
+  const effectsEditor = useEffectsEditor(tool, (tool) => { setTool(tool); setHoldStart(null); setRegion(null); setSelectedIds(new Set()) })
   const [holdStart, setHoldStart] = useState<{ lane: number; time: number } | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [region, setRegion] = useState<{ start: number; end: number | null } | null>(null)
@@ -72,14 +76,15 @@ export default function ChartEditorPage() {
   const regionNotes = useMemo(() => !region || region.end === null ? [] : notesInRegion(chart.notes, region.start, region.end), [chart.notes, region])
   const selectedNotes = useMemo(() => chart.notes.filter((note) => selectedIds.has(note.id)), [chart.notes, selectedIds])
   const regionStatus = useMemo(() => {
+    if (effectsEditor.status) return effectsEditor.status
     if (actionFeedback) return actionFeedback
-    if (tool === 'tempo') return { tone: 'action', title: text('选择 BPM 变速位置', 'Choose a BPM change position'), detail: text('点击轨道上的目标节拍线，然后输入从该位置开始使用的 BPM。', 'Click the target beat line, then enter the BPM to use from that point.') }
+    if (tool === 'tempo') return { tone: 'action', title: text('选择 BPM 变化位置', 'Choose a BPM change position'), detail: text('点击轨道上的目标节拍线，然后输入从该位置开始使用的 BPM。', 'Click the target beat line, then enter the BPM to use from that point.') }
     if (tool !== 'region') return null
     if (!region) return { tone: 'action', title: text('选择区域起点', 'Choose the region start'), detail: text('点击轨道上的一条节拍线作为区域起点。', 'Click a beat line to set the start of the region.') }
     if (region.end === null) return { tone: 'action', title: text('继续选择区域终点', 'Choose the region end'), detail: text(`起点 ${formatTime(region.start)}，现在点击另一条节拍线。`, `Start ${formatTime(region.start)}; now click another beat line.`) }
     if (!regionNotes.length) return { tone: 'empty', title: text('所选区域没有音符', 'No notes in this region'), detail: text('请重新选择包含音符的范围，之后才能复制或镜像。', 'Select a range containing notes before copying or mirroring.') }
     return { tone: 'ready', title: text(`已选择 ${regionNotes.length} 个音符`, `${regionNotes.length} notes selected`), detail: text('现在可以复制或镜像这些音符。', 'You can now copy or mirror these notes.') }
-  }, [actionFeedback, clipboard, region, regionNotes.length, text, tool])
+  }, [effectsEditor.status, actionFeedback, clipboard, region, regionNotes.length, text, tool])
 
   useEffect(() => setBpmDraft(String(chart.bpm)), [chart.bpm])
   useEffect(() => setOffsetDraft(String(chart.offset)), [chart.offset])
@@ -94,18 +99,14 @@ export default function ChartEditorPage() {
 
   const applyBpm = (value: number) => {
     if (!Number.isFinite(value) || value < BPM_MIN || value > BPM_MAX) return
-    setChart((previous) => {
-      return retimeInitialBpm(previous, value)
-    })
+    commitEdit((previous) => retimeInitialBpm(previous, value))
   }
   const applyOffset = (value: number) => {
     if (!Number.isFinite(value)) return
-    setChart((previous) => {
-      const delta = value - previous.offset
-      if (!delta) return previous
-      return { ...previous, offset: value, bpmChanges: previous.bpmChanges.map((change) => ({ ...change, time: change.time + delta })), notes: previous.notes.map((note) => ({ ...note, time: note.time + delta, endTime: note.endTime === undefined ? undefined : note.endTime + delta })) }
-    })
+    try { commitEdit((previous) => shiftChartOffset(previous, value)) }
+    catch { showToast(text('偏移不能将事件移到谱面起点之前', 'Offset cannot move events before the chart start')); setOffsetDraft(String(chart.offset)) }
   }
+
   const resetToolContext = useCallback((next: ToolMode) => {
     setTool(next); setHoldStart(null)
     if (next !== 'region') setRegion(null)
@@ -162,16 +163,16 @@ export default function ChartEditorPage() {
     if (tempoTime === null) return
     const bpm = Number(tempoDraft)
     if (!Number.isFinite(bpm) || bpm < BPM_MIN || bpm > BPM_MAX) { showToast(text(`BPM 需在 ${BPM_MIN}–${BPM_MAX} 之间`, `BPM must be between ${BPM_MIN} and ${BPM_MAX}`)); return }
-    setChart((previous) => ({
+    commitEdit((previous) => ({
       ...previous,
       bpmChanges: [...previous.bpmChanges.filter((change) => Math.abs(change.time - tempoTime) >= 0.01), { time: tempoTime, bpm }].sort((a, b) => a.time - b.time),
     }))
     setTempoTime(null); setTool('note'); showToast(text(`已在 ${formatTime(tempoTime)} 设置 ${bpm} BPM`, `Set ${bpm} BPM at ${formatTime(tempoTime)}`))
-  }, [setChart, showToast, tempoDraft, tempoTime, text])
+  }, [commitEdit, showToast, tempoDraft, tempoTime, text])
   const deleteTempoChange = useCallback((time: number) => {
-    setChart((previous) => ({ ...previous, bpmChanges: previous.bpmChanges.filter((change) => Math.abs(change.time - time) >= 0.01) }))
-    setTempoTime(null); showToast(text('已删除 BPM 变速点', 'BPM change removed'))
-  }, [setChart, showToast, text])
+    commitEdit((previous) => ({ ...previous, bpmChanges: previous.bpmChanges.filter((change) => Math.abs(change.time - time) >= 0.01) }))
+    setTempoTime(null); showToast(text('已删除 BPM 变化点', 'BPM change removed'))
+  }, [commitEdit, showToast, text])
   const startPlaytest = useCallback(async (fromStart: boolean) => {
     if (isPlaying) await togglePlay(playbackRate, subdivision)
     setCurrentTime(fromStart ? 0 : currentTime)
@@ -212,7 +213,7 @@ export default function ChartEditorPage() {
         chart={chart} currentTime={currentTime} subdivision={subdivision} tool={tool} holdStart={holdStart}
         selectedIds={selectedIds} region={region} isPlaying={isPlaying} onSeek={setCurrentTime}
         onNotesChange={commitNotes} onHoldStart={setHoldStart} onSelectionChange={setSelectedIds}
-        onRegionLine={chooseRegionLine} onTempoLine={chooseTempoLine}
+        onRegionLine={chooseRegionLine} onTempoLine={chooseTempoLine} onEffectLine={effectsEditor.onLine} onEffectEdit={effectsEditor.edit}
         onZoomChange={(editorZoom) => setChart((current) => ({ ...current, settings: { ...current.settings, editorZoom } }))}
         onSubdivisionChange={changeSubdivision}
       />
@@ -241,13 +242,16 @@ export default function ChartEditorPage() {
 
       <aside className="editor-utility-dock intro" aria-label={text('编辑器工具栏', 'Editor toolbar')}>
         <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('info')} aria-label={text('谱面信息', 'Chart info')}><span className="editor-dock-label">{text('谱面信息', 'Chart info')}</span><BookOpen /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('谱面信息', 'Chart info')}</TooltipContent></Tooltip>
-        <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('tempo')} aria-label={text('BPM 变速', 'BPM changes')}><span className="editor-dock-label">{text('BPM 变速', 'BPM changes')}</span><Gauge /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('BPM 变速', 'BPM changes')}</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('tempo')} aria-label={text('BPM 变化', 'BPM changes')}><span className="editor-dock-label">{text('BPM 变化', 'BPM changes')}</span><Gauge /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('BPM 变化', 'BPM changes')}</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger asChild><button onClick={() => effectsEditor.setOpen(true)} aria-label={text(editorEffects.title.zh, editorEffects.title.en)}><span className="editor-dock-label">{text(editorEffects.title.zh, editorEffects.title.en)}</span><Sparkles /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text(editorEffects.title.zh, editorEffects.title.en)}</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('settings')} aria-label={text('谱面设置', 'Chart settings')}><span className="editor-dock-label">{text('谱面设置', 'Chart settings')}</span><SlidersHorizontal /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('谱面设置', 'Chart settings')}</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger asChild><button onClick={() => void flushActiveChart().finally(() => navigate('manage'))} aria-label={text('退出编辑器', 'Exit editor')}><span className="editor-dock-label">{text('退出编辑器', 'Exit editor')}</span><LogOut /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('退出编辑器', 'Exit editor')}</TooltipContent></Tooltip>
       </aside>
       <Button className="editor-playtest-cta" onClick={() => setOpenSheet('playtest')}><Gamepad2 />{text('谱面试玩', 'Playtest')}</Button>
       {regionStatus && <div key={actionFeedback?.id} className="region-workflow-status" data-tone={regionStatus.tone} data-feedback={Boolean(actionFeedback)}><span><ScanSearch /></span><div><strong>{regionStatus.title}</strong><small>{regionStatus.detail}</small></div></div>}
     </div>
+
+    <EffectsModule editor={effectsEditor} />
 
     <Sheet open={openSheet === 'info'} onOpenChange={(open) => setOpenSheet(open ? 'info' : null)}>
       <SheetContent className="editor-sheet">
@@ -258,8 +262,8 @@ export default function ChartEditorPage() {
             <div className="config-form">
               <label><span>{text('歌曲标题', 'Song title')}</span><Input value={chart.title} onChange={(event) => setChart((current) => ({ ...current, title: event.target.value }))} /></label>
               <label><span>{text('艺术家', 'Artist')}</span><Input value={chart.artist} placeholder="Unknown artist" onChange={(event) => setChart((current) => ({ ...current, artist: event.target.value }))} /></label>
-              <label><span>{text('初始 BPM', 'Initial BPM')}</span><Input inputMode="decimal" value={bpmDraft} onChange={(event) => { const raw = event.target.value; setBpmDraft(raw); if (raw !== '') applyBpm(Number(raw)) }} onBlur={() => { const value = Number(bpmDraft); if (bpmDraft === '' || !Number.isFinite(value) || value < BPM_MIN || value > BPM_MAX) { showToast(text(`BPM 需在 ${BPM_MIN}–${BPM_MAX} 之间`, `BPM must be between ${BPM_MIN} and ${BPM_MAX}`)); setBpmDraft(String(chart.bpm)) } }} /></label>
-              <label><span>{text('谱面偏移（ms）', 'Chart offset (ms)')}</span><Input inputMode="numeric" value={offsetDraft} onChange={(event) => { const raw = event.target.value; setOffsetDraft(raw); if (raw !== '' && Number.isFinite(Number(raw))) applyOffset(Number(raw)) }} onBlur={() => { if (offsetDraft === '' || !Number.isFinite(Number(offsetDraft))) { showToast(text('偏移值必须是有效毫秒数', 'Offset must be a valid millisecond value')); setOffsetDraft(String(chart.offset)) } }} /></label>
+              <label><span>{text('初始 BPM', 'Initial BPM')}</span><Input inputMode="decimal" value={bpmDraft} onChange={(event) => { const raw = event.target.value; setBpmDraft(raw) }} onBlur={() => { const value = Number(bpmDraft); if (bpmDraft === '' || !Number.isFinite(value) || value < BPM_MIN || value > BPM_MAX) { showToast(text(`BPM 需在 ${BPM_MIN}–${BPM_MAX} 之间`, `BPM must be between ${BPM_MIN} and ${BPM_MAX}`)); setBpmDraft(String(chart.bpm)) } else applyBpm(value) }} /></label>
+              <label><span>{text('谱面偏移（ms）', 'Chart offset (ms)')}</span><Input inputMode="numeric" value={offsetDraft} onChange={(event) => { const raw = event.target.value; setOffsetDraft(raw) }} onBlur={() => { if (offsetDraft === '' || !Number.isFinite(Number(offsetDraft))) { showToast(text('偏移值必须是有效毫秒数', 'Offset must be a valid millisecond value')); setOffsetDraft(String(chart.offset)) } else applyOffset(Number(offsetDraft)) }} /></label>
             </div>
             <button className="audio-drop" onClick={() => void chooseAudio()}><span className="audio-icon"><Upload /></span><span><strong>{chart.audioName || text('上传音频文件', 'Upload audio file')}</strong><small>{text('MP3、WAV、OGG、M4A 或 FLAC', 'MP3, WAV, OGG, M4A, or FLAC')}</small></span><b>{chart.audioName ? text('替换', 'Replace') : text('上传', 'Upload')}</b></button>
             <div className="managed-media-row"><button className="audio-drop" onClick={() => void chooseBackground()}><span className="audio-icon"><ImagePlus /></span><span><strong>{chart.backgroundName || text('上传试玩背景', 'Upload playtest background')}</strong><small>{text('图片或 MP4 / WebM 视频', 'Image or MP4 / WebM video')}</small></span><b>{chart.backgroundName ? text('替换', 'Replace') : text('上传', 'Upload')}</b></button>{chart.backgroundName && <Button variant="outline" size="icon" title={text('移除背景', 'Remove background')} onClick={() => void removeBackground()}><X /></Button>}</div>
@@ -272,12 +276,12 @@ export default function ChartEditorPage() {
 
     <Sheet open={openSheet === 'tempo'} onOpenChange={(open) => setOpenSheet(open ? 'tempo' : null)}>
       <SheetContent className="editor-sheet">
-        <SheetHeader><SheetTitle>{text('BPM 变速', 'BPM changes')}</SheetTitle><SheetDescription>{text('在任意节拍线上设置从该位置开始生效的 BPM。', 'Set a BPM on any beat line that takes effect from that point.')}</SheetDescription></SheetHeader>
+        <SheetHeader><SheetTitle>{text('BPM 变化', 'BPM changes')}</SheetTitle><SheetDescription>{text('在任意节拍线上设置从该位置开始生效的 BPM。', 'Set a BPM on any beat line that takes effect from that point.')}</SheetDescription></SheetHeader>
         <div className="editor-sheet-scroll">
           <section className="sheet-section">
-            <div className="sheet-section-heading"><span><Gauge /></span><div><h3>{text('变速时间轴', 'Tempo timeline')}</h3><p>{chart.bpmChanges.length ? text(`已有 ${chart.bpmChanges.length} 个变速点`, `${chart.bpmChanges.length} BPM changes`) : text('当前谱面使用固定 BPM', 'This chart uses a fixed BPM')}</p></div></div>
-            <Button className="tempo-add-button" onClick={() => { setOpenSheet(null); resetToolContext('tempo') }}><Plus />{text('选择节拍线添加变速', 'Choose a beat line to add a BPM change')}</Button>
-            <div className="tempo-change-list">{chart.bpmChanges.length ? chart.bpmChanges.map((change) => <div key={change.time}><button onClick={() => { setCurrentTime(change.time); setOpenSheet(null); chooseTempoLine(change.time) }}><time>{formatTime(change.time)}</time><strong>{change.bpm} BPM</strong></button><Button variant="ghost" size="icon-sm" title={text('删除变速点', 'Delete BPM change')} onClick={() => deleteTempoChange(change.time)}><Trash2 /></Button></div>) : <p>{text('点击上方按钮，再选择轨道中的目标节拍线。', 'Click the button above, then choose the target beat line in the lanes.')}</p>}</div>
+            <div className="sheet-section-heading"><span><Gauge /></span><div><h3>{text('BPM 时间轴', 'Tempo timeline')}</h3><p>{chart.bpmChanges.length ? text(`已有 ${chart.bpmChanges.length} 个 BPM 变化点`, `${chart.bpmChanges.length} BPM changes`) : text('当前谱面使用固定 BPM', 'This chart uses a fixed BPM')}</p></div></div>
+            <Button className="tempo-add-button" onClick={() => { setOpenSheet(null); resetToolContext('tempo') }}><Plus />{text('选择节拍线添加 BPM 变化', 'Choose a beat line to add a BPM change')}</Button>
+            <div className="tempo-change-list">{chart.bpmChanges.length ? chart.bpmChanges.map((change) => <div key={change.time}><button onClick={() => { setCurrentTime(change.time); setOpenSheet(null); chooseTempoLine(change.time) }}><time>{formatTime(change.time)}</time><strong>{change.bpm} BPM</strong></button><Button variant="ghost" size="icon-sm" title={text('删除 BPM 变化点', 'Delete BPM change')} onClick={() => deleteTempoChange(change.time)}><Trash2 /></Button></div>) : <p>{text('点击上方按钮，再选择轨道中的目标节拍线。', 'Click the button above, then choose the target beat line in the lanes.')}</p>}</div>
           </section>
         </div>
       </SheetContent>
@@ -311,9 +315,9 @@ export default function ChartEditorPage() {
 
     <Dialog open={tempoTime !== null} onOpenChange={(open) => { if (!open) setTempoTime(null) }}>
       <DialogContent className="tempo-dialog">
-        <DialogHeader><DialogTitle>{text('设置 BPM 变速', 'Set BPM change')}</DialogTitle><DialogDescription>{tempoTime === null ? '' : text(`从 ${formatTime(tempoTime)} 的节拍线开始使用新速度。`, `Use the new BPM from the beat line at ${formatTime(tempoTime)}.`)}</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>{text('设置 BPM 变化', 'Set BPM change')}</DialogTitle><DialogDescription>{tempoTime === null ? '' : text(`从 ${formatTime(tempoTime)} 的节拍线开始使用新 BPM。`, `Use the new BPM from the beat line at ${formatTime(tempoTime)}.`)}</DialogDescription></DialogHeader>
         <label><span>BPM</span><Input autoFocus inputMode="decimal" value={tempoDraft} onChange={(event) => setTempoDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') saveTempoChange() }} /></label>
-        <DialogFooter>{tempoTime !== null && chart.bpmChanges.some((change) => Math.abs(change.time - tempoTime) < 0.01) && <Button variant="destructive" onClick={() => deleteTempoChange(tempoTime)}>{text('删除变速点', 'Delete BPM change')}</Button>}<Button variant="outline" onClick={() => setTempoTime(null)}>{text('取消', 'Cancel')}</Button><Button onClick={saveTempoChange}>{text('保存', 'Save')}</Button></DialogFooter>
+        <DialogFooter>{tempoTime !== null && chart.bpmChanges.some((change) => Math.abs(change.time - tempoTime) < 0.01) && <Button variant="destructive" onClick={() => deleteTempoChange(tempoTime)}>{text('删除 BPM 变化点', 'Delete BPM change')}</Button>}<Button variant="outline" onClick={() => setTempoTime(null)}>{text('取消', 'Cancel')}</Button><Button onClick={saveTempoChange}>{text('保存', 'Save')}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   </div>

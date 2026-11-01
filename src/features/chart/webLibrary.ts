@@ -1,3 +1,4 @@
+import { normalizeEffects } from './effects/scrollSpeed'
 import type { Chart } from './types'
 
 export interface WebChartRecord {
@@ -48,7 +49,7 @@ export const readWebChart = (id: string) => transact<WebChartRecord | undefined>
 export async function writeWebChart(id: string, chart: Chart, assets: { audio?: Blob; background?: Blob | null; cover?: Blob | null } = {}) {
   const existing = await readWebChart(id)
   const record: WebChartRecord = {
-    id, chart, updatedAt: Date.now(),
+    id, chart: { ...chart, effects: normalizeEffects(chart.effects) }, updatedAt: Date.now(),
     audio: assets.audio === undefined ? existing?.audio : assets.audio,
     background: assets.background === undefined ? existing?.background : assets.background ?? undefined,
     cover: assets.cover === undefined ? existing?.cover : assets.cover ?? undefined,

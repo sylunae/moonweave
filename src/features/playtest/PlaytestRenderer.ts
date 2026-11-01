@@ -1,4 +1,6 @@
-import { beatLinesInRange, scrollPositionAtTime, timeAtScrollPosition } from '@/features/chart/tempoMap'
+import { beatLinesInRange } from '@/features/chart/tempoMap'
+import type { ChartEffect } from '@/features/chart/effects/scrollSpeed'
+import { createSpeedGeometry } from './speedGeometry'
 import type { BpmChange, ChartNote } from '@/features/chart/types'
 import { getPlaytestHorizon, getPlaytestTrackHalfWidth } from '@/features/playtest/playtestGeometry'
 
@@ -34,6 +36,7 @@ interface PlaytestRendererOptions {
   scrollSpeed: number
   bpm: number
   bpmChanges: BpmChange[]
+  effects: ChartEffect[]
   offset: number
   duration: number
   getTime(): number
@@ -290,6 +293,8 @@ function lowerBound(notes: ChartNote[], time: number, useEnd = false) {
 export class PlaytestRenderer {
   private readonly gl: WebGL2RenderingContext
   private readonly notes: ChartNote[]
+  private readonly geometry: ReturnType<typeof createSpeedGeometry>
+  private readonly visualBeats: { time: number; position: number }[]
   private readonly noteProgram: GLProgram
   private readonly trackProgram: GLProgram
   private readonly glowProgram: GLProgram
@@ -347,6 +352,8 @@ export class PlaytestRenderer {
     this.gl = gl
     this.renderScale = Math.max(0.72, Math.min(1, options.initialRenderScale ?? 1))
     this.notes = [...options.notes].sort((a, b) => a.time - b.time)
+    this.geometry = createSpeedGeometry(this.notes, options.effects)
+    this.visualBeats = beatLinesInRange(options, 0, options.duration, 1).map((line) => ({ time: line.time, position: this.geometry.map.positionAt(line.time) }))
     this.noteProgram = compileProgram(gl, NOTE_VERTEX, NOTE_FRAGMENT, ['uTime', 'uHorizon', 'uTilt', 'uTrackWidth', 'uViewportHeight', 'uColors'])
     this.trackProgram = compileProgram(gl, TRACK_VERTEX, TRACK_FRAGMENT, ['uTilt', 'uTrackWidth', 'uTrackGeometry', 'uColor'])
     this.glowProgram = compileProgram(gl, GLOW_VERTEX, GLOW_FRAGMENT, ['uTrackWidth', 'uColor'])
@@ -388,7 +395,7 @@ export class PlaytestRenderer {
     gl.bindVertexArray(vao)
     this.createQuadBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, instances)
-    gl.bufferData(gl.ARRAY_BUFFER, Math.max(1, this.notes.length) * NOTE_STRIDE * 4, gl.DYNAMIC_DRAW)
+    gl.bufferData(gl.ARRAY_BUFFER, Math.max(1, this.geometry.pieces.length) * NOTE_STRIDE * 4, gl.DYNAMIC_DRAW)
     gl.enableVertexAttribArray(1)
     gl.vertexAttribPointer(1, 4, gl.FLOAT, false, NOTE_STRIDE * 4, 0)
     gl.vertexAttribDivisor(1, 1)
@@ -563,29 +570,22 @@ export class PlaytestRenderer {
 
   private uploadVisibleNotes(time: number) {
     const horizon = getPlaytestHorizon(HORIZON_MS, this.options.scrollSpeed, this.options.laneTilt)
-    const position = scrollPositionAtTime(this.options, time)
-    const fromTime = timeAtScrollPosition(this.options, position - horizon * (100 / 86 - 1))
-    const toTime = timeAtScrollPosition(this.options, position + horizon)
-    const first = Math.max(0, lowerBound(this.notes, fromTime) - 8)
-    const last = Math.min(this.notes.length, lowerBound(this.notes, toTime) + 2)
-    const key = `${first}:${last}:${this.hiddenNotes.size}:${[...this.startedHolds].join(',')}:${[...this.activeHolds].join(',')}`
+    const position = this.geometry.map.positionAt(time)
+    const candidates = this.geometry.visible(position - horizon * (100 / 86 - 1) - 260, position + horizon)
+    const visible = candidates.filter((piece) => !this.hiddenNotes.has(piece.sourceId) &&
+      (piece.sourceEndTime >= time - 260 || this.startedHolds.has(piece.sourceId)))
+    const key = `notes:${visible.map((piece) => `${piece.id}:${this.activeHolds.has(piece.sourceId)}`).join(',')}`
     if (key === this.lastVisibleKey) return
     this.lastVisibleKey = key
-    const candidates = this.notes.slice(first, last)
-    for (const id of this.startedHolds) {
-      const note = this.notes.find((candidate) => candidate.id === id)
-      if (note && !candidates.includes(note)) candidates.push(note)
-    }
-    const visible = candidates.filter((note) => !this.hiddenNotes.has(note.id) && scrollPositionAtTime(this.options, note.endTime ?? note.time) >= position - 260)
     const data = new Float32Array(visible.length * NOTE_STRIDE)
     visible.forEach((note, index) => {
       const offset = index * NOTE_STRIDE
       data[offset] = note.lane
-      data[offset + 1] = scrollPositionAtTime(this.options, note.time)
-      data[offset + 2] = scrollPositionAtTime(this.options, note.endTime ?? note.time)
+      data[offset + 1] = note.time
+      data[offset + 2] = note.endTime ?? note.time
       data[offset + 3] = note.kind === 'hold' ? 1 : 0
       data[offset + 4] = note.lane
-      data[offset + 5] = this.activeHolds.has(note.id) ? 1 : 0
+      data[offset + 5] = this.activeHolds.has(note.sourceId) ? 1 : 0
     })
     this.visibleCount = visible.length
     const gl = this.gl
@@ -641,12 +641,22 @@ export class PlaytestRenderer {
 
   private drawBeats(time: number) {
     const horizon = getPlaytestHorizon(HORIZON_MS, this.options.scrollSpeed, this.options.laneTilt)
-    const position = scrollPositionAtTime(this.options, time)
-    const fromTime = timeAtScrollPosition(this.options, position - 120)
-    const toTime = timeAtScrollPosition(this.options, position + horizon)
+    const position = this.geometry.map.positionAt(time)
+    let lo = 0, hi = this.visualBeats.length
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1
+      if (this.visualBeats[mid].position < position - 120) lo = mid + 1
+      else hi = mid
+    }
     let floatCount = 0
-    for (const line of beatLinesInRange(this.options, fromTime, toTime, 1)) {
-      const depth = (scrollPositionAtTime(this.options, line.time) - position) / horizon
+    let previousPosition = -Infinity
+    for (let i = lo; i < this.visualBeats.length; i++) {
+      const line = this.visualBeats[i]
+      if (line.position > position + horizon) break
+      // A stop can put many beat lines at exactly the same position.
+      if (line.position === previousPosition) continue
+      previousPosition = line.position
+      const depth = (line.position - position) / horizon
       if (floatCount + 4 > this.beatVertices.length) break
       this.beatVertices[floatCount++] = -1
       this.beatVertices[floatCount++] = depth
@@ -678,7 +688,7 @@ export class PlaytestRenderer {
     const { program, uniforms } = this.noteProgram
     gl.useProgram(program)
     gl.bindVertexArray(this.noteVao)
-    gl.uniform1f(uniforms.uTime, scrollPositionAtTime(this.options, time))
+    gl.uniform1f(uniforms.uTime, this.geometry.map.positionAt(time))
     gl.uniform1f(uniforms.uHorizon, getPlaytestHorizon(HORIZON_MS, this.options.scrollSpeed, this.options.laneTilt))
     gl.uniform1f(uniforms.uTilt, this.options.laneTilt / 45)
     gl.uniform1f(uniforms.uTrackWidth, getPlaytestTrackHalfWidth(this.options.laneTilt))
