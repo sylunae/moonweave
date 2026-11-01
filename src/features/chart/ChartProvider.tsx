@@ -7,6 +7,9 @@ import { deleteWebChart, listWebCharts, readWebChart, writeWebChart } from './we
 import { createChartPackage, readChartPackage } from './chartPackage'
 import { DEFAULT_CHART, normalizeChart, type Chart, type ChartNote } from './types'
 import { snapToBeatLine } from './tempoMap'
+import { BpmDetectionDialog } from './BpmDetectionDialog'
+import { bpmDetectionCopy } from '@/config/app'
+import type { BpmFailureReason } from './detectBpm'
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 const text = (zh: string, en: string) => document.documentElement.lang.startsWith('zh') ? zh : en
@@ -37,6 +40,7 @@ interface ChartContextValue {
   futureLength: number
   toast: string
   setCurrentTime(time: number): void
+  setPlaybackRate(rate: number): void
   commitNotes(notes: ChartNote[]): void
   commitEdit(update: (chart: Chart) => Chart): void
   undo(): void
@@ -86,12 +90,15 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const historyRef = useRef<EditSnapshot[]>([])
   const futureRef = useRef<EditSnapshot[]>([])
   const [toast, setToast] = useState('')
+  const [bpmRequest, setBpmRequest] = useState<{ sequence: number; id: string; url: string } | null>(null)
+  const audioImportSequence = useRef(0)
   const audioRef = useRef<HTMLAudioElement>(null)
   const objectUrlRef = useRef('')
   const backgroundObjectUrlRef = useRef('')
   const webCoverUrlsRef = useRef(new Map<string, string>())
   const animationRef = useRef(0)
   const playbackClockRef = useRef(new PlaybackClock())
+  const mediaWaitingRef = useRef(false)
   const playbackQueueRef = useRef<Promise<void>>(Promise.resolve())
   const playbackEpochRef = useRef(0)
   const toastTimerRef = useRef(0)
@@ -108,6 +115,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     toastTimerRef.current = window.setTimeout(() => setToast(''), 2600)
   }, [])
   const stopPlayback = useCallback(() => {
+    mediaWaitingRef.current = false
     playbackEpochRef.current += 1
     cancelAnimationFrame(animationRef.current)
     const audio = audioRef.current
@@ -128,6 +136,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     setBackgroundUrl(url)
   }, [])
   const resetSession = useCallback((loaded: Chart, url = '', background = '', cover = '') => {
+    audioImportSequence.current += 1; setBpmRequest(null)
     stopPlayback(); chartRef.current = loaded; setChart(loaded); historyRef.current = []; futureRef.current = []; setHistory([]); setFuture([]); setCurrentTimeState(0)
     replaceAudioUrl(url, url.startsWith('blob:')); replaceBackgroundUrl(background, background.startsWith('blob:')); setCoverUrl(cover)
   }, [replaceAudioUrl, replaceBackgroundUrl, stopPlayback])
@@ -262,19 +271,28 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const chooseAudio = useCallback(async () => {
     const id = activeIdRef.current
     if (!id) return
+    const sequence = ++audioImportSequence.current
+    setBpmRequest(null)
+    const isCurrent = () => id === activeIdRef.current && sequence === audioImportSequence.current
     if (window.moonweave) {
       const result = await window.moonweave.chooseAudio(id)
-      if (!result) return
+      if (!result || !isCurrent()) return
+      stopPlayback()
       const next = { ...chartRef.current, audioPath: result.audioPath, audioName: result.name }
-      setChart(next); replaceAudioUrl(result.url); setCurrentTimeState(0); await persistSnapshot(id, next); showToast(text('音频已复制到应用内部', 'Audio copied into the app'))
+      chartRef.current = next; setChart(next); replaceAudioUrl(result.url); setCurrentTimeState(0)
+      await persistSnapshot(id, next)
+      if (isCurrent()) { setBpmRequest({ sequence, id, url: result.url }); showToast(text(bpmDetectionCopy.analyzing.zh, bpmDetectionCopy.analyzing.en)) }
       return
     }
     const [file] = await chooseLocalFiles('audio/*,.flac,.m4a')
-    if (!file) return
+    if (!file || !isCurrent()) return
+    stopPlayback()
     const next = { ...chartRef.current, audioPath: 'indexeddb', audioName: file.name }
     const url = URL.createObjectURL(file)
-    setChart(next); replaceAudioUrl(url, true); setCurrentTimeState(0); await persistSnapshot(id, next, { audio: file }); showToast(text('音频已保存到浏览器谱面库', 'Audio saved to the browser chart library'))
-  }, [persistSnapshot, replaceAudioUrl, showToast])
+    chartRef.current = next; setChart(next); replaceAudioUrl(url, true); setCurrentTimeState(0)
+    await persistSnapshot(id, next, { audio: file })
+    if (isCurrent()) { setBpmRequest({ sequence, id, url }); showToast(text(bpmDetectionCopy.analyzing.zh, bpmDetectionCopy.analyzing.en)) }
+  }, [persistSnapshot, replaceAudioUrl, showToast, stopPlayback])
 
   const chooseBackground = useCallback(async () => {
     const id = activeIdRef.current
@@ -437,7 +455,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     const audio = audioRef.current
     if (!audio) return
     audio.currentTime = value / 1000
-    if (audio.paused) playbackClockRef.current.reset(value)
+    if (audio.paused || audio.seeking || mediaWaitingRef.current) playbackClockRef.current.reset(value)
     else playbackClockRef.current.start(value, performance.now(), audio.playbackRate)
   }, [])
   const commitEdit = useCallback((update: (chart: Chart) => Chart) => {
@@ -470,13 +488,26 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     chartRef.current = restored; setChart(restored)
     setHistory(historyRef.current); setFuture(futureRef.current)
   }, [])
+  const unavailableBpm = useCallback((reason: BpmFailureReason) => showToast(text(bpmDetectionCopy[reason].zh, bpmDetectionCopy[reason].en)), [showToast])
   const tick = useCallback(() => {
     const audio = audioRef.current
     if (!audio || audio.paused || audio.ended) return
-    const time = playbackClockRef.current.getTime(audio.currentTime * 1000)
+    const time = audio.seeking || mediaWaitingRef.current
+      ? audio.currentTime * 1000
+      : playbackClockRef.current.getTime(audio.currentTime * 1000)
     setCurrentTimeState(clamp(time, 0, chartRef.current.duration))
     animationRef.current = requestAnimationFrame(tick)
   }, [])
+  const setPlaybackRate = useCallback((rate: number) => {
+    if (rate !== 0.5 && rate !== 0.75 && rate !== 1) return
+    setPreferences((current) => ({ ...current, playbackRate: rate }))
+    const audio = audioRef.current
+    if (!audio || audio.playbackRate === rate) return
+    audio.playbackRate = rate
+    if (!audio.paused && !audio.ended) {
+      playbackClockRef.current.setRate(audio.currentTime * 1000, performance.now(), rate)
+    }
+  }, [setPreferences])
   const togglePlay = useCallback((playbackRate: number, subdivision: number) => {
     const epoch = playbackEpochRef.current
     const toggle = async () => {
@@ -500,7 +531,8 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
         await audio.play()
         if (epoch !== playbackEpochRef.current || audio.paused) return
         cancelAnimationFrame(animationRef.current)
-        playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
+        if (audio.seeking || mediaWaitingRef.current) playbackClockRef.current.stop(audio.currentTime * 1000)
+        else playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
         setIsPlaying(true)
         animationRef.current = requestAnimationFrame(tick)
       } catch {
@@ -523,8 +555,8 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<ChartContextValue>(() => ({
     chart, setChart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, audioRef, currentTime, isPlaying,
     historyLength: history.length, futureLength: future.length, toast,
-    setCurrentTime, commitNotes, commitEdit, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast,
-  }), [chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, commitNotes, commitEdit, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
+    setCurrentTime, setPlaybackRate, commitNotes, commitEdit, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast,
+  }), [chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, setPlaybackRate, commitNotes, commitEdit, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
   return <ChartContext.Provider value={value}>
     <audio ref={audioRef} src={audioUrl || undefined} preload="auto" onLoadedMetadata={(event) => {
       const duration = event.currentTarget.duration * 1000
@@ -540,7 +572,25 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
           showToast(text('内部音频已不可用，请重新上传', 'Saved audio is unavailable; upload it again')); return ''
         })
       }, 0)
+    }} onSeeking={(event) => {
+      playbackClockRef.current.stop(event.currentTarget.currentTime * 1000)
+    }} onSeeked={(event) => {
+      const audio = event.currentTarget
+      if (!audio.seeking && !audio.paused && !audio.ended && !mediaWaitingRef.current) {
+        playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
+      }
+    }} onWaiting={(event) => {
+      mediaWaitingRef.current = true
+      playbackClockRef.current.stop(event.currentTarget.currentTime * 1000)
+    }} onPlaying={(event) => {
+      const audio = event.currentTarget
+      if (mediaWaitingRef.current && !audio.paused && !audio.seeking) {
+        mediaWaitingRef.current = false
+        playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
+      }
     }} onPlay={() => setIsPlaying(true)} onPause={(event) => {
+      // pause is queued by the browser and may arrive after playback resumed.
+      if (!event.currentTarget.paused) return
       cancelAnimationFrame(animationRef.current)
       playbackClockRef.current.stop(event.currentTarget.currentTime * 1000)
       setIsPlaying(false)
@@ -549,6 +599,11 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
       setIsPlaying(false); setCurrentTimeState(chart.duration); cancelAnimationFrame(animationRef.current)
     }} />
     {children}
+    {bpmRequest && <BpmDetectionDialog key={bpmRequest.sequence} url={bpmRequest.url} onUnavailable={unavailableBpm} onApply={(bpm) => {
+      if (activeIdRef.current !== bpmRequest.id || audioImportSequence.current !== bpmRequest.sequence) return
+      commitEdit((previous) => ({ ...previous, bpm }))
+      showToast(text(bpmDetectionCopy.applied.zh, bpmDetectionCopy.applied.en))
+    }} />}
     {toast && <div className="chart-toast" role="status">{toast}</div>}
   </ChartContext.Provider>
 }

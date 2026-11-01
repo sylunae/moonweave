@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import type { ChartLibraryItem, ManagedChart, TitlebarTheme } from '../../src/shared/electron'
 import { createChartPackage, readChartPackage } from '../../src/features/chart/chartPackage'
 import type { Chart } from '../../src/features/chart/types'
+import { readAnalysisAudio } from './analysisAudio'
 
 const TITLEBAR_HEIGHT = 42
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.ogg', '.m4a', '.flac'])
@@ -195,6 +196,12 @@ function createWindow(): void {
 }
 
 function registerIpc(): void {
+  ipcMain.handle('library:read-analysis-audio', async (_event, id: unknown) => {
+    if (!validId(id)) throw new Error('无效的谱面 ID')
+    const record = parseStoredChart(id)
+    if (!record) throw new Error('找不到这份谱面')
+    return readAnalysisAudio(audioDirectory(), id, record.chart.audioPath)
+  })
   ipcMain.handle('shell:open-external', (_event, value: unknown) => {
     if (typeof value !== 'string' || !/^https?:\/\//i.test(value)) return false
     void shell.openExternal(value); return true

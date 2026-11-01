@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { ChartEditor } from '@/features/chart/ChartEditor'
+import { ChartEditor, type ChartEditorHandle } from '@/features/chart/ChartEditor'
 import { useChart } from '@/features/chart/ChartProvider'
 import { adjacentBeatLine, bpmAtTime, retimeInitialBpm, snapToBeatLine } from '@/features/chart/tempoMap'
 import type { ChartNote, ToolMode } from '@/features/chart/types'
@@ -51,13 +51,18 @@ const playCopyConfirmation = () => {
 export default function ChartEditorPage() {
   const { text } = useI18n()
   const {
-    chart, setChart, commitEdit, activeChartId, storageStatus, coverUrl, currentTime, setCurrentTime,
+    chart, setChart, commitEdit, activeChartId, storageStatus, coverUrl, currentTime, setCurrentTime, setPlaybackRate,
     isPlaying, historyLength, futureLength, commitNotes, undo, redo, flushActiveChart, togglePlay,
     chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, showToast,
   } = useChart()
   const { preferences, setPreferences } = usePreferences()
   const playbackRate = preferences.playbackRate
+  const editorRef = useRef<ChartEditorHandle>(null)
   const [subdivision, setSubdivision] = useState<(typeof SUBDIVISIONS)[number]>(4)
+  const toggleEditorPlay = useCallback(() => {
+    editorRef.current?.flushSeek()
+    return togglePlay(playbackRate, subdivision)
+  }, [playbackRate, subdivision, togglePlay])
   const [tool, setTool] = useState<ToolMode>('note')
   const effectsEditor = useEffectsEditor(tool, (tool) => { setTool(tool); setHoldStart(null); setRegion(null); setSelectedIds(new Set()) })
   const [holdStart, setHoldStart] = useState<{ lane: number; time: number } | null>(null)
@@ -174,8 +179,9 @@ export default function ChartEditorPage() {
     setTempoTime(null); showToast(text('已删除 BPM 变化点', 'BPM change removed'))
   }, [commitEdit, showToast, text])
   const startPlaytest = useCallback(async (fromStart: boolean) => {
+    const pendingTime = editorRef.current?.flushSeek()
     if (isPlaying) await togglePlay(playbackRate, subdivision)
-    setCurrentTime(fromStart ? 0 : currentTime)
+    setCurrentTime(fromStart ? 0 : pendingTime ?? currentTime)
     setOpenSheet(null)
     navigate('playtest')
   }, [currentTime, isPlaying, playbackRate, setCurrentTime, subdivision, togglePlay])
@@ -195,21 +201,22 @@ export default function ChartEditorPage() {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c' && selectedNotes.length) { event.preventDefault(); copySelection(); return }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v' && clipboard) { event.preventDefault(); pasteAtCurrentBeat(); return }
       if (event.repeat) return
-      if (event.code === 'KeyQ') { event.preventDefault(); void togglePlay(playbackRate, subdivision) }
+      if (event.code === 'KeyQ') { event.preventDefault(); void toggleEditorPlay() }
       if (event.code === 'Delete' && selectedIds.size) { event.preventDefault(); deleteSelection() }
-      if (event.code === 'ArrowUp') { event.preventDefault(); setCurrentTime(adjacentBeatLine(chart, currentTime, subdivision, 1)) }
-      if (event.code === 'ArrowDown') { event.preventDefault(); setCurrentTime(adjacentBeatLine(chart, currentTime, subdivision, -1)) }
-      if (event.code === 'Space') { event.preventDefault(); setCurrentTime(adjacentBeatLine(chart, currentTime, 1, 1)) }
+      if (event.code === 'ArrowUp') { event.preventDefault(); setCurrentTime(adjacentBeatLine(chart, editorRef.current?.flushSeek() ?? currentTime, subdivision, 1)) }
+      if (event.code === 'ArrowDown') { event.preventDefault(); setCurrentTime(adjacentBeatLine(chart, editorRef.current?.flushSeek() ?? currentTime, subdivision, -1)) }
+      if (event.code === 'Space') { event.preventDefault(); setCurrentTime(adjacentBeatLine(chart, editorRef.current?.flushSeek() ?? currentTime, 1, 1)) }
     }
     window.addEventListener('keydown', keydown)
     return () => window.removeEventListener('keydown', keydown)
-  }, [chart, clipboard, copySelection, currentTime, deleteSelection, flushActiveChart, pasteAtCurrentBeat, playbackRate, redo, selectedIds.size, selectedNotes.length, setCurrentTime, showToast, subdivision, text, togglePlay, undo])
+  }, [chart, clipboard, copySelection, currentTime, deleteSelection, flushActiveChart, pasteAtCurrentBeat, playbackRate, redo, selectedIds.size, selectedNotes.length, setCurrentTime, showToast, subdivision, text, toggleEditorPlay, undo])
 
   if (!activeChartId) return <div className="editor-empty page-enter"><BookOpen /><h1>{text('未选择谱面', 'No chart selected')}</h1><Button onClick={() => navigate('manage')}>{text('前往我的谱面', 'Go to My Charts')}</Button></div>
 
   return <div className="editor-page page-enter">
     <div className="editor-workspace">
       <ChartEditor
+        ref={editorRef}
         chart={chart} currentTime={currentTime} subdivision={subdivision} tool={tool} holdStart={holdStart}
         selectedIds={selectedIds} region={region} isPlaying={isPlaying} onSeek={setCurrentTime}
         onNotesChange={commitNotes} onHoldStart={setHoldStart} onSelectionChange={setSelectedIds}
@@ -219,7 +226,7 @@ export default function ChartEditorPage() {
       />
 
       <aside className="editor-action-rail editor-action-rail-left" aria-label={text('常用编辑操作', 'Common editing actions')}>
-        <button className="editor-action primary" onClick={() => void togglePlay(playbackRate, subdivision)}><span>{isPlaying ? <Pause /> : <Play />}</span><b>{isPlaying ? text('暂停', 'Pause') : text('播放', 'Play')}</b></button>
+        <button className="editor-action primary" onClick={() => void toggleEditorPlay()}><span>{isPlaying ? <Pause /> : <Play />}</span><b>{isPlaying ? text('暂停', 'Pause') : text('播放', 'Play')}</b></button>
         <button className={`editor-action${tool === 'region' ? ' active' : ''}`} onClick={startRegionSelection}><span><ScanSearch /></span><b>{text('区域', 'Region')}</b></button>
         <button className={`editor-action danger${tool === 'delete' ? ' active' : ''}`} onClick={deleteSelection}><span><Trash2 /></span><b>{text('删除', 'Delete')}</b></button>
         <div className="editor-compact-actions">
@@ -232,7 +239,7 @@ export default function ChartEditorPage() {
           <Tooltip><TooltipTrigger asChild><span><button disabled={!historyLength} onClick={undo} aria-label={text('撤回', 'Undo')}><Undo2 /></button></span></TooltipTrigger><TooltipContent side="right" sideOffset={9}>{text('撤回', 'Undo')}</TooltipContent></Tooltip>
           <Tooltip><TooltipTrigger asChild><span><button disabled={!futureLength} onClick={redo} aria-label={text('重做', 'Redo')}><Redo2 /></button></span></TooltipTrigger><TooltipContent side="right" sideOffset={9}>{text('重做', 'Redo')}</TooltipContent></Tooltip>
         </div>
-        <div className="playback-rate">{PLAYBACK_RATES.map((rate) => <button key={rate} className={playbackRate === rate ? 'active' : ''} onClick={() => setPreferences((current) => ({ ...current, playbackRate: rate }))}>{rate}×</button>)}</div>
+        <div className="playback-rate">{PLAYBACK_RATES.map((rate) => <button key={rate} className={playbackRate === rate ? 'active' : ''} onClick={() => { editorRef.current?.flushSeek(); setPlaybackRate(rate) }}>{rate}×</button>)}</div>
       </aside>
 
       <aside className="editor-action-rail editor-action-rail-right" aria-label={text('音符工具', 'Note tools')}>

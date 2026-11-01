@@ -34,6 +34,7 @@ export interface MoonweaveAPI {
   readBundledChartPackage(name: string): Promise<Uint8Array>
   listCharts(): Promise<ChartLibraryItem[]>
   readChart(id: string): Promise<ManagedChart | null>
+  readAudioForAnalysis(id: string): Promise<Uint8Array | null>
   writeChart(id: string, chart: Chart): Promise<ChartLibraryItem>
   deleteChart(id: string): Promise<boolean>
   chooseAudio(id: string): Promise<{ audioPath: string; url: string; name: string } | null>

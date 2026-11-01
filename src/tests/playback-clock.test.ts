@@ -29,4 +29,37 @@ describe('PlaybackClock', () => {
     clock.stop(2_050, 30)
     expect(clock.getTime(2_050, 500)).toBe(2_050)
   })
+
+  it('preserves the interpolated position through rate changes with coarse samples', () => {
+    const clock = new PlaybackClock()
+    clock.start(1000, 0)
+    expect(clock.getTime(1000, 16)).toBe(1016)
+    clock.setRate(1000, 16, 0.5)
+    expect(clock.getTime(1000, 16)).toBe(1016)
+    expect(clock.getTime(1000, 24)).toBe(1020)
+    clock.setRate(1020, 24, 1)
+    expect(clock.getTime(1020, 32)).toBe(1028)
+    expect(clock.getTime(1020, 44)).toBe(1040)
+    clock.setRate(1020, 44, 0.5)
+    expect(clock.getTime(1020, 44)).toBe(1040)
+    expect(clock.getTime(1020, 52)).toBe(1044)
+  })
+
+  it('does not keep the monotonic floor of an earlier playback after a backward seek', () => {
+    const clock = new PlaybackClock()
+    clock.start(10000, 0)
+    expect(clock.getTime(10000, 16)).toBe(10016)
+    expect(clock.getTime(2000, 32)).toBe(2000)
+    expect(clock.getTime(2000, 40)).toBe(2008)
+  })
+
+  it('bounds interpolation when media stalls instead of accumulating seconds of offset', () => {
+    const clock = new PlaybackClock()
+    clock.start(1000, 0, 0.5)
+    expect(clock.getTime(1000, 5000)).toBeLessThanOrEqual(1050)
+    clock.stop(1000, 5000)
+    expect(clock.getTime(1000, 9000)).toBe(1000)
+    clock.start(1000, 9000, 0.5)
+    expect(clock.getTime(1000, 9016)).toBe(1008)
+  })
 })

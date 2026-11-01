@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('moonweave', Object.freeze({
   readBundledChartPackage: (name: string) => ipcRenderer.invoke('library:read-bundled-package', name),
   listCharts: () => ipcRenderer.invoke('library:list'),
   readChart: (id: string) => ipcRenderer.invoke('library:read', id),
+  readAudioForAnalysis: (id: string) => ipcRenderer.invoke('library:read-analysis-audio', id),
   writeChart: (id: string, chart: unknown) => ipcRenderer.invoke('library:write', id, chart),
   deleteChart: (id: string) => ipcRenderer.invoke('library:delete', id),
   chooseAudio: (id: string) => ipcRenderer.invoke('library:choose-audio', id),

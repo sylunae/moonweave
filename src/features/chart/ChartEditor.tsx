@@ -1,6 +1,6 @@
 import { EffectMarkers } from './effects/EffectMarkers'
 import type { ChartEffect } from './effects/scrollSpeed'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { createEditorNoteIndex, visibleEditorNotes } from './editorTimeline'
 import { adjacentBeatLine, beatAtTime, beatLinesInRange, bpmAtTime, scrollPositionAtTime, snapToBeatLine, timeAtScrollPosition } from './tempoMap'
@@ -12,7 +12,12 @@ const LANE_COLORS = ['#31d7ff', '#b788ff', '#b788ff', '#31d7ff']
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 
+export interface ChartEditorHandle {
+  flushSeek(): number | null
+}
+
 interface EditorProps {
+  ref?: React.Ref<ChartEditorHandle>
   chart: Chart
   currentTime: number
   subdivision: number
@@ -38,7 +43,7 @@ const formatOverviewTime = (milliseconds: number) => {
   return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`
 }
 
-export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, selectedIds, region, isPlaying, onSeek, onNotesChange, onHoldStart, onSelectionChange, onRegionLine, onTempoLine, onEffectLine, onEffectEdit, onZoomChange, onSubdivisionChange }: EditorProps) {
+export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdStart, selectedIds, region, isPlaying, onSeek, onNotesChange, onHoldStart, onSelectionChange, onRegionLine, onTempoLine, onEffectLine, onEffectEdit, onZoomChange, onSubdivisionChange }: EditorProps) {
   const { preferences } = usePreferences()
   const { text } = useI18n()
   const laneRef = useRef<HTMLDivElement>(null)
@@ -210,6 +215,7 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
 
   const commitSeekPreview = useCallback(() => {
     window.clearTimeout(seekCommitTimerRef.current)
+    if (!previewingSeekRef.current) return null
     if (seekFrameRef.current) {
       cancelAnimationFrame(seekFrameRef.current)
       seekFrameRef.current = 0
@@ -217,7 +223,10 @@ export function ChartEditor({ chart, currentTime, subdivision, tool, holdStart, 
     }
     previewingSeekRef.current = false
     onSeek(pendingViewportTimeRef.current)
+    return pendingViewportTimeRef.current
   }, [onSeek])
+
+  useImperativeHandle(ref, () => ({ flushSeek: commitSeekPreview }), [commitSeekPreview])
 
   const handleWheel = useCallback((event: WheelEvent) => {
     event.preventDefault()
