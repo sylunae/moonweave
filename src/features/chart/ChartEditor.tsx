@@ -31,6 +31,7 @@ interface EditorProps {
   onHoldStart(value: { lane: number; time: number } | null): void
   onSelectionChange(ids: Set<string>): void
   onRegionLine(time: number): void
+  onRegionMove?(delta: number): void
   onTempoLine(time: number): void
   onEffectLine(time: number): void
   onEffectEdit(effect: ChartEffect): void
@@ -43,7 +44,7 @@ const formatOverviewTime = (milliseconds: number) => {
   return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`
 }
 
-export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdStart, selectedIds, region, isPlaying, onSeek, onNotesChange, onHoldStart, onSelectionChange, onRegionLine, onTempoLine, onEffectLine, onEffectEdit, onZoomChange, onSubdivisionChange }: EditorProps) {
+export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdStart, selectedIds, region, isPlaying, onSeek, onNotesChange, onHoldStart, onSelectionChange, onRegionLine, onRegionMove, onTempoLine, onEffectLine, onEffectEdit, onZoomChange, onSubdivisionChange }: EditorProps) {
   const { preferences } = usePreferences()
   const { text } = useI18n()
   const laneRef = useRef<HTMLDivElement>(null)
@@ -57,6 +58,7 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
   const seekFrameRef = useRef(0)
   const pendingViewportTimeRef = useRef(currentTime)
   const pointerCleanupRef = useRef<() => void>(() => undefined)
+  const suppressRegionClickRef = useRef(false)
   const pps = chart.settings.editorZoom
   const judgmentY = clamp(laneHeight - preferences.judgmentLineHeight, 120, Math.max(120, laneHeight - 80))
   const timelineTime = previewingSeekRef.current ? viewportTime : currentTime
@@ -88,8 +90,9 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
     return snapToBeatLine(chart, raw, subdivision)
   }
   const laneClick = (event: React.PointerEvent, lane: number) => {
+    if (event.button !== 0) return
+    if (tool === 'region') { notePointerDown(event); return }
     const time = pointerTime(event.clientY)
-    if (tool === 'region') { onRegionLine(time); return }
     if (tool === 'tempo') { onTempoLine(time); return }
     if (tool === 'effect') { onEffectLine(time); return }
     if (tool === 'delete') return
@@ -110,23 +113,33 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
       onHoldStart(null)
     }
   }
-  const notePointerDown = (event: React.PointerEvent<HTMLDivElement>, id: string) => {
+  const regionClick = (event: React.MouseEvent) => {
+    if (tool !== 'region') return
+    event.stopPropagation()
+    if (!suppressRegionClickRef.current) onRegionLine(pointerTime(event.clientY))
+    suppressRegionClickRef.current = false
+  }
+  const notePointerDown = (event: React.PointerEvent, id?: string) => {
     if (event.button !== 0) return
     event.stopPropagation(); event.preventDefault()
     pointerCleanupRef.current()
-    if (tool === 'region') { onRegionLine(pointerTime(event.clientY)); return }
+    suppressRegionClickRef.current = false
     if (tool === 'tempo') { onTempoLine(pointerTime(event.clientY)); return }
     if (tool === 'effect') { onEffectLine(pointerTime(event.clientY)); return }
     if (tool === 'delete') { onNotesChange(chart.notes.filter((note) => note.id !== id)); return }
-    const wasSelected = selectedIds.has(id)
+    const regionMode = tool === 'region'
+    if (!regionMode && !id) return
+    const wasSelected = id !== undefined && selectedIds.has(id)
     const nextSelection = new Set(selectedIds)
-    if (!wasSelected) { nextSelection.add(id); onSelectionChange(nextSelection) }
+    if (!regionMode && !wasSelected) { nextSelection.add(id!); onSelectionChange(nextSelection) }
     const startX = event.clientX
     const startY = event.clientY
     const pointerId = event.pointerId
     const dragThreshold = event.pointerType === 'touch' ? 8 : 3
     const rect = laneRef.current!.querySelector('.lanes')!.getBoundingClientRect()
-    const selectedNotes = chart.notes.filter((note) => nextSelection.has(note.id))
+    const time = pointerTime(startY)
+    const canDrag = !regionMode || (region?.end != null && (wasSelected || (id === undefined && time >= region.start && time <= region.end)))
+    const selectedNotes = canDrag ? chart.notes.filter((note) => nextSelection.has(note.id)) : []
     const earliest = Math.min(...selectedNotes.map((note) => note.time))
     const latest = Math.max(...selectedNotes.map((note) => note.endTime ?? note.time))
     let didDrag = false
@@ -134,10 +147,12 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
       if (moveEvent.pointerId !== pointerId) return
       if (!didDrag && Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) < dragThreshold) return
       didDrag = true
-      const laneDelta = Math.round((moveEvent.clientX - startX) / (rect.width / 4))
+      if (regionMode) suppressRegionClickRef.current = true
+      if (!selectedNotes.length) return
+      const laneDelta = clamp(Math.round((moveEvent.clientX - startX) / (rect.width / 4)), -Math.min(...selectedNotes.map((note) => note.lane)), 3 - Math.max(...selectedNotes.map((note) => note.lane)))
       const requestedPosition = scrollPositionAtTime(chart, earliest) - (moveEvent.clientY - startY) / pps * 1000
       const requestedTimeDelta = snapToBeatLine(chart, timeAtScrollPosition(chart, requestedPosition), subdivision) - earliest
-      const timeDelta = clamp(requestedTimeDelta, -earliest, chart.duration - latest)
+      const timeDelta = clamp(requestedTimeDelta, -Math.min(earliest, regionMode ? region!.start : earliest), chart.duration - Math.max(latest, regionMode ? region!.end! : latest))
       const preview: Record<string, { lane: number; time: number; endTime?: number }> = {}
       selectedNotes.forEach((note) => { preview[note.id] = { lane: clamp(note.lane + laneDelta, 0, 3), time: note.time + timeDelta, endTime: note.endTime === undefined ? undefined : note.endTime + timeDelta } })
       dragPreviewRef.current = preview; setDragPreview(preview)
@@ -149,8 +164,11 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
     const up = (upEvent: globalThis.PointerEvent) => {
       if (upEvent.pointerId !== pointerId) return
       const preview = dragPreviewRef.current
-      if (upEvent.type !== 'pointercancel' && didDrag && Object.keys(preview).length) onNotesChange(chart.notes.map((note) => preview[note.id] ? { ...note, ...preview[note.id] } : note))
-      else if (wasSelected) { const next = new Set(selectedIds); next.delete(id); onSelectionChange(next) }
+      if (upEvent.type !== 'pointercancel' && didDrag && Object.keys(preview).length) {
+        onNotesChange(chart.notes.map((note) => preview[note.id] ? { ...note, ...preview[note.id] } : note))
+        if (regionMode) onRegionMove?.(preview[selectedNotes[0].id].time - selectedNotes[0].time)
+      } else if (!regionMode && upEvent.type !== 'pointercancel' && wasSelected) { const next = new Set(selectedIds); next.delete(id!); onSelectionChange(next) }
+      if (regionMode && upEvent.type === 'pointercancel') suppressRegionClickRef.current = true
       dragPreviewRef.current = {}; setDragPreview({})
       cleanup()
     }
@@ -160,6 +178,7 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
   const resizeHold = (event: React.PointerEvent<HTMLButtonElement>, edge: 'start' | 'end') => {
     if (event.button !== 0) return
     event.stopPropagation(); event.preventDefault()
+    suppressRegionClickRef.current = true
     pointerCleanupRef.current()
     const holds = chart.notes.filter((note) => note.kind === 'hold' && selectedIds.has(note.id))
     if (!holds.length) return
@@ -262,6 +281,9 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
     return bins.map((value) => value / maximum)
   }, [chart.duration, chart.notes])
 
+  const regionAnchor = tool === 'region' ? chart.notes.find((note) => selectedIds.has(note.id) && dragPreview[note.id]) : undefined
+  const regionDelta = regionAnchor ? dragPreview[regionAnchor.id].time - regionAnchor.time : 0
+
   return <section className="chart-editor-stage">
     <div className="editor-body">
       <aside className="density-overview" aria-label={text('音符密集度与吸附精度', 'Note density and snap precision')}>
@@ -295,19 +317,19 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
       </aside>
       <div className={`lane-editor ${tool === 'region' || tool === 'tempo' || tool === 'effect' ? 'region-mode' : ''}`} ref={laneRef}>
         <EffectMarkers effects={chart.effects} from={visibleRange.from} to={visibleRange.to} height={laneHeight} yAt={yAt} onEdit={onEffectEdit} />
-        {region && <div className="region-overlay" style={{ top: yAt(region.end ?? region.start), height: Math.max(2, (scrollPositionAtTime(chart, region.end ?? region.start) - scrollPositionAtTime(chart, region.start)) / 1000 * pps) }} />}
+        {region && <div className="region-overlay" style={{ top: yAt((region.end ?? region.start) + regionDelta), height: Math.max(2, (scrollPositionAtTime(chart, (region.end ?? region.start) + regionDelta) - scrollPositionAtTime(chart, region.start + regionDelta)) / 1000 * pps) }} />}
         <div className="beat-layer">{lines.map((line) => {
           const y = yAt(line.time); const position = ((line.index % subdivision) + subdivision) % subdivision
           const tone = line.major ? 'major' : subdivision === 3 || (subdivision % 2 === 0 && position === subdivision / 2) ? 'blue' : 'violet'
           const tempo = chart.bpmChanges.find((change) => Math.abs(change.time - line.time) < 0.01)
           return <div key={line.index} className={`beat-line ${tone}${tempo ? ' tempo-change' : ''}`} style={{ top: y }}><span>{line.major ? Math.floor(line.beat) + 1 : ''}</span>{tempo && <b>{tempo.bpm} BPM</b>}</div>
         })}</div>
-        <div className="lanes">{[0, 1, 2, 3].map((lane) => <div className={`edit-lane lane-${lane}`} key={lane} onPointerDown={(event) => laneClick(event, lane)} />)}</div>
+        <div className="lanes">{[0, 1, 2, 3].map((lane) => <div className={`edit-lane lane-${lane}`} key={lane} onPointerDown={(event) => laneClick(event, lane)} onClick={regionClick} />)}</div>
         <div className="notes-layer">{visibleNotes.map((originalNote) => {
           const note = dragPreview[originalNote.id] ? { ...originalNote, ...dragPreview[originalNote.id] } : originalNote
           const y = yAt(note.time); const endY = note.kind === 'hold' ? yAt(note.endTime!) : y
           if (y < -150 || endY > laneHeight) return null
-          return <div key={note.id} className={`editor-note ${note.kind} ${selectedIds.has(note.id) ? 'selected' : ''} ${tool === 'delete' ? 'deletable' : ''}`} onPointerDown={(event) => notePointerDown(event, note.id)} style={{ left: `${note.lane * 25 + 1.6}%`, top: note.kind === 'hold' ? endY : y - 7, height: note.kind === 'hold' ? Math.max(16, y - endY + 12) : 14, '--lane': LANE_COLORS[note.lane] } as React.CSSProperties}><i />{note.kind === 'hold' && selectedIds.has(note.id) && <><button className="hold-resize-handle end" aria-label={text('调整 Hold 终点', 'Adjust Hold end')} onPointerDown={(event) => resizeHold(event, 'end')} /><button className="hold-resize-handle start" aria-label={text('调整 Hold 起点', 'Adjust Hold start')} onPointerDown={(event) => resizeHold(event, 'start')} /></>}</div>
+          return <div key={note.id} className={`editor-note ${note.kind} ${selectedIds.has(note.id) ? 'selected' : ''} ${tool === 'delete' ? 'deletable' : ''}`} onPointerDown={(event) => notePointerDown(event, note.id)} onClick={regionClick} style={{ left: `${note.lane * 25 + 1.6}%`, top: note.kind === 'hold' ? endY : y - 7, height: note.kind === 'hold' ? Math.max(16, y - endY + 12) : 14, '--lane': LANE_COLORS[note.lane] } as React.CSSProperties}><i />{note.kind === 'hold' && selectedIds.has(note.id) && <><button className="hold-resize-handle end" aria-label={text('调整 Hold 终点', 'Adjust Hold end')} onPointerDown={(event) => resizeHold(event, 'end')} /><button className="hold-resize-handle start" aria-label={text('调整 Hold 起点', 'Adjust Hold start')} onPointerDown={(event) => resizeHold(event, 'start')} /></>}</div>
         })}{holdStart && <div className="hold-pending" style={{ left: `${holdStart.lane * 25 + 2}%`, top: yAt(holdStart.time) - 8 }} />}</div>
         <div className="judgment-line" style={{ top: judgmentY }}><span>{isPlaying ? 'PLAYING' : 'JUDGEMENT'}</span></div>
       </div>

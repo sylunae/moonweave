@@ -1,10 +1,13 @@
+import { improvisationCopy as copy } from '@/config/app'
+import { mergeRecording, recordingConflicts } from '@/features/chart/improvisation'
+import { correctImprovisedNotes } from '@/features/chart/improvisationCorrection'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Gauge, Pause, Play, RotateCcw, Sparkles } from 'lucide-react'
 import { navigate } from '@/app/navigation'
 import { useI18n } from '@/app/i18n'
 import { usePreferences } from '@/app/preferences'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useChart } from '@/features/chart/ChartProvider'
 import { usePlatform } from '@/features/platform/PlatformProvider'
 import type { ChartNote } from '@/features/chart/types'
@@ -22,6 +25,14 @@ export default function PlaytestPage() {
   const { text } = useI18n()
   const editor = useChart()
   const platform = usePlatform()
+  const improvising = editor.improvising && !platform.session
+  const recordedRef = useRef<ChartNote[]>([])
+  const correctedRef = useRef<ChartNote[] | null>(null)
+  const committedRef = useRef(false)
+  const [exitStep, setExitStep] = useState<'save' | 'conflict' | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [recordingEnded, setRecordingEnded] = useState(false)
+  const exitOpenRef = useRef(false)
   const formalSession = platform.session
   const formalAudioRef = useRef<HTMLAudioElement>(null)
   const chart = formalSession?.chart ?? editor.chart
@@ -80,8 +91,9 @@ export default function PlaytestPage() {
 
   useEffect(() => {
     document.body.classList.toggle('official-play', Boolean(formalSession))
-    return () => document.body.classList.remove('official-play')
-  }, [formalSession])
+    document.body.classList.toggle('improvisation-play', improvising)
+    return () => document.body.classList.remove('official-play', 'improvisation-play')
+  }, [formalSession, improvising])
 
   const getRenderTime = useCallback(() => {
     if (prerollTimeRef.current !== null) return prerollTimeRef.current
@@ -218,11 +230,12 @@ export default function PlaytestPage() {
       playingRef.current = false
       setPlaying(false)
       setDisplayTime(endedAt)
-      if (formalSession) setCompleted(true)
+      if (improvising) { setRecordingEnded(true); exitOpenRef.current = true; setExitStep('save') }
+      else if (formalSession) setCompleted(true)
     }
     audio.addEventListener('ended', handleEnded)
     return () => audio.removeEventListener('ended', handleEnded)
-  }, [audioRef, formalSession])
+  }, [audioRef, formalSession, improvising])
 
   useEffect(() => {
     const video = backgroundVideoRef.current
@@ -245,6 +258,7 @@ export default function PlaytestPage() {
       bpm: chart.bpm, bpmChanges: chart.bpmChanges, effects: chart.effects, offset: chart.offset, duration: chart.duration, getTime: getRenderTime,
       getPlaying: () => playingRef.current,
       autoplay: false,
+      getRecordedNotes: () => recordedRef.current,
       transparentBackground: hasCustomBackground,
       initialRenderScale: hasVideoBackground ? 0.9 : 1,
       onStats: setStats,
@@ -261,6 +275,7 @@ export default function PlaytestPage() {
   }, [])
 
   const togglePlayback = useCallback(async () => {
+    if (exitOpenRef.current) return
     const audio = audioRef.current
     if (!audioUrl || !audio) { showToast(text('请先在编辑器的谱面信息中选择可用音频', 'Select usable audio in the editor’s Chart Info first')); return }
     if (playingRef.current) {
@@ -270,11 +285,14 @@ export default function PlaytestPage() {
       playbackClockRef.current.stop(pausedAt)
       playingRef.current = false; setPlaying(false); setDisplayTime(pausedAt); return
     }
+    const playbackEpoch = needsPrerollRef.current ? prerollEpochRef.current + 1 : prerollEpochRef.current
     const startAudio = async () => {
+      if (playbackEpoch !== prerollEpochRef.current || exitOpenRef.current) return
       prerollTimeRef.current = null
       audio.playbackRate = playbackRate
       try {
         await audio.play()
+        if (playbackEpoch !== prerollEpochRef.current || exitOpenRef.current) { audio.pause(); return }
         playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
         playingRef.current = true; setPlaying(true)
       }
@@ -299,8 +317,12 @@ export default function PlaytestPage() {
   const restart = useCallback(() => resetRun(0), [resetRun])
 
   const hitLane = useCallback((lane: number) => {
-    if (prerollTimeRef.current !== null) return
+    if (!playingRef.current || exitOpenRef.current || prerollTimeRef.current !== null || audioRef.current?.paused) return
     const now = getRenderTime(); timeRef.current = now
+    if (improvising && now >= 0 && now <= duration) {
+      const tap: ChartNote = { id: crypto.randomUUID(), lane, time: now, kind: 'note' }
+      recordedRef.current.push(tap)
+    }
     const reconnecting = notes.find((note) => note.kind === 'hold' && note.lane === lane && holdStartsRef.current.has(note.id) && !judgedRef.current.has(note.id) && now < (note.endTime ?? note.time) && droppedHoldsRef.current.has(note.id))
     if (reconnecting) { droppedHoldsRef.current.delete(reconnecting.id); rendererRef.current?.setHoldActive(reconnecting.id, true); updateActiveHoldLanes(); return }
     const laneNotes = notesByLane[lane]
@@ -321,7 +343,7 @@ export default function PlaytestPage() {
       rendererRef.current?.setHoldActive(candidate.id, true); updateActiveHoldLanes()
     } else { judgedRef.current.set(candidate.id, result); rendererRef.current?.hideNote(candidate.id) }
     registerJudgment(lane, result)
-  }, [getRenderTime, notes, notesByLane, registerJudgment, updateActiveHoldLanes, windows])
+  }, [audioRef, duration, getRenderTime, improvising, notes, notesByLane, registerJudgment, updateActiveHoldLanes, windows])
 
   const pressLane = useCallback((lane: number) => {
     if (pressedRef.current.has(lane)) return
@@ -346,26 +368,68 @@ export default function PlaytestPage() {
     releaseLane(lane)
   }, [releaseLane])
 
+  const finishLeaving = useCallback(() => {
+    audioRef.current?.pause()
+    if (formalSession) { platform.leavePlay(); navigate(formalSession.returnRoute) }
+    else { editor.setImprovising(false); editor.setCurrentTime(timeRef.current); navigate('editor') }
+  }, [audioRef, editor, formalSession, platform])
+
+  const leave = useCallback(() => {
+    if (!improvising || !recordedRef.current.length) { finishLeaving(); return }
+    prerollEpochRef.current += 1
+    cancelAnimationFrame(prerollFrameRef.current)
+    const now = audioRef.current?.currentTime ? audioRef.current.currentTime * 1000 : timeRef.current
+    audioRef.current?.pause()
+    playbackClockRef.current.stop(now)
+    timeRef.current = now
+    playingRef.current = false
+    setPlaying(false)
+    setDisplayTime(now)
+    exitOpenRef.current = true
+    setExitStep('save')
+  }, [audioRef, finishLeaving, improvising])
+
+  const saveRecording = async (overwrite?: boolean) => {
+    if (saving) return
+    if (!recordedRef.current.length) { finishLeaving(); return }
+    if (!committedRef.current && overwrite === undefined) correctedRef.current = correctImprovisedNotes(editor.chart, recordedRef.current)
+    const recorded = correctedRef.current ?? recordedRef.current
+    if (!committedRef.current && overwrite === undefined && recordingConflicts(editor.chart.notes, recorded).size) {
+      setExitStep('conflict'); return
+    }
+    setSaving(true)
+    try {
+      if (!committedRef.current) {
+        editor.commitEdit((current) => ({ ...current, notes: mergeRecording(current.notes, recorded, overwrite ?? false) }))
+        committedRef.current = true
+      }
+      if (await editor.flushActiveChart()) finishLeaving()
+      else showToast(text(copy.failed.zh, copy.failed.en))
+    } catch { showToast(text(copy.failed.zh, copy.failed.en)) }
+    finally { setSaving(false) }
+  }
+
   useEffect(() => {
     const keyMap = new Map(preferences.playKeys.map((key, lane) => [key.toLowerCase(), lane]))
     const down = (event: KeyboardEvent) => {
-      if (event.repeat) return
-      if (event.code === 'Escape') { if (formalSession) { platform.leavePlay(); navigate(formalSession.returnRoute) } else navigate('editor'); return }
+      if (event.repeat || exitOpenRef.current) return
+      if (event.code === 'Escape') { event.preventDefault(); leave(); return }
       if (event.code === 'Space') { event.preventDefault(); void togglePlayback(); return }
       const lane = keyMap.get(event.key.toLowerCase()); if (lane !== undefined) { event.preventDefault(); pressLane(lane) }
     }
     const up = (event: KeyboardEvent) => { const lane = keyMap.get(event.key.toLowerCase()); if (lane !== undefined) releaseLane(lane) }
     window.addEventListener('keydown', down); window.addEventListener('keyup', up)
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
-  }, [formalSession, platform, preferences.playKeys, pressLane, releaseLane, togglePlayback])
+  }, [leave, preferences.playKeys, pressLane, releaseLane, togglePlayback])
+
+  useEffect(() => {
+    const releaseAll = () => { for (const lane of pressedRef.current) releaseLane(lane) }
+    window.addEventListener('blur', releaseAll)
+    return () => window.removeEventListener('blur', releaseAll)
+  }, [releaseLane])
 
   const laneX = (lane: number) => getPlaytestLaneCenterPercent(lane, preferences.laneTilt)
   const trackInset = `${(1 - getPlaytestTrackHalfWidth(preferences.laneTilt)) * 50}%`
-  const leave = () => {
-    audioRef.current?.pause()
-    if (formalSession) { platform.leavePlay(); navigate(formalSession.returnRoute) }
-    else { editor.setCurrentTime(timeRef.current); navigate('editor') }
-  }
 
   return <div className="playtest-page page-enter" style={{ '--playtest-track-inset': trackInset } as React.CSSProperties}>
     {formalSession && <audio ref={formalAudioRef} src={audioUrl} preload="auto" />}
@@ -375,8 +439,8 @@ export default function PlaytestPage() {
     <div className="playtest-vignette" /><div className="playtest-judgment-line" />
     <header className="playtest-header">
       <Button variant="outline" onClick={leave}><ArrowLeft />{formalSession ? text('退出游玩', 'Leave play') : text('返回编辑器', 'Back to editor')}</Button>
-      <div className="playtest-title"><span className="eyebrow">MOONWEAVE · {formalSession ? 'OFFICIAL PLAY' : 'PLAYTEST'}</span><strong>{chart.title}</strong><small>{chart.artist || chart.audioName}</small></div>
-      <div className="playtest-header-actions"><Button variant="outline" size="icon" title={text('重新开始', 'Restart')} onClick={restart}><RotateCcw /></Button><Button variant="outline" size="icon" title={playing ? text('暂停', 'Pause') : text('播放', 'Play')} onClick={() => void togglePlayback()}>{playing ? <Pause /> : <Play />}</Button></div>
+      <div className="playtest-title"><span className="eyebrow">MOONWEAVE · {improvising ? text(copy.title.zh, copy.title.en) : formalSession ? 'OFFICIAL PLAY' : 'PLAYTEST'}</span><strong>{chart.title}</strong><small>{chart.artist || chart.audioName}</small></div>
+      <div className="playtest-header-actions"><Button variant="outline" size="icon" title={text('重新开始', 'Restart')} disabled={improvising} onClick={restart}><RotateCcw /></Button><Button variant="outline" size="icon" title={playing ? text('暂停', 'Pause') : text('播放', 'Play')} onClick={() => void togglePlayback()}>{playing ? <Pause /> : <Play />}</Button></div>
     </header>
     <aside className="playtest-score"><span>SCORE</span><strong>{score.toString().padStart(8, '0')}</strong><span>ACCURACY</span><strong>{accuracy.toFixed(2)}%</strong></aside>
     <aside className="playtest-performance"><div><Gauge /><span><b>{stats.fps || '—'} FPS · P95 {stats.frameTimeP95.toFixed(1)} MS</b><small>MAX {stats.frameTimeMax.toFixed(1)} MS · {Math.round(stats.renderScale * 100)}% SCALE</small></span></div><div><Sparkles /><span><b>{stats.notes} NOTES · {stats.particles} FX</b><small>{stats.longFramePercent.toFixed(1)}% LONG · {stats.clockStalls} CLOCK STALLS</small></span></div></aside>
@@ -384,9 +448,18 @@ export default function PlaytestPage() {
     {feedback.map((effect) => <div key={`judge-${effect.id}`} className={`playtest-judge-text ${effect.result.toLowerCase()}`} style={{ left: `${laneX(effect.lane)}%` }}>{effect.result}</div>)}
     {[...activeHoldLanes].map((lane) => <i key={lane} className={`playtest-hold-effect ${lane === 0 || lane === 3 ? 'light' : 'conflict'}`} style={{ left: `${laneX(lane)}%`, backgroundImage: `url(${effectTexture(lane)})` }} />)}
     {combo > 0 && <div key={combo} className="playtest-combo"><b>{combo}</b><span>COMBO</span></div>}
-    {!playing && !completed && <Button variant="outline" className="playtest-paused" onClick={() => void togglePlayback()}><Play fill="currentColor" /><b>{displayTime > 0 ? text('继续', 'Continue') : formalSession ? text('开始游玩', 'Start play') : text('开始试玩', 'Start playtest')}</b><span>SPACE</span></Button>}
+    {!playing && !completed && !exitStep && <Button variant="outline" className="playtest-paused" onClick={() => void togglePlayback()}><Play fill="currentColor" /><b>{displayTime > 0 ? text('继续', 'Continue') : formalSession ? text('开始游玩', 'Start play') : text('开始试玩', 'Start playtest')}</b><span>SPACE</span></Button>}
     <div className="playtest-key-caps">{preferences.playKeys.map((key, lane) => <button key={`${key}-${lane}`} aria-label={text(`轨道 ${lane + 1}，按键 ${key}`, `Lane ${lane + 1}, key ${key}`)} className={pressed.has(lane) ? 'pressed' : ''} style={{ '--lane-x': `${laneX(lane)}%` } as React.CSSProperties} onContextMenu={(event) => event.preventDefault()} onPointerDown={(event) => pressTouchLane(event, lane)} onPointerUp={(event) => releaseTouchLane(event, lane)} onPointerCancel={(event) => releaseTouchLane(event, lane)} onLostPointerCapture={() => releaseLane(lane)}><span>{key}</span></button>)}</div>
     <div className="playtest-progress"><i style={{ width: `${Math.max(0, Math.min(100, displayTime / Math.max(1, duration) * 100))}%` }} /></div>
+    <Dialog open={exitStep !== null} onOpenChange={(open) => { if (!open && !saving && !committedRef.current && !recordingEnded) { exitOpenRef.current = false; setExitStep(null) } }}><DialogContent size="md" showCloseButton={!saving && !committedRef.current && !recordingEnded} onEscapeKeyDown={(event) => { if (saving || committedRef.current || recordingEnded) event.preventDefault() }} onInteractOutside={(event) => event.preventDefault()}>
+      <DialogHeader><DialogTitle>{text((exitStep === 'conflict' ? copy.conflict : copy.save).zh, (exitStep === 'conflict' ? copy.conflict : copy.save).en)}</DialogTitle><DialogDescription>{text((exitStep === 'conflict' ? copy.conflictDescription : copy.description).zh, (exitStep === 'conflict' ? copy.conflictDescription : copy.description).en)} · {recordedRef.current.length} NOTES</DialogDescription></DialogHeader>
+      <DialogFooter className="sm:flex-wrap">
+        {!committedRef.current && !recordingEnded && <Button variant="outline" disabled={saving} onClick={() => { exitOpenRef.current = false; setExitStep(null) }}>{text(copy.cancel.zh, copy.cancel.en)}</Button>}
+        {!committedRef.current && <Button variant="outline" disabled={saving} onClick={finishLeaving}>{text(copy.discard.zh, copy.discard.en)}</Button>}
+        {exitStep === 'conflict' && !committedRef.current && <Button variant="outline" disabled={saving} onClick={() => void saveRecording(false)}>{text(copy.keep.zh, copy.keep.en)}</Button>}
+        <Button disabled={saving} onClick={() => void saveRecording(exitStep === 'conflict' ? true : undefined)}>{text((exitStep === 'conflict' && !committedRef.current ? copy.overwrite : copy.confirm).zh, (exitStep === 'conflict' && !committedRef.current ? copy.overwrite : copy.confirm).en)}</Button>
+      </DialogFooter>
+    </DialogContent></Dialog>
     <Dialog open={completed} onOpenChange={() => undefined}><DialogContent showCloseButton={false} className="result-dialog">
       <DialogHeader><span className="eyebrow">PLAY RESULT</span><DialogTitle>{text('演奏完成', 'Chart cleared')}</DialogTitle><DialogDescription>{chart.title} · {chart.artist}</DialogDescription></DialogHeader>
       <div className="result-grade">{accuracy >= 99 ? 'SS' : accuracy >= 95 ? 'S' : accuracy >= 90 ? 'A' : accuracy >= 80 ? 'B' : 'C'}</div>

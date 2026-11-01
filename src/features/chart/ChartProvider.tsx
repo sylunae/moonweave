@@ -25,6 +25,8 @@ const webSummary = (id: string, chart: Chart, updatedAt: number, coverUrl = ''):
 
 interface ChartContextValue {
   chart: Chart
+  improvising: boolean
+  setImprovising(value: boolean): void
   setChart: React.Dispatch<React.SetStateAction<Chart>>
   activeChartId: string
   charts: ChartLibraryItem[]
@@ -75,6 +77,7 @@ function chooseLocalFiles(accept: string, multiple = false) {
 
 export function ChartProvider({ children }: { children: React.ReactNode }) {
   const { setPreferences } = usePreferences()
+  const [improvising, setImprovising] = useState(false)
   const [chart, setChart] = useState<Chart>(freshChart)
   const [activeChartId, setActiveChartId] = useState('')
   const [charts, setCharts] = useState<ChartLibraryItem[]>([])
@@ -553,10 +556,10 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     webCoverUrlsRef.current.clear()
   }, [])
   const value = useMemo<ChartContextValue>(() => ({
-    chart, setChart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, audioRef, currentTime, isPlaying,
+    improvising, setImprovising, chart, setChart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, audioRef, currentTime, isPlaying,
     historyLength: history.length, futureLength: future.length, toast,
     setCurrentTime, setPlaybackRate, commitNotes, commitEdit, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast,
-  }), [chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, setPlaybackRate, commitNotes, commitEdit, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
+  }), [improvising, chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, setPlaybackRate, commitNotes, commitEdit, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
   return <ChartContext.Provider value={value}>
     <audio ref={audioRef} src={audioUrl || undefined} preload="auto" onLoadedMetadata={(event) => {
       const duration = event.currentTarget.duration * 1000

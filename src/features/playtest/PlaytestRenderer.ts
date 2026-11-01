@@ -40,6 +40,7 @@ interface PlaytestRendererOptions {
   offset: number
   duration: number
   getTime(): number
+  getRecordedNotes?(): ChartNote[]
   getPlaying(): boolean
   autoplay: boolean
   transparentBackground?: boolean
@@ -60,6 +61,7 @@ layout(location=1) in vec4 iNote;
 layout(location=2) in float iColor;
 layout(location=3) in float iActive;
 uniform float uTime;
+uniform float uRealTime;
 uniform float uHorizon;
 uniform float uTilt;
 uniform float uTrackWidth;
@@ -75,7 +77,8 @@ float visualScreenY(float noteTime) {
   float curveRange = exp(curve) - 1.0;
   float startSlope = curve > 0.0001 ? curve / curveRange : 1.0;
   float endSlope = curve > 0.0001 ? curve * exp(curve) / curveRange : 1.0;
-  float progress = 1.0 - (noteTime - uTime) / uHorizon;
+  float distance = iActive < -0.5 ? uRealTime - noteTime : noteTime - uTime;
+  float progress = 1.0 - distance / uHorizon;
   float eased = progress < 0.0 ? progress * startSlope
     : progress > 1.0 ? 1.0 + (progress - 1.0) * endSlope
     : curve > 0.0001 ? (exp(curve * progress) - 1.0) / curveRange
@@ -332,6 +335,7 @@ export class PlaytestRenderer {
   private slowWindows = 0
   private fastWindows = 0
   private lastVisibleKey = ''
+  private noteCapacity = 0
   private visibleCount = 0
   private drawCalls = 0
   private lastTime = 0
@@ -354,7 +358,7 @@ export class PlaytestRenderer {
     this.notes = [...options.notes].sort((a, b) => a.time - b.time)
     this.geometry = createSpeedGeometry(this.notes, options.effects)
     this.visualBeats = beatLinesInRange(options, 0, options.duration, 1).map((line) => ({ time: line.time, position: this.geometry.map.positionAt(line.time) }))
-    this.noteProgram = compileProgram(gl, NOTE_VERTEX, NOTE_FRAGMENT, ['uTime', 'uHorizon', 'uTilt', 'uTrackWidth', 'uViewportHeight', 'uColors'])
+    this.noteProgram = compileProgram(gl, NOTE_VERTEX, NOTE_FRAGMENT, ['uTime', 'uRealTime', 'uHorizon', 'uTilt', 'uTrackWidth', 'uViewportHeight', 'uColors'])
     this.trackProgram = compileProgram(gl, TRACK_VERTEX, TRACK_FRAGMENT, ['uTilt', 'uTrackWidth', 'uTrackGeometry', 'uColor'])
     this.glowProgram = compileProgram(gl, GLOW_VERTEX, GLOW_FRAGMENT, ['uTrackWidth', 'uColor'])
     this.particleProgram = compileProgram(gl, PARTICLE_VERTEX, PARTICLE_FRAGMENT, ['uTime', 'uAspect', 'uTexture', 'uColors'])
@@ -574,10 +578,13 @@ export class PlaytestRenderer {
     const candidates = this.geometry.visible(position - horizon * (100 / 86 - 1) - 260, position + horizon)
     const visible = candidates.filter((piece) => !this.hiddenNotes.has(piece.sourceId) &&
       (piece.sourceEndTime >= time - 260 || this.startedHolds.has(piece.sourceId)))
-    const key = `notes:${visible.map((piece) => `${piece.id}:${this.activeHolds.has(piece.sourceId)}`).join(',')}`
+    const recorded = this.options.getRecordedNotes?.() ?? []
+    const firstRecorded = lowerBound(recorded, time - horizon * 1.1)
+    const reverse = recorded.slice(firstRecorded).filter((note) => note.time <= time)
+    const key = `reverse:${reverse.map((note) => note.id).join(',')};notes:${visible.map((piece) => `${piece.id}:${this.activeHolds.has(piece.sourceId)}`).join(',')}`
     if (key === this.lastVisibleKey) return
     this.lastVisibleKey = key
-    const data = new Float32Array(visible.length * NOTE_STRIDE)
+    const data = new Float32Array((visible.length + reverse.length) * NOTE_STRIDE)
     visible.forEach((note, index) => {
       const offset = index * NOTE_STRIDE
       data[offset] = note.lane
@@ -587,9 +594,21 @@ export class PlaytestRenderer {
       data[offset + 4] = note.lane
       data[offset + 5] = this.activeHolds.has(note.sourceId) ? 1 : 0
     })
-    this.visibleCount = visible.length
+    reverse.forEach((note, index) => {
+      const offset = (visible.length + index) * NOTE_STRIDE
+      data[offset] = note.lane
+      data[offset + 1] = note.time
+      data[offset + 2] = note.time
+      data[offset + 4] = note.lane
+      data[offset + 5] = -1
+    })
+    this.visibleCount = visible.length + reverse.length
     const gl = this.gl
     gl.bindBuffer(gl.ARRAY_BUFFER, this.noteInstances)
+    if (data.byteLength > this.noteCapacity) {
+      this.noteCapacity = Math.max(data.byteLength, this.noteCapacity * 2, 1024)
+      gl.bufferData(gl.ARRAY_BUFFER, this.noteCapacity, gl.DYNAMIC_DRAW)
+    }
     if (data.byteLength) gl.bufferSubData(gl.ARRAY_BUFFER, 0, data)
   }
 
@@ -689,6 +708,7 @@ export class PlaytestRenderer {
     gl.useProgram(program)
     gl.bindVertexArray(this.noteVao)
     gl.uniform1f(uniforms.uTime, this.geometry.map.positionAt(time))
+    gl.uniform1f(uniforms.uRealTime, time)
     gl.uniform1f(uniforms.uHorizon, getPlaytestHorizon(HORIZON_MS, this.options.scrollSpeed, this.options.laneTilt))
     gl.uniform1f(uniforms.uTilt, this.options.laneTilt / 45)
     gl.uniform1f(uniforms.uTrackWidth, getPlaytestTrackHalfWidth(this.options.laneTilt))

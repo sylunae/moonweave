@@ -1,6 +1,6 @@
 import { EffectsModule, useEffectsEditor } from '@/features/chart/effects/EffectsModule'
 import { shiftChartOffset } from '@/features/chart/editHistory'
-import { editorEffects } from '@/config/app'
+import { editorEffects, improvisationCopy } from '@/config/app'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   BookOpen, ClipboardPaste, Copy, FlipHorizontal2, Gamepad2, Gauge, ImagePlus,
@@ -51,7 +51,7 @@ const playCopyConfirmation = () => {
 export default function ChartEditorPage() {
   const { text } = useI18n()
   const {
-    chart, setChart, commitEdit, activeChartId, storageStatus, coverUrl, currentTime, setCurrentTime, setPlaybackRate,
+    chart, setChart, setImprovising, commitEdit, activeChartId, storageStatus, coverUrl, currentTime, setCurrentTime, setPlaybackRate,
     isPlaying, historyLength, futureLength, commitNotes, undo, redo, flushActiveChart, togglePlay,
     chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, showToast,
   } = useChart()
@@ -156,9 +156,10 @@ export default function ChartEditorPage() {
       return SUBDIVISIONS[clamp(index + direction, 0, SUBDIVISIONS.length - 1)]
     })
   }, [])
-  const startRegionSelection = useCallback(() => {
-    setTool('region'); setHoldStart(null); setSelectedIds(new Set()); setRegion(null)
-  }, [])
+  const toggleActionTool = useCallback((next: 'region' | 'delete') => {
+    resetToolContext(tool === next ? 'note' : next)
+    setSelectedIds(new Set()); setRegion(null)
+  }, [resetToolContext, tool])
   const chooseTempoLine = useCallback((time: number) => {
     const existing = chart.bpmChanges.find((change) => Math.abs(change.time - time) < 0.01)
     setTempoTime(time)
@@ -178,13 +179,14 @@ export default function ChartEditorPage() {
     commitEdit((previous) => ({ ...previous, bpmChanges: previous.bpmChanges.filter((change) => Math.abs(change.time - time) >= 0.01) }))
     setTempoTime(null); showToast(text('已删除 BPM 变化点', 'BPM change removed'))
   }, [commitEdit, showToast, text])
-  const startPlaytest = useCallback(async (fromStart: boolean) => {
+  const startPlaytest = useCallback(async (fromStart: boolean, improvise = false) => {
     const pendingTime = editorRef.current?.flushSeek()
     if (isPlaying) await togglePlay(playbackRate, subdivision)
     setCurrentTime(fromStart ? 0 : pendingTime ?? currentTime)
+    setImprovising(improvise)
     setOpenSheet(null)
     navigate('playtest')
-  }, [currentTime, isPlaying, playbackRate, setCurrentTime, subdivision, togglePlay])
+  }, [currentTime, isPlaying, playbackRate, setCurrentTime, setImprovising, subdivision, togglePlay])
 
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
@@ -221,14 +223,15 @@ export default function ChartEditorPage() {
         selectedIds={selectedIds} region={region} isPlaying={isPlaying} onSeek={setCurrentTime}
         onNotesChange={commitNotes} onHoldStart={setHoldStart} onSelectionChange={setSelectedIds}
         onRegionLine={chooseRegionLine} onTempoLine={chooseTempoLine} onEffectLine={effectsEditor.onLine} onEffectEdit={effectsEditor.edit}
+        onRegionMove={(delta) => setRegion((current) => current && current.end !== null ? { start: current.start + delta, end: current.end + delta } : current)}
         onZoomChange={(editorZoom) => setChart((current) => ({ ...current, settings: { ...current.settings, editorZoom } }))}
         onSubdivisionChange={changeSubdivision}
       />
 
       <aside className="editor-action-rail editor-action-rail-left" aria-label={text('常用编辑操作', 'Common editing actions')}>
         <button className="editor-action primary" onClick={() => void toggleEditorPlay()}><span>{isPlaying ? <Pause /> : <Play />}</span><b>{isPlaying ? text('暂停', 'Pause') : text('播放', 'Play')}</b></button>
-        <button className={`editor-action${tool === 'region' ? ' active' : ''}`} onClick={startRegionSelection}><span><ScanSearch /></span><b>{text('区域', 'Region')}</b></button>
-        <button className={`editor-action danger${tool === 'delete' ? ' active' : ''}`} onClick={deleteSelection}><span><Trash2 /></span><b>{text('删除', 'Delete')}</b></button>
+        <button className={`editor-action${tool === 'region' ? ' active' : ''}`} aria-pressed={tool === 'region'} onClick={() => toggleActionTool('region')}><span><ScanSearch /></span><b>{text('区域', 'Region')}</b></button>
+        <button className={`editor-action danger${tool === 'delete' ? ' active' : ''}`} aria-pressed={tool === 'delete'} onClick={() => toggleActionTool('delete')}><span><Trash2 /></span><b>{text('删除', 'Delete')}</b></button>
         <div className="editor-compact-actions">
           <Tooltip><TooltipTrigger asChild><span><button disabled={!selectedNotes.length} onClick={copySelection} aria-label={text('复制选中音符', 'Copy selected notes')}><Copy /></button></span></TooltipTrigger><TooltipContent side="right" sideOffset={9}>{selectedNotes.length ? text(`复制选中的 ${selectedNotes.length} 个音符`, `Copy ${selectedNotes.length} selected notes`) : text('请选择要复制的音符', 'Select notes to copy')}</TooltipContent></Tooltip>
           <Tooltip><TooltipTrigger asChild><span><button disabled={!clipboard?.notes.length} onClick={pasteAtCurrentBeat} aria-label={text('粘贴到当前判定线', 'Paste at the current judgment line')}><ClipboardPaste /></button></span></TooltipTrigger><TooltipContent side="right" sideOffset={9}>{clipboard?.notes.length ? text(`粘贴 ${clipboard.notes.length} 个音符到当前判定线`, `Paste ${clipboard.notes.length} notes at the current judgment line`) : text('复制音符后可粘贴', 'Copy notes before pasting')}</TooltipContent></Tooltip>
@@ -314,6 +317,7 @@ export default function ChartEditorPage() {
       <SheetContent className="editor-sheet playtest-entry-sheet">
         <SheetHeader><SheetTitle>{text('谱面试玩', 'Playtest')}</SheetTitle><SheetDescription>{text('选择这次试玩的开始位置。', 'Choose where to begin this playtest.')}</SheetDescription></SheetHeader>
         <div className="playtest-entry-options">
+          <button onClick={() => void startPlaytest(false, true)}><span><Sparkles /></span><div><strong>{text(improvisationCopy.title.zh, improvisationCopy.title.en)}</strong><small>{text(improvisationCopy.entry.zh, improvisationCopy.entry.en)}</small></div></button>
           <button onClick={() => void startPlaytest(false)}><span><Play /></span><div><strong>{text('从当前位置开始', 'Start at current position')}</strong><small>{formatTime(currentTime)} · {text('跳过此前音符', 'Skip earlier notes')}</small></div></button>
           <button onClick={() => void startPlaytest(true)}><span><Gamepad2 /></span><div><strong>{text('从头开始', 'Start from beginning')}</strong><small>00:00.000 · {text('完整试玩整份谱面', 'Play the full chart')}</small></div></button>
         </div>

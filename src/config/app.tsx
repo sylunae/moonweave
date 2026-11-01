@@ -1,6 +1,21 @@
 import { Library, Piano } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+export const improvisationCopy = {
+  title: { zh: '即兴制谱', en: 'Improvise' },
+  entry: { zh: '从当前位置演奏 · 记录敲击并向上退场', en: 'Play from here · Record taps moving upward' },
+  save: { zh: '保存这次即兴演奏？', en: 'Save this performance?' },
+  description: { zh: '按当前谱面的节拍网格，根据密度对齐至 1/4、1/8 或 1/16 拍，可撤销。', en: 'Align taps to this chart’s beat grid at 1/4, 1/8 or 1/16 of a beat based on density. You can undo this.' },
+  discard: { zh: '不保存并退出', en: 'Discard and exit' },
+  confirm: { zh: '保存到制谱器', en: 'Save to editor' },
+  cancel: { zh: '继续演奏', en: 'Continue performance' },
+  conflict: { zh: '这些位置已有音符', en: 'Notes already occupy these positions' },
+  conflictDescription: { zh: '覆盖会替换同轨道重叠的原音符（包含长按）；保留则跳过冲突的新音符，其余敲击仍会保存。', en: 'Overwrite replaces overlapping notes in the same lane, including holds. Keep existing skips conflicting new taps and saves the rest.' },
+  overwrite: { zh: '覆盖重叠音符', en: 'Overwrite overlaps' },
+  keep: { zh: '保留原音符', en: 'Keep existing' },
+  failed: { zh: '保存失败，演奏结果仍保留，请重试', en: 'Save failed. Your recording is retained; retry saving.' },
+} as const
+
 export const editorEffects = {
   title: { zh: '特效', en: 'Effects' },
   scrollSpeed: { zh: '变速', en: 'Scroll speed' },
