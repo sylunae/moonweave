@@ -1,0 +1,445 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Moonweave AI chart v1",
+  "description": "Structural validation only. Moonweave also validates audio identity, timing, ranges, revisions, unique IDs and lane collisions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "requestId",
+    "mode",
+    "unit",
+    "song"
+  ],
+  "properties": {
+    "format": {
+      "const": "moonweave-ai-chart"
+    },
+    "version": {
+      "const": 1
+    },
+    "requestId": {
+      "$ref": "#/$defs/id"
+    },
+    "mode": {
+      "enum": [
+        "replace",
+        "segment",
+        "patch"
+      ]
+    },
+    "unit": {
+      "enum": [
+        "ms",
+        "beat"
+      ]
+    },
+    "song": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "audioName",
+        "duration",
+        "bpm",
+        "offset",
+        "bpmChanges"
+      ],
+      "properties": {
+        "audioName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "duration": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "bpm": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 400
+        },
+        "offset": {
+          "type": "number"
+        },
+        "bpmChanges": {
+          "type": "array",
+          "maxItems": 50000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "time",
+              "bpm"
+            ],
+            "properties": {
+              "time": {
+                "type": "number",
+                "minimum": 0
+              },
+              "bpm": {
+                "type": "number",
+                "minimum": 20,
+                "maximum": 400
+              }
+            }
+          }
+        }
+      }
+    },
+    "target": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "chartId",
+            "revision"
+          ],
+          "properties": {
+            "chartId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "revision": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "afterRequestId",
+            "notesRevision"
+          ],
+          "properties": {
+            "afterRequestId": {
+              "$ref": "#/$defs/id"
+            },
+            "notesRevision": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        }
+      ]
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "type": "number"
+        },
+        "end": {
+          "type": "number"
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "maxItems": 50000
+    },
+    "operations": {
+      "type": "array",
+      "maxItems": 50000
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "replace"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "notes"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "range"
+              ]
+            },
+            {
+              "required": [
+                "operations"
+              ]
+            }
+          ]
+        }
+      },
+      "else": {
+        "required": [
+          "target",
+          "range"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "segment"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "notes"
+        ],
+        "not": {
+          "required": [
+            "operations"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "patch"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "operations"
+        ],
+        "not": {
+          "required": [
+            "notes"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "unit": {
+            "const": "ms"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "notes": {
+            "items": {
+              "$ref": "#/$defs/msNote"
+            }
+          },
+          "operations": {
+            "items": {
+              "$ref": "#/$defs/msOperation"
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "notes": {
+            "items": {
+              "$ref": "#/$defs/beatNote"
+            }
+          },
+          "operations": {
+            "items": {
+              "$ref": "#/$defs/beatOperation"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "\\S"
+    },
+    "msNote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "lane",
+        "time"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "note",
+            "hold"
+          ]
+        },
+        "lane": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0
+        },
+        "endTime": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "hold"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "endTime"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "endTime"
+          ]
+        }
+      }
+    },
+    "beatNote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "lane",
+        "beat"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "note",
+            "hold"
+          ]
+        },
+        "lane": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "beat": {
+          "type": "number"
+        },
+        "endBeat": {
+          "type": "number"
+        }
+      },
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "hold"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "endBeat"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "endBeat"
+          ]
+        }
+      }
+    },
+    "delete": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "id"
+      ],
+      "properties": {
+        "op": {
+          "const": "delete"
+        },
+        "id": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    },
+    "msOperation": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/delete"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "note"
+          ],
+          "properties": {
+            "op": {
+              "enum": [
+                "add",
+                "update"
+              ]
+            },
+            "note": {
+              "$ref": "#/$defs/msNote"
+            }
+          }
+        }
+      ]
+    },
+    "beatOperation": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/delete"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "note"
+          ],
+          "properties": {
+            "op": {
+              "enum": [
+                "add",
+                "update"
+              ]
+            },
+            "note": {
+              "$ref": "#/$defs/beatNote"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

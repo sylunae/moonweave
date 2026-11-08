@@ -31,6 +31,7 @@ it('applies playback rate immediately to audio and timeline without pausing, see
     await act(async () => { root.render(<ChartProvider><Harness /></ChartProvider>) })
     const audio = context!.audioRef.current!
     Object.defineProperty(audio, 'paused', { get: () => paused })
+    Object.defineProperty(audio, 'readyState', { value: 4 })
     await act(async () => context!.togglePlay(1, 4))
     audio.currentTime = 3.125
     pause.mockClear(); play.mockClear(); dependencies.setPreferences.mockClear()
@@ -66,9 +67,9 @@ it('applies playback rate immediately to audio and timeline without pausing, see
   }
 })
 
-it('stays synchronized across repeated pause, seek, resume, buffering and delayed pause events', async () => {
+it('stays synchronized across repeated pause, seek, resume, buffering and delayed media events', async () => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-  let paused = true, seeking = false
+  let paused = true, seeking = false, readyState = 4
   let frame: FrameRequestCallback = () => {}
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frame = callback; return 1 })
   const cancel = vi.fn()
@@ -87,6 +88,7 @@ it('stays synchronized across repeated pause, seek, resume, buffering and delaye
     const audio = context!.audioRef.current!
     Object.defineProperty(audio, 'paused', { get: () => paused })
     Object.defineProperty(audio, 'seeking', { get: () => seeking })
+    Object.defineProperty(audio, 'readyState', { get: () => readyState })
     await act(async () => context!.togglePlay(1, 4))
     for (const target of [10000, 2000, 8000, 1000]) {
       await act(async () => context!.togglePlay(1, 4))
@@ -106,20 +108,72 @@ it('stays synchronized across repeated pause, seek, resume, buffering and delaye
       await act(async () => audio.dispatchEvent(new Event('pause')))
       expect(cancel).not.toHaveBeenCalled()
       expect(context!.isPlaying).toBe(true)
+      // The decoder has not advanced yet, even though play/seeked completed.
+      now.mockReturnValue(performance.now() + 300)
+      await act(async () => frame(performance.now()))
+      expect(context!.currentTime).toBe(target)
       now.mockReturnValue(performance.now() + 16)
+      audio.currentTime = (target + 16) / 1000
       await act(async () => frame(performance.now()))
       expect(context!.currentTime).toBeCloseTo(target + 16)
-      audio.currentTime = (target + 16) / 1000
     }
+    readyState = 2
     await act(async () => audio.dispatchEvent(new Event('waiting')))
     const beforeWaiting = audio.currentTime * 1000
     now.mockReturnValue(performance.now() + 2000)
     await act(async () => frame(performance.now()))
     expect(context!.currentTime).toBe(beforeWaiting)
+    readyState = 4
     await act(async () => audio.dispatchEvent(new Event('playing')))
     now.mockReturnValue(performance.now() + 16)
+    audio.currentTime = (beforeWaiting + 16) / 1000
     await act(async () => frame(performance.now()))
     expect(context!.currentTime).toBeCloseTo(beforeWaiting + 16)
+
+    // A queued seeking/waiting event can arrive after the media recovered.
+    await act(async () => {
+      audio.dispatchEvent(new Event('seeking'))
+      audio.dispatchEvent(new Event('waiting'))
+    })
+    now.mockReturnValue(performance.now() + 16)
+    await act(async () => frame(performance.now()))
+    expect(context!.currentTime).toBeCloseTo(beforeWaiting + 32)
+
+    for (const target of [9000, 2500, 7000, 500]) {
+      seeking = true; readyState = 2
+      await act(async () => {
+        context!.setCurrentTime(target)
+        audio.dispatchEvent(new Event('seeking'))
+        audio.dispatchEvent(new Event('waiting'))
+      })
+      // playing may precede seeked; it must still clear the old waiting state.
+      readyState = 4
+      await act(async () => audio.dispatchEvent(new Event('playing')))
+      seeking = false
+      await act(async () => audio.dispatchEvent(new Event('seeked')))
+      now.mockReturnValue(performance.now() + 16)
+      audio.currentTime = (target + 16) / 1000
+      await act(async () => frame(performance.now()))
+      expect(context!.currentTime).toBeCloseTo(target + 16)
+    }
+
+    // seeked is not proof that the audio has enough data to resume output.
+    seeking = true; readyState = 2
+    await act(async () => {
+      context!.setCurrentTime(3000)
+      audio.dispatchEvent(new Event('seeking'))
+    })
+    seeking = false
+    await act(async () => audio.dispatchEvent(new Event('seeked')))
+    now.mockReturnValue(performance.now() + 500)
+    await act(async () => frame(performance.now()))
+    expect(context!.currentTime).toBe(3000)
+    readyState = 4
+    await act(async () => audio.dispatchEvent(new Event('playing')))
+    now.mockReturnValue(performance.now() + 16)
+    audio.currentTime = 3.016
+    await act(async () => frame(performance.now()))
+    expect(context!.currentTime).toBeCloseTo(3016)
   } finally {
     await act(async () => root.unmount())
     element.remove(); URL.createObjectURL = originalCreate; URL.revokeObjectURL = originalRevoke

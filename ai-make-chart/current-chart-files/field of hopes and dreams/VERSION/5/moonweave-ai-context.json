@@ -1,0 +1,70 @@
+{
+  "format": "moonweave-ai-context",
+  "version": 1,
+  "target": {
+    "chartId": "c6637b3f-ca51-492a-85d1-4a8d024bf17a",
+    "revision": "sha256:0cdf06df42f62670109582b62024a31e8f6be11835969bb8024cb0f513c5d732"
+  },
+  "title": "AI制谱测试5（midi）",
+  "artist": "",
+  "song": {
+    "audioName": "the-field-of-hopes-and-dreams-deltarune-arranged-for-piano.mp3",
+    "duration": 163267.732,
+    "bpm": 125,
+    "offset": 0,
+    "bpmChanges": []
+  },
+  "conventions": {
+    "timeUnit": "ms",
+    "beatUnit": "quarter-note",
+    "beatZeroAtMs": 0,
+    "lanesLeftToRight": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "range": "[start,end); hold endpoints must be inside; crossing holds are read-only",
+    "audioIdentity": "filename-and-duration; use the identical original WAV",
+    "bpmChangeTimeUnit": "ms, even when output unit is beat"
+  },
+  "cursor": {
+    "time": 0,
+    "beat": 0,
+    "bpm": 125,
+    "subdivision": 4,
+    "isPlaying": false
+  },
+  "range": {
+    "start": 0,
+    "end": 163267.732,
+    "startBeat": 0,
+    "endBeat": 340.1411083333333
+  },
+  "notes": [],
+  "notesTruncated": false,
+  "totalNearbyNotes": 0,
+  "outputTemplate": {
+    "format": "moonweave-ai-chart",
+    "version": 1,
+    "requestId": "6ab24680-236e-4c4a-b5cf-b1e186b7a932",
+    "mode": "segment",
+    "unit": "ms",
+    "target": {
+      "chartId": "c6637b3f-ca51-492a-85d1-4a8d024bf17a",
+      "revision": "sha256:0cdf06df42f62670109582b62024a31e8f6be11835969bb8024cb0f513c5d732"
+    },
+    "song": {
+      "audioName": "the-field-of-hopes-and-dreams-deltarune-arranged-for-piano.mp3",
+      "duration": 163267.732,
+      "bpm": 125,
+      "offset": 0,
+      "bpmChanges": []
+    },
+    "range": {
+      "start": 0,
+      "end": 163267.732
+    },
+    "notes": []
+  }
+}

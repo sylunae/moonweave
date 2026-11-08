@@ -1,6 +1,6 @@
 import { beatLinesInRange } from '@/features/chart/tempoMap'
 import type { ChartEffect } from '@/features/chart/effects/scrollSpeed'
-import { createSpeedGeometry } from './speedGeometry'
+import { createSpeedGeometry, type VisualNote } from './speedGeometry'
 import type { BpmChange, ChartNote } from '@/features/chart/types'
 import { getPlaytestHorizon, getPlaytestTrackHalfWidth } from '@/features/playtest/playtestGeometry'
 
@@ -334,7 +334,13 @@ export class PlaytestRenderer {
   private statsFrames = 0
   private slowWindows = 0
   private fastWindows = 0
-  private lastVisibleKey = ''
+  private readonly visibleCandidates: VisualNote[] = []
+  private noteData = new Float32Array(0)
+  private particleDirtyStart = MAX_PARTICLES
+  private particleDirtyEnd = 0
+  private viewportHeight = 1
+  private lastDevicePixelRatio = 0
+  private lastWindowWidth = 0
   private noteCapacity = 0
   private visibleCount = 0
   private drawCalls = 0
@@ -560,10 +566,13 @@ export class PlaytestRenderer {
   private resize() {
     const { canvas } = this.options
     const nativeDpr = window.devicePixelRatio || 1
+    this.lastDevicePixelRatio = nativeDpr
+    this.lastWindowWidth = window.innerWidth
+    this.viewportHeight = Math.max(1, canvas.clientHeight)
     const dpr = Math.min(nativeDpr * (window.innerWidth < 760 ? 1 : 1.5), window.innerWidth < 760 ? 1.5 : 2)
     const scale = dpr * this.renderScale
     const width = Math.max(1, Math.round(canvas.clientWidth * scale))
-    const height = Math.max(1, Math.round(canvas.clientHeight * scale))
+    const height = Math.max(1, Math.round(this.viewportHeight * scale))
     if (canvas.width !== width || canvas.height !== height || this.lastResizeScale !== scale) {
       canvas.width = width
       canvas.height = height
@@ -575,41 +584,43 @@ export class PlaytestRenderer {
   private uploadVisibleNotes(time: number) {
     const horizon = getPlaytestHorizon(HORIZON_MS, this.options.scrollSpeed, this.options.laneTilt)
     const position = this.geometry.map.positionAt(time)
-    const candidates = this.geometry.visible(position - horizon * (100 / 86 - 1) - 260, position + horizon)
-    const visible = candidates.filter((piece) => !this.hiddenNotes.has(piece.sourceId) &&
-      (piece.sourceEndTime >= time - 260 || this.startedHolds.has(piece.sourceId)))
-    const recorded = this.options.getRecordedNotes?.() ?? []
-    const firstRecorded = lowerBound(recorded, time - horizon * 1.1)
-    const reverse = recorded.slice(firstRecorded).filter((note) => note.time <= time)
-    const key = `reverse:${reverse.map((note) => note.id).join(',')};notes:${visible.map((piece) => `${piece.id}:${this.activeHolds.has(piece.sourceId)}`).join(',')}`
-    if (key === this.lastVisibleKey) return
-    this.lastVisibleKey = key
-    const data = new Float32Array((visible.length + reverse.length) * NOTE_STRIDE)
-    visible.forEach((note, index) => {
-      const offset = index * NOTE_STRIDE
-      data[offset] = note.lane
-      data[offset + 1] = note.time
-      data[offset + 2] = note.endTime ?? note.time
-      data[offset + 3] = note.kind === 'hold' ? 1 : 0
-      data[offset + 4] = note.lane
-      data[offset + 5] = this.activeHolds.has(note.sourceId) ? 1 : 0
-    })
-    reverse.forEach((note, index) => {
-      const offset = (visible.length + index) * NOTE_STRIDE
-      data[offset] = note.lane
-      data[offset + 1] = note.time
-      data[offset + 2] = note.time
-      data[offset + 4] = note.lane
-      data[offset + 5] = -1
-    })
-    this.visibleCount = visible.length + reverse.length
+    const candidates = this.geometry.visible(position - horizon * (100 / 86 - 1) - 260, position + horizon, this.visibleCandidates)
+    const recorded = this.options.getRecordedNotes?.()
+    const firstRecorded = recorded ? lowerBound(recorded, time - horizon * 1.1) : 0
+    let recordedEnd = firstRecorded
+    while (recorded && recordedEnd < recorded.length && recorded[recordedEnd].time <= time) recordedEnd++
+    const required = (candidates.length + recordedEnd - firstRecorded) * NOTE_STRIDE
+    let changed = false
+    if (required > this.noteData.length) {
+      this.noteData = new Float32Array(Math.max(required, this.noteData.length * 2))
+      changed = true
+    }
+    let cursor = 0
+    const write = (value: number) => {
+      const rounded = Math.fround(value)
+      if (this.noteData[cursor] !== rounded) { this.noteData[cursor] = rounded; changed = true }
+      cursor++
+    }
+    for (const note of candidates) {
+      if (this.hiddenNotes.has(note.sourceId) || (note.sourceEndTime < time - 260 && !this.startedHolds.has(note.sourceId))) continue
+      write(note.lane); write(note.time); write(note.endTime ?? note.time)
+      write(note.kind === 'hold' ? 1 : 0); write(note.lane); write(this.activeHolds.has(note.sourceId) ? 1 : 0)
+    }
+    for (let index = firstRecorded; recorded && index < recordedEnd; index++) {
+      const note = recorded[index]
+      write(note.lane); write(note.time); write(note.time); write(0); write(note.lane); write(-1)
+    }
+    const count = cursor / NOTE_STRIDE
+    changed ||= count !== this.visibleCount
+    this.visibleCount = count
+    if (!changed || !cursor) return
     const gl = this.gl
     gl.bindBuffer(gl.ARRAY_BUFFER, this.noteInstances)
-    if (data.byteLength > this.noteCapacity) {
-      this.noteCapacity = Math.max(data.byteLength, this.noteCapacity * 2, 1024)
+    if (this.noteData.byteLength > this.noteCapacity) {
+      this.noteCapacity = Math.max(this.noteData.byteLength, this.noteCapacity * 2, 1024)
       gl.bufferData(gl.ARRAY_BUFFER, this.noteCapacity, gl.DYNAMIC_DRAW)
     }
-    if (data.byteLength) gl.bufferSubData(gl.ARRAY_BUFFER, 0, data)
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.noteData, 0, cursor)
   }
 
   private drawTrack() {
@@ -712,7 +723,7 @@ export class PlaytestRenderer {
     gl.uniform1f(uniforms.uHorizon, getPlaytestHorizon(HORIZON_MS, this.options.scrollSpeed, this.options.laneTilt))
     gl.uniform1f(uniforms.uTilt, this.options.laneTilt / 45)
     gl.uniform1f(uniforms.uTrackWidth, getPlaytestTrackHalfWidth(this.options.laneTilt))
-    gl.uniform1f(uniforms.uViewportHeight, Math.max(1, this.options.canvas.clientHeight))
+    gl.uniform1f(uniforms.uViewportHeight, this.viewportHeight)
     this.setPalette(uniforms.uColors)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.visibleCount)
@@ -722,6 +733,13 @@ export class PlaytestRenderer {
   private drawParticles(time: number) {
     if (!this.activeParticles) return
     const gl = this.gl
+    if (this.particleDirtyEnd > this.particleDirtyStart) {
+      const start = this.particleDirtyStart * PARTICLE_STRIDE
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.particleInstances)
+      gl.bufferSubData(gl.ARRAY_BUFFER, start * 4, this.particleData, start, (this.particleDirtyEnd - this.particleDirtyStart) * PARTICLE_STRIDE)
+      this.particleDirtyStart = MAX_PARTICLES
+      this.particleDirtyEnd = 0
+    }
     const { program, uniforms } = this.particleProgram
     gl.useProgram(program)
     gl.bindVertexArray(this.particleVao)
@@ -762,7 +780,7 @@ export class PlaytestRenderer {
     this.lastTime = time
     this.autoplay(time)
     this.uploadVisibleNotes(time)
-    this.resize()
+    if (this.lastDevicePixelRatio !== (window.devicePixelRatio || 1) || this.lastWindowWidth !== window.innerWidth) this.resize()
     this.drawCalls = 0
     gl.disable(gl.DEPTH_TEST)
     gl.enable(gl.BLEND)
@@ -802,6 +820,7 @@ export class PlaytestRenderer {
       if (this.slowWindows >= 2 && this.renderScale > 0.72) { this.renderScale = Math.max(0.72, this.renderScale - 0.1); this.slowWindows = 0 }
       if (this.fastWindows >= 5 && this.renderScale < 1) { this.renderScale = Math.min(1, this.renderScale + 0.05); this.fastWindows = 0 }
       this.options.onStats({ fps, backend: 'WebGL2', renderScale: this.renderScale, notes: this.visibleCount, particles: this.activeParticles, drawCalls: this.drawCalls, frameTimeP95, frameTimeMax, longFramePercent, clockStalls: this.clockStalls })
+      this.resize()
       this.statsFrames = 0
       this.frameTimeCount = 0
       this.clockStalls = 0
@@ -814,7 +833,6 @@ export class PlaytestRenderer {
     this.hiddenNotes.add(id)
     this.startedHolds.delete(id)
     this.activeHolds.delete(id)
-    this.lastVisibleKey = ''
   }
 
   setLanePressed(lane: number, pressed: boolean) {
@@ -825,12 +843,10 @@ export class PlaytestRenderer {
   setHoldActive(id: string, active: boolean) {
     if (active) { this.startedHolds.add(id); this.activeHolds.add(id) }
     else this.activeHolds.delete(id)
-    this.lastVisibleKey = ''
   }
 
   setHoldStarted(id: string) {
     this.startedHolds.add(id)
-    this.lastVisibleKey = ''
   }
 
   reset(time = 0) {
@@ -841,8 +857,10 @@ export class PlaytestRenderer {
     this.activeHolds.clear()
     this.pressedLanes.clear()
     this.autoPlayedNotes.clear()
-    this.lastVisibleKey = ''
     this.activeParticles = 0
+    this.particleCursor = 0
+    this.particleDirtyStart = MAX_PARTICLES
+    this.particleDirtyEnd = 0
     this.particleData.fill(0)
     const gl = this.gl
     gl.bindBuffer(gl.ARRAY_BUFFER, this.particleInstances)
@@ -858,6 +876,8 @@ export class PlaytestRenderer {
     const y = -0.72
     for (let index = 0; index < count; index++) {
       const slot = this.particleCursor++ % MAX_PARTICLES
+      this.particleDirtyStart = Math.min(this.particleDirtyStart, slot)
+      this.particleDirtyEnd = Math.max(this.particleDirtyEnd, slot + 1)
       const offset = slot * PARTICLE_STRIDE
       const angle = (index / count) * Math.PI * 2 + Math.random() * 0.35
       const speed = 0.00018 + Math.random() * 0.0004
@@ -871,9 +891,6 @@ export class PlaytestRenderer {
       this.particleData[offset + 7] = lane
     }
     this.activeParticles = Math.min(MAX_PARTICLES, this.activeParticles + count)
-    const gl = this.gl
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.particleInstances)
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.particleData)
   }
 
   destroy() {

@@ -1,0 +1,106 @@
+{
+  "format": "moonweave-pattern-example",
+  "version": 1,
+  "id": "07-melody-with-accent",
+  "name": "单音旋律中的一次重音",
+  "source": {
+    "type": "assistant",
+    "reviewStatus": "AI 补充示例，待用户确认"
+  },
+  "configuration": {
+    "keyCount": 4,
+    "sequence": [
+      "1",
+      "2",
+      "34",
+      "2",
+      "1"
+    ],
+    "sequenceMeaning": "数组从前到后表示落点先后；每个字符串的数字表示同刻按下的轨道，1–4 从左到右。",
+    "laneMapping": {
+      "1": 0,
+      "2": 1,
+      "3": 2,
+      "4": 3
+    },
+    "timing": {
+      "bpm": 120,
+      "stepMs": 500,
+      "assumption": "演示假设：相邻落点间隔一拍（500ms），起点为 0ms。用户只指定了轨道顺序，没有指定节奏、速度或音频；实际制谱必须按音乐重新定时。"
+    },
+    "holds": []
+  },
+  "explanation": {
+    "summary": "以单键承接旋律，只在中间的明显重音加入 34 双押。",
+    "reasoning": [
+      "双押表达额外的音乐力度或层次，不是为了填满轨道。",
+      "34 是右手同侧双押；选轨时还需观察前后手部负担。"
+    ],
+    "usageAndLimits": [
+      "适合中间确有和弦、叠层或明显重音的乐句。",
+      "纯净的普通单音通常仍采用单键；不要仅因旋律到达高点就加双押。"
+    ],
+    "difficulty": "未定级；实际难度需结合速度、节奏间隔、持续长度与前后配置判断。"
+  },
+  "relatedExamples": {},
+  "chart": {
+    "version": 1,
+    "title": "单音旋律中的一次重音",
+    "artist": "",
+    "audioPath": "",
+    "audioName": "",
+    "backgroundPath": "",
+    "backgroundName": "",
+    "backgroundType": "",
+    "backgroundVideoStartTime": 0,
+    "coverPath": "",
+    "coverName": "",
+    "bpm": 120,
+    "bpmChanges": [],
+    "effects": [],
+    "offset": 0,
+    "duration": 3000,
+    "notes": [
+      {
+        "id": "07-melody-with-accent-001",
+        "kind": "note",
+        "lane": 0,
+        "time": 0
+      },
+      {
+        "id": "07-melody-with-accent-002",
+        "kind": "note",
+        "lane": 1,
+        "time": 500
+      },
+      {
+        "id": "07-melody-with-accent-003",
+        "kind": "note",
+        "lane": 2,
+        "time": 1000
+      },
+      {
+        "id": "07-melody-with-accent-004",
+        "kind": "note",
+        "lane": 3,
+        "time": 1000
+      },
+      {
+        "id": "07-melody-with-accent-005",
+        "kind": "note",
+        "lane": 1,
+        "time": 1500
+      },
+      {
+        "id": "07-melody-with-accent-006",
+        "kind": "note",
+        "lane": 0,
+        "time": 2000
+      }
+    ],
+    "aiImportHistory": [],
+    "settings": {
+      "editorZoom": 230
+    }
+  }
+}

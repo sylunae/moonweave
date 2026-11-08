@@ -1,0 +1,121 @@
+{
+  "format": "moonweave-pattern-example",
+  "version": 1,
+  "id": "06-repeated-phrase",
+  "name": "重复乐句：保留相同配置",
+  "source": {
+    "type": "assistant",
+    "reviewStatus": "AI 补充示例，待用户确认"
+  },
+  "configuration": {
+    "keyCount": 4,
+    "sequence": [
+      "1",
+      "2",
+      "3",
+      "2",
+      "1",
+      "2",
+      "3",
+      "2"
+    ],
+    "sequenceMeaning": "数组从前到后表示落点先后；每个字符串的数字表示同刻按下的轨道，1–4 从左到右。",
+    "laneMapping": {
+      "1": 0,
+      "2": 1,
+      "3": 2,
+      "4": 3
+    },
+    "timing": {
+      "bpm": 120,
+      "stepMs": 500,
+      "assumption": "演示假设：相邻落点间隔一拍（500ms），起点为 0ms。用户只指定了轨道顺序，没有指定节奏、速度或音频；实际制谱必须按音乐重新定时。"
+    },
+    "holds": []
+  },
+  "explanation": {
+    "summary": "同一段四音动机重复时，两次都使用 1、2、3、2。",
+    "reasoning": [
+      "第 1–4 个落点与第 5–8 个落点使用完全相同的配置。",
+      "让玩家通过配置感知音乐动机的重复。"
+    ],
+    "usageAndLimits": [
+      "仅在两次音乐动机确实相似时采用。",
+      "音乐有明显变化时，配置也应适度变化。"
+    ],
+    "difficulty": "未定级；实际难度需结合速度、节奏间隔、持续长度与前后配置判断。"
+  },
+  "relatedExamples": {},
+  "chart": {
+    "version": 1,
+    "title": "重复乐句：保留相同配置",
+    "artist": "",
+    "audioPath": "",
+    "audioName": "",
+    "backgroundPath": "",
+    "backgroundName": "",
+    "backgroundType": "",
+    "backgroundVideoStartTime": 0,
+    "coverPath": "",
+    "coverName": "",
+    "bpm": 120,
+    "bpmChanges": [],
+    "effects": [],
+    "offset": 0,
+    "duration": 4500,
+    "notes": [
+      {
+        "id": "06-repeated-phrase-001",
+        "kind": "note",
+        "lane": 0,
+        "time": 0
+      },
+      {
+        "id": "06-repeated-phrase-002",
+        "kind": "note",
+        "lane": 1,
+        "time": 500
+      },
+      {
+        "id": "06-repeated-phrase-003",
+        "kind": "note",
+        "lane": 2,
+        "time": 1000
+      },
+      {
+        "id": "06-repeated-phrase-004",
+        "kind": "note",
+        "lane": 1,
+        "time": 1500
+      },
+      {
+        "id": "06-repeated-phrase-005",
+        "kind": "note",
+        "lane": 0,
+        "time": 2000
+      },
+      {
+        "id": "06-repeated-phrase-006",
+        "kind": "note",
+        "lane": 1,
+        "time": 2500
+      },
+      {
+        "id": "06-repeated-phrase-007",
+        "kind": "note",
+        "lane": 2,
+        "time": 3000
+      },
+      {
+        "id": "06-repeated-phrase-008",
+        "kind": "note",
+        "lane": 1,
+        "time": 3500
+      }
+    ],
+    "aiImportHistory": [],
+    "settings": {
+      "editorZoom": 230
+    }
+  }
+}

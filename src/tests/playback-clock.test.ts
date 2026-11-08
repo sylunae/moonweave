@@ -62,4 +62,19 @@ describe('PlaybackClock', () => {
     clock.start(1000, 9000, 0.5)
     expect(clock.getTime(1000, 9016)).toBe(1008)
   })
+
+  it('anchors to actual media progress after repeated seeks instead of counting decoder startup delay', () => {
+    const clock = new PlaybackClock()
+    let now = 0
+    for (const [target, delay, rate] of [[10000, 240, 1], [2000, 80, 0.5], [8000, 500, 0.75], [1000, 120, 1]]) {
+      clock.start(target, now, rate, { waitForProgress: true })
+      now += delay
+      expect(clock.getTime(target, now)).toBe(target)
+      now += 16
+      const advanced = target + 16 * rate
+      expect(clock.getTime(advanced, now)).toBe(advanced)
+      expect(clock.getTime(advanced, now + 8)).toBeCloseTo(advanced + 8 * rate)
+      now += 100
+    }
+  })
 })

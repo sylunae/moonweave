@@ -1,0 +1,121 @@
+{
+  "format": "moonweave-pattern-example",
+  "version": 1,
+  "id": "05-alternating-pulse",
+  "name": "均匀节拍：左右交替",
+  "source": {
+    "type": "assistant",
+    "reviewStatus": "AI 补充示例，待用户确认"
+  },
+  "configuration": {
+    "keyCount": 4,
+    "sequence": [
+      "2",
+      "3",
+      "2",
+      "3",
+      "2",
+      "3",
+      "2",
+      "3"
+    ],
+    "sequenceMeaning": "数组从前到后表示落点先后；每个字符串的数字表示同刻按下的轨道，1–4 从左到右。",
+    "laneMapping": {
+      "1": 0,
+      "2": 1,
+      "3": 2,
+      "4": 3
+    },
+    "timing": {
+      "bpm": 120,
+      "stepMs": 500,
+      "assumption": "演示假设：相邻落点间隔一拍（500ms），起点为 0ms。用户只指定了轨道顺序，没有指定节奏、速度或音频；实际制谱必须按音乐重新定时。"
+    },
+    "holds": []
+  },
+  "explanation": {
+    "summary": "用内侧两轨交替承接均匀节拍，保持单键密度稳定。",
+    "reasoning": [
+      "配置每个落点只有一个音符。",
+      "左右交替可以承接连续节拍，但不是同音反复的默认替代。"
+    ],
+    "usageAndLimits": [
+      "适合音乐本身有交替感或持续均匀的节奏层。",
+      "若音乐重点是同音敲击，优先考虑保留重复触感。"
+    ],
+    "difficulty": "未定级；实际难度需结合速度、节奏间隔、持续长度与前后配置判断。"
+  },
+  "relatedExamples": {},
+  "chart": {
+    "version": 1,
+    "title": "均匀节拍：左右交替",
+    "artist": "",
+    "audioPath": "",
+    "audioName": "",
+    "backgroundPath": "",
+    "backgroundName": "",
+    "backgroundType": "",
+    "backgroundVideoStartTime": 0,
+    "coverPath": "",
+    "coverName": "",
+    "bpm": 120,
+    "bpmChanges": [],
+    "effects": [],
+    "offset": 0,
+    "duration": 4500,
+    "notes": [
+      {
+        "id": "05-alternating-pulse-001",
+        "kind": "note",
+        "lane": 1,
+        "time": 0
+      },
+      {
+        "id": "05-alternating-pulse-002",
+        "kind": "note",
+        "lane": 2,
+        "time": 500
+      },
+      {
+        "id": "05-alternating-pulse-003",
+        "kind": "note",
+        "lane": 1,
+        "time": 1000
+      },
+      {
+        "id": "05-alternating-pulse-004",
+        "kind": "note",
+        "lane": 2,
+        "time": 1500
+      },
+      {
+        "id": "05-alternating-pulse-005",
+        "kind": "note",
+        "lane": 1,
+        "time": 2000
+      },
+      {
+        "id": "05-alternating-pulse-006",
+        "kind": "note",
+        "lane": 2,
+        "time": 2500
+      },
+      {
+        "id": "05-alternating-pulse-007",
+        "kind": "note",
+        "lane": 1,
+        "time": 3000
+      },
+      {
+        "id": "05-alternating-pulse-008",
+        "kind": "note",
+        "lane": 2,
+        "time": 3500
+      }
+    ],
+    "aiImportHistory": [],
+    "settings": {
+      "editorZoom": 230
+    }
+  }
+}

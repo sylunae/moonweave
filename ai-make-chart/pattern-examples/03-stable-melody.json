@@ -1,0 +1,114 @@
+{
+  "format": "moonweave-pattern-example",
+  "version": 1,
+  "id": "03-stable-melody",
+  "name": "稳定的旋律",
+  "source": {
+    "type": "user",
+    "reviewStatus": "用户提供的配置"
+  },
+  "configuration": {
+    "keyCount": 4,
+    "sequence": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "3",
+      "2",
+      "1"
+    ],
+    "sequenceMeaning": "数组从前到后表示落点先后；每个字符串的数字表示同刻按下的轨道，1–4 从左到右。",
+    "laneMapping": {
+      "1": 0,
+      "2": 1,
+      "3": 2,
+      "4": 3
+    },
+    "timing": {
+      "bpm": 120,
+      "stepMs": 500,
+      "assumption": "演示假设：相邻落点间隔一拍（500ms），起点为 0ms。用户只指定了轨道顺序，没有指定节奏、速度或音频；实际制谱必须按音乐重新定时。"
+    },
+    "holds": []
+  },
+  "explanation": {
+    "summary": "按用户给出的往返配置表现稳定旋律，形成从左到右再回到左侧的连续走向。",
+    "reasoning": [
+      "保留完整的 1→2→3→4→3→2→1 顺序。",
+      "单音用单键表达，让配置的走向保持清楚。"
+    ],
+    "usageAndLimits": [
+      "适合具有平稳推进和回落感的乐句。",
+      "用户未提供具体音高；不能据此推断轨道必须与音高一一对应。"
+    ],
+    "difficulty": "未定级；实际难度需结合速度、节奏间隔、持续长度与前后配置判断。"
+  },
+  "relatedExamples": {},
+  "chart": {
+    "version": 1,
+    "title": "稳定的旋律",
+    "artist": "",
+    "audioPath": "",
+    "audioName": "",
+    "backgroundPath": "",
+    "backgroundName": "",
+    "backgroundType": "",
+    "backgroundVideoStartTime": 0,
+    "coverPath": "",
+    "coverName": "",
+    "bpm": 120,
+    "bpmChanges": [],
+    "effects": [],
+    "offset": 0,
+    "duration": 4000,
+    "notes": [
+      {
+        "id": "03-stable-melody-001",
+        "kind": "note",
+        "lane": 0,
+        "time": 0
+      },
+      {
+        "id": "03-stable-melody-002",
+        "kind": "note",
+        "lane": 1,
+        "time": 500
+      },
+      {
+        "id": "03-stable-melody-003",
+        "kind": "note",
+        "lane": 2,
+        "time": 1000
+      },
+      {
+        "id": "03-stable-melody-004",
+        "kind": "note",
+        "lane": 3,
+        "time": 1500
+      },
+      {
+        "id": "03-stable-melody-005",
+        "kind": "note",
+        "lane": 2,
+        "time": 2000
+      },
+      {
+        "id": "03-stable-melody-006",
+        "kind": "note",
+        "lane": 1,
+        "time": 2500
+      },
+      {
+        "id": "03-stable-melody-007",
+        "kind": "note",
+        "lane": 0,
+        "time": 3000
+      }
+    ],
+    "aiImportHistory": [],
+    "settings": {
+      "editorZoom": 230
+    }
+  }
+}

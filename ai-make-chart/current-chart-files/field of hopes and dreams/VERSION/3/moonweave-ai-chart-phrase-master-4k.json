@@ -1,0 +1,9062 @@
+{
+  "format": "moonweave-ai-chart",
+  "version": 1,
+  "mode": "segment",
+  "unit": "beat",
+  "song": {
+    "audioName": "13. Field of Hopes and Dreams (DELTARUNE Chapter 1 Soundtrack) - Toby Fox [9oDZ2vN9XF0].mp3",
+    "duration": 165302.875,
+    "bpm": 125,
+    "offset": 180,
+    "bpmChanges": []
+  },
+  "range": {
+    "start": -0.375,
+    "end": 344.00598958333336
+  },
+  "target": {
+    "chartId": "eda60840-ce62-422f-b564-4f703611f90d",
+    "revision": "sha256:157ae053ddb299f37cb4f29071c63c7a961d73e08e3dce8657a6da128b0764a0"
+  },
+  "requestId": "fohad-phrase-v3-7091474d-b992-4d33-b397-60ffdf9edf79",
+  "notes": [
+    {
+      "id": "v3-phrase-0001",
+      "kind": "note",
+      "lane": 0,
+      "beat": 0.0
+    },
+    {
+      "id": "v3-phrase-0002",
+      "kind": "note",
+      "lane": 2,
+      "beat": 0.0
+    },
+    {
+      "id": "v3-phrase-0003",
+      "kind": "note",
+      "lane": 1,
+      "beat": 0.25
+    },
+    {
+      "id": "v3-phrase-0004",
+      "kind": "note",
+      "lane": 0,
+      "beat": 1.0
+    },
+    {
+      "id": "v3-phrase-0005",
+      "kind": "note",
+      "lane": 1,
+      "beat": 1.5
+    },
+    {
+      "id": "v3-phrase-0006",
+      "kind": "note",
+      "lane": 3,
+      "beat": 1.5
+    },
+    {
+      "id": "v3-phrase-0007",
+      "kind": "note",
+      "lane": 0,
+      "beat": 2.0
+    },
+    {
+      "id": "v3-phrase-0008",
+      "kind": "note",
+      "lane": 2,
+      "beat": 2.0
+    },
+    {
+      "id": "v3-phrase-0009",
+      "kind": "note",
+      "lane": 3,
+      "beat": 2.25
+    },
+    {
+      "id": "v3-phrase-0010",
+      "kind": "note",
+      "lane": 0,
+      "beat": 3.0
+    },
+    {
+      "id": "v3-phrase-0011",
+      "kind": "note",
+      "lane": 1,
+      "beat": 3.5
+    },
+    {
+      "id": "v3-phrase-0012",
+      "kind": "note",
+      "lane": 2,
+      "beat": 3.5
+    },
+    {
+      "id": "v3-phrase-0013",
+      "kind": "note",
+      "lane": 0,
+      "beat": 4.0
+    },
+    {
+      "id": "v3-phrase-0014",
+      "kind": "note",
+      "lane": 3,
+      "beat": 4.0
+    },
+    {
+      "id": "v3-phrase-0015",
+      "kind": "note",
+      "lane": 1,
+      "beat": 4.25
+    },
+    {
+      "id": "v3-phrase-0016",
+      "kind": "note",
+      "lane": 0,
+      "beat": 5.0
+    },
+    {
+      "id": "v3-phrase-0017",
+      "kind": "note",
+      "lane": 1,
+      "beat": 5.5
+    },
+    {
+      "id": "v3-phrase-0018",
+      "kind": "note",
+      "lane": 3,
+      "beat": 5.5
+    },
+    {
+      "id": "v3-phrase-0019",
+      "kind": "note",
+      "lane": 0,
+      "beat": 6.0
+    },
+    {
+      "id": "v3-phrase-0020",
+      "kind": "note",
+      "lane": 2,
+      "beat": 6.0
+    },
+    {
+      "id": "v3-phrase-0021",
+      "kind": "note",
+      "lane": 3,
+      "beat": 6.25
+    },
+    {
+      "id": "v3-phrase-0022",
+      "kind": "note",
+      "lane": 1,
+      "beat": 6.5
+    },
+    {
+      "id": "v3-phrase-0023",
+      "kind": "note",
+      "lane": 0,
+      "beat": 6.625
+    },
+    {
+      "id": "v3-phrase-0024",
+      "kind": "note",
+      "lane": 2,
+      "beat": 6.75
+    },
+    {
+      "id": "v3-phrase-0025",
+      "kind": "note",
+      "lane": 3,
+      "beat": 7.0
+    },
+    {
+      "id": "v3-phrase-0026",
+      "kind": "note",
+      "lane": 1,
+      "beat": 7.5
+    },
+    {
+      "id": "v3-phrase-0027",
+      "kind": "note",
+      "lane": 2,
+      "beat": 7.5
+    },
+    {
+      "id": "v3-phrase-0028",
+      "kind": "note",
+      "lane": 0,
+      "beat": 8.0
+    },
+    {
+      "id": "v3-phrase-0029",
+      "kind": "note",
+      "lane": 2,
+      "beat": 8.0
+    },
+    {
+      "id": "v3-phrase-0030",
+      "kind": "note",
+      "lane": 1,
+      "beat": 8.25
+    },
+    {
+      "id": "v3-phrase-0031",
+      "kind": "note",
+      "lane": 0,
+      "beat": 9.0
+    },
+    {
+      "id": "v3-phrase-0032",
+      "kind": "note",
+      "lane": 1,
+      "beat": 9.5
+    },
+    {
+      "id": "v3-phrase-0033",
+      "kind": "note",
+      "lane": 3,
+      "beat": 9.5
+    },
+    {
+      "id": "v3-phrase-0034",
+      "kind": "note",
+      "lane": 0,
+      "beat": 10.0
+    },
+    {
+      "id": "v3-phrase-0035",
+      "kind": "note",
+      "lane": 2,
+      "beat": 10.0
+    },
+    {
+      "id": "v3-phrase-0036",
+      "kind": "note",
+      "lane": 3,
+      "beat": 10.25
+    },
+    {
+      "id": "v3-phrase-0037",
+      "kind": "note",
+      "lane": 0,
+      "beat": 11.0
+    },
+    {
+      "id": "v3-phrase-0038",
+      "kind": "note",
+      "lane": 1,
+      "beat": 11.5
+    },
+    {
+      "id": "v3-phrase-0039",
+      "kind": "note",
+      "lane": 2,
+      "beat": 11.5
+    },
+    {
+      "id": "v3-phrase-0040",
+      "kind": "note",
+      "lane": 0,
+      "beat": 12.0
+    },
+    {
+      "id": "v3-phrase-0041",
+      "kind": "note",
+      "lane": 3,
+      "beat": 12.0
+    },
+    {
+      "id": "v3-phrase-0042",
+      "kind": "note",
+      "lane": 1,
+      "beat": 12.25
+    },
+    {
+      "id": "v3-phrase-0043",
+      "kind": "note",
+      "lane": 0,
+      "beat": 13.0
+    },
+    {
+      "id": "v3-phrase-0044",
+      "kind": "note",
+      "lane": 1,
+      "beat": 13.5
+    },
+    {
+      "id": "v3-phrase-0045",
+      "kind": "note",
+      "lane": 3,
+      "beat": 13.5
+    },
+    {
+      "id": "v3-phrase-0046",
+      "kind": "note",
+      "lane": 0,
+      "beat": 14.0
+    },
+    {
+      "id": "v3-phrase-0047",
+      "kind": "note",
+      "lane": 2,
+      "beat": 14.0
+    },
+    {
+      "id": "v3-phrase-0048",
+      "kind": "note",
+      "lane": 3,
+      "beat": 14.25
+    },
+    {
+      "id": "v3-phrase-0049",
+      "kind": "note",
+      "lane": 1,
+      "beat": 14.5
+    },
+    {
+      "id": "v3-phrase-0050",
+      "kind": "note",
+      "lane": 0,
+      "beat": 14.625
+    },
+    {
+      "id": "v3-phrase-0051",
+      "kind": "note",
+      "lane": 2,
+      "beat": 14.75
+    },
+    {
+      "id": "v3-phrase-0052",
+      "kind": "note",
+      "lane": 3,
+      "beat": 15.0
+    },
+    {
+      "id": "v3-phrase-0053",
+      "kind": "note",
+      "lane": 1,
+      "beat": 15.5
+    },
+    {
+      "id": "v3-phrase-0054",
+      "kind": "note",
+      "lane": 2,
+      "beat": 15.5
+    },
+    {
+      "id": "v3-phrase-0055",
+      "kind": "note",
+      "lane": 0,
+      "beat": 16.0
+    },
+    {
+      "id": "v3-phrase-0056",
+      "kind": "note",
+      "lane": 3,
+      "beat": 16.0
+    },
+    {
+      "id": "v3-phrase-0057",
+      "kind": "note",
+      "lane": 1,
+      "beat": 17.5
+    },
+    {
+      "id": "v3-phrase-0058",
+      "kind": "note",
+      "lane": 3,
+      "beat": 17.5
+    },
+    {
+      "id": "v3-phrase-0059",
+      "kind": "note",
+      "lane": 0,
+      "beat": 18.0
+    },
+    {
+      "id": "v3-phrase-0060",
+      "kind": "note",
+      "lane": 2,
+      "beat": 18.0
+    },
+    {
+      "id": "v3-phrase-0061",
+      "kind": "note",
+      "lane": 1,
+      "beat": 19.5
+    },
+    {
+      "id": "v3-phrase-0062",
+      "kind": "note",
+      "lane": 2,
+      "beat": 19.5
+    },
+    {
+      "id": "v3-phrase-0063",
+      "kind": "note",
+      "lane": 0,
+      "beat": 20.0
+    },
+    {
+      "id": "v3-phrase-0064",
+      "kind": "note",
+      "lane": 3,
+      "beat": 20.0
+    },
+    {
+      "id": "v3-phrase-0065",
+      "kind": "note",
+      "lane": 1,
+      "beat": 21.5
+    },
+    {
+      "id": "v3-phrase-0066",
+      "kind": "note",
+      "lane": 3,
+      "beat": 21.5
+    },
+    {
+      "id": "v3-phrase-0067",
+      "kind": "note",
+      "lane": 0,
+      "beat": 22.0
+    },
+    {
+      "id": "v3-phrase-0068",
+      "kind": "note",
+      "lane": 2,
+      "beat": 22.0
+    },
+    {
+      "id": "v3-phrase-0069",
+      "kind": "note",
+      "lane": 1,
+      "beat": 22.5
+    },
+    {
+      "id": "v3-phrase-0070",
+      "kind": "note",
+      "lane": 0,
+      "beat": 22.625
+    },
+    {
+      "id": "v3-phrase-0071",
+      "kind": "note",
+      "lane": 2,
+      "beat": 22.75
+    },
+    {
+      "id": "v3-phrase-0072",
+      "kind": "note",
+      "lane": 3,
+      "beat": 23.0
+    },
+    {
+      "id": "v3-phrase-0073",
+      "kind": "note",
+      "lane": 1,
+      "beat": 23.5
+    },
+    {
+      "id": "v3-phrase-0074",
+      "kind": "note",
+      "lane": 2,
+      "beat": 23.5
+    },
+    {
+      "id": "v3-phrase-0075",
+      "kind": "note",
+      "lane": 0,
+      "beat": 24.0
+    },
+    {
+      "id": "v3-phrase-0076",
+      "kind": "note",
+      "lane": 3,
+      "beat": 24.0
+    },
+    {
+      "id": "v3-phrase-0077",
+      "kind": "note",
+      "lane": 1,
+      "beat": 25.5
+    },
+    {
+      "id": "v3-phrase-0078",
+      "kind": "note",
+      "lane": 3,
+      "beat": 25.5
+    },
+    {
+      "id": "v3-phrase-0079",
+      "kind": "note",
+      "lane": 0,
+      "beat": 26.0
+    },
+    {
+      "id": "v3-phrase-0080",
+      "kind": "note",
+      "lane": 2,
+      "beat": 26.0
+    },
+    {
+      "id": "v3-phrase-0081",
+      "kind": "note",
+      "lane": 1,
+      "beat": 27.5
+    },
+    {
+      "id": "v3-phrase-0082",
+      "kind": "note",
+      "lane": 2,
+      "beat": 27.5
+    },
+    {
+      "id": "v3-phrase-0083",
+      "kind": "note",
+      "lane": 0,
+      "beat": 28.0
+    },
+    {
+      "id": "v3-phrase-0084",
+      "kind": "note",
+      "lane": 3,
+      "beat": 28.0
+    },
+    {
+      "id": "v3-phrase-0085",
+      "kind": "note",
+      "lane": 1,
+      "beat": 29.5
+    },
+    {
+      "id": "v3-phrase-0086",
+      "kind": "note",
+      "lane": 3,
+      "beat": 29.5
+    },
+    {
+      "id": "v3-phrase-0087",
+      "kind": "note",
+      "lane": 0,
+      "beat": 30.0
+    },
+    {
+      "id": "v3-phrase-0088",
+      "kind": "note",
+      "lane": 2,
+      "beat": 30.0
+    },
+    {
+      "id": "v3-phrase-0089",
+      "kind": "note",
+      "lane": 1,
+      "beat": 30.5
+    },
+    {
+      "id": "v3-phrase-0090",
+      "kind": "note",
+      "lane": 0,
+      "beat": 30.625
+    },
+    {
+      "id": "v3-phrase-0091",
+      "kind": "note",
+      "lane": 2,
+      "beat": 30.75
+    },
+    {
+      "id": "v3-phrase-0092",
+      "kind": "note",
+      "lane": 3,
+      "beat": 31.0
+    },
+    {
+      "id": "v3-phrase-0093",
+      "kind": "note",
+      "lane": 1,
+      "beat": 31.5
+    },
+    {
+      "id": "v3-phrase-0094",
+      "kind": "note",
+      "lane": 2,
+      "beat": 31.5
+    },
+    {
+      "id": "v3-phrase-0095",
+      "kind": "note",
+      "lane": 0,
+      "beat": 32.0
+    },
+    {
+      "id": "v3-phrase-0096",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 32.0,
+      "endBeat": 33.5
+    },
+    {
+      "id": "v3-phrase-0097",
+      "kind": "note",
+      "lane": 3,
+      "beat": 32.0
+    },
+    {
+      "id": "v3-phrase-0098",
+      "kind": "note",
+      "lane": 1,
+      "beat": 32.5
+    },
+    {
+      "id": "v3-phrase-0099",
+      "kind": "note",
+      "lane": 3,
+      "beat": 32.75
+    },
+    {
+      "id": "v3-phrase-0100",
+      "kind": "note",
+      "lane": 0,
+      "beat": 33.0
+    },
+    {
+      "id": "v3-phrase-0101",
+      "kind": "note",
+      "lane": 1,
+      "beat": 33.0
+    },
+    {
+      "id": "v3-phrase-0102",
+      "kind": "note",
+      "lane": 1,
+      "beat": 33.5
+    },
+    {
+      "id": "v3-phrase-0103",
+      "kind": "note",
+      "lane": 3,
+      "beat": 33.5
+    },
+    {
+      "id": "v3-phrase-0104",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 34.0,
+      "endBeat": 35.5
+    },
+    {
+      "id": "v3-phrase-0105",
+      "kind": "note",
+      "lane": 1,
+      "beat": 34.0
+    },
+    {
+      "id": "v3-phrase-0106",
+      "kind": "note",
+      "lane": 2,
+      "beat": 34.0
+    },
+    {
+      "id": "v3-phrase-0107",
+      "kind": "note",
+      "lane": 1,
+      "beat": 34.5
+    },
+    {
+      "id": "v3-phrase-0108",
+      "kind": "note",
+      "lane": 3,
+      "beat": 34.5
+    },
+    {
+      "id": "v3-phrase-0109",
+      "kind": "note",
+      "lane": 2,
+      "beat": 35.0
+    },
+    {
+      "id": "v3-phrase-0110",
+      "kind": "note",
+      "lane": 3,
+      "beat": 35.0
+    },
+    {
+      "id": "v3-phrase-0111",
+      "kind": "note",
+      "lane": 2,
+      "beat": 35.5
+    },
+    {
+      "id": "v3-phrase-0112",
+      "kind": "note",
+      "lane": 3,
+      "beat": 35.5
+    },
+    {
+      "id": "v3-phrase-0113",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 36.0,
+      "endBeat": 37.5
+    },
+    {
+      "id": "v3-phrase-0114",
+      "kind": "note",
+      "lane": 2,
+      "beat": 36.0
+    },
+    {
+      "id": "v3-phrase-0115",
+      "kind": "note",
+      "lane": 3,
+      "beat": 36.0
+    },
+    {
+      "id": "v3-phrase-0116",
+      "kind": "note",
+      "lane": 1,
+      "beat": 36.5
+    },
+    {
+      "id": "v3-phrase-0117",
+      "kind": "note",
+      "lane": 3,
+      "beat": 36.75
+    },
+    {
+      "id": "v3-phrase-0118",
+      "kind": "note",
+      "lane": 1,
+      "beat": 37.0
+    },
+    {
+      "id": "v3-phrase-0119",
+      "kind": "note",
+      "lane": 2,
+      "beat": 37.0
+    },
+    {
+      "id": "v3-phrase-0120",
+      "kind": "note",
+      "lane": 1,
+      "beat": 37.5
+    },
+    {
+      "id": "v3-phrase-0121",
+      "kind": "note",
+      "lane": 3,
+      "beat": 37.5
+    },
+    {
+      "id": "v3-phrase-0122",
+      "kind": "note",
+      "lane": 0,
+      "beat": 38.0
+    },
+    {
+      "id": "v3-phrase-0123",
+      "kind": "note",
+      "lane": 1,
+      "beat": 38.0
+    },
+    {
+      "id": "v3-phrase-0124",
+      "kind": "note",
+      "lane": 2,
+      "beat": 38.0
+    },
+    {
+      "id": "v3-phrase-0125",
+      "kind": "note",
+      "lane": 1,
+      "beat": 38.5
+    },
+    {
+      "id": "v3-phrase-0126",
+      "kind": "note",
+      "lane": 2,
+      "beat": 38.5
+    },
+    {
+      "id": "v3-phrase-0127",
+      "kind": "note",
+      "lane": 3,
+      "beat": 38.5
+    },
+    {
+      "id": "v3-phrase-0128",
+      "kind": "note",
+      "lane": 0,
+      "beat": 38.625
+    },
+    {
+      "id": "v3-phrase-0129",
+      "kind": "note",
+      "lane": 2,
+      "beat": 38.75
+    },
+    {
+      "id": "v3-phrase-0130",
+      "kind": "note",
+      "lane": 0,
+      "beat": 39.0
+    },
+    {
+      "id": "v3-phrase-0131",
+      "kind": "note",
+      "lane": 2,
+      "beat": 39.0
+    },
+    {
+      "id": "v3-phrase-0132",
+      "kind": "note",
+      "lane": 3,
+      "beat": 39.0
+    },
+    {
+      "id": "v3-phrase-0133",
+      "kind": "note",
+      "lane": 2,
+      "beat": 39.5
+    },
+    {
+      "id": "v3-phrase-0134",
+      "kind": "note",
+      "lane": 3,
+      "beat": 39.5
+    },
+    {
+      "id": "v3-phrase-0135",
+      "kind": "note",
+      "lane": 0,
+      "beat": 40.0
+    },
+    {
+      "id": "v3-phrase-0136",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 40.0,
+      "endBeat": 41.5
+    },
+    {
+      "id": "v3-phrase-0137",
+      "kind": "note",
+      "lane": 3,
+      "beat": 40.0
+    },
+    {
+      "id": "v3-phrase-0138",
+      "kind": "note",
+      "lane": 1,
+      "beat": 40.5
+    },
+    {
+      "id": "v3-phrase-0139",
+      "kind": "note",
+      "lane": 3,
+      "beat": 40.75
+    },
+    {
+      "id": "v3-phrase-0140",
+      "kind": "note",
+      "lane": 0,
+      "beat": 41.0
+    },
+    {
+      "id": "v3-phrase-0141",
+      "kind": "note",
+      "lane": 1,
+      "beat": 41.0
+    },
+    {
+      "id": "v3-phrase-0142",
+      "kind": "note",
+      "lane": 1,
+      "beat": 41.5
+    },
+    {
+      "id": "v3-phrase-0143",
+      "kind": "note",
+      "lane": 3,
+      "beat": 41.5
+    },
+    {
+      "id": "v3-phrase-0144",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 42.0,
+      "endBeat": 43.5
+    },
+    {
+      "id": "v3-phrase-0145",
+      "kind": "note",
+      "lane": 1,
+      "beat": 42.0
+    },
+    {
+      "id": "v3-phrase-0146",
+      "kind": "note",
+      "lane": 2,
+      "beat": 42.0
+    },
+    {
+      "id": "v3-phrase-0147",
+      "kind": "note",
+      "lane": 1,
+      "beat": 42.5
+    },
+    {
+      "id": "v3-phrase-0148",
+      "kind": "note",
+      "lane": 3,
+      "beat": 42.5
+    },
+    {
+      "id": "v3-phrase-0149",
+      "kind": "note",
+      "lane": 2,
+      "beat": 43.0
+    },
+    {
+      "id": "v3-phrase-0150",
+      "kind": "note",
+      "lane": 3,
+      "beat": 43.0
+    },
+    {
+      "id": "v3-phrase-0151",
+      "kind": "note",
+      "lane": 2,
+      "beat": 43.5
+    },
+    {
+      "id": "v3-phrase-0152",
+      "kind": "note",
+      "lane": 3,
+      "beat": 43.5
+    },
+    {
+      "id": "v3-phrase-0153",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 44.0,
+      "endBeat": 45.25
+    },
+    {
+      "id": "v3-phrase-0154",
+      "kind": "note",
+      "lane": 2,
+      "beat": 44.0
+    },
+    {
+      "id": "v3-phrase-0155",
+      "kind": "note",
+      "lane": 3,
+      "beat": 44.0
+    },
+    {
+      "id": "v3-phrase-0156",
+      "kind": "note",
+      "lane": 1,
+      "beat": 44.5
+    },
+    {
+      "id": "v3-phrase-0157",
+      "kind": "note",
+      "lane": 3,
+      "beat": 44.75
+    },
+    {
+      "id": "v3-phrase-0158",
+      "kind": "note",
+      "lane": 1,
+      "beat": 45.0
+    },
+    {
+      "id": "v3-phrase-0159",
+      "kind": "note",
+      "lane": 2,
+      "beat": 45.0
+    },
+    {
+      "id": "v3-phrase-0160",
+      "kind": "note",
+      "lane": 1,
+      "beat": 45.5
+    },
+    {
+      "id": "v3-phrase-0161",
+      "kind": "note",
+      "lane": 3,
+      "beat": 45.5
+    },
+    {
+      "id": "v3-phrase-0162",
+      "kind": "note",
+      "lane": 0,
+      "beat": 46.0
+    },
+    {
+      "id": "v3-phrase-0163",
+      "kind": "note",
+      "lane": 1,
+      "beat": 46.0
+    },
+    {
+      "id": "v3-phrase-0164",
+      "kind": "note",
+      "lane": 2,
+      "beat": 46.0
+    },
+    {
+      "id": "v3-phrase-0165",
+      "kind": "note",
+      "lane": 1,
+      "beat": 46.5
+    },
+    {
+      "id": "v3-phrase-0166",
+      "kind": "note",
+      "lane": 2,
+      "beat": 46.5
+    },
+    {
+      "id": "v3-phrase-0167",
+      "kind": "note",
+      "lane": 3,
+      "beat": 46.5
+    },
+    {
+      "id": "v3-phrase-0168",
+      "kind": "note",
+      "lane": 0,
+      "beat": 46.625
+    },
+    {
+      "id": "v3-phrase-0169",
+      "kind": "note",
+      "lane": 2,
+      "beat": 46.75
+    },
+    {
+      "id": "v3-phrase-0170",
+      "kind": "note",
+      "lane": 0,
+      "beat": 47.0
+    },
+    {
+      "id": "v3-phrase-0171",
+      "kind": "note",
+      "lane": 2,
+      "beat": 47.0
+    },
+    {
+      "id": "v3-phrase-0172",
+      "kind": "note",
+      "lane": 3,
+      "beat": 47.0
+    },
+    {
+      "id": "v3-phrase-0173",
+      "kind": "note",
+      "lane": 1,
+      "beat": 47.25
+    },
+    {
+      "id": "v3-phrase-0174",
+      "kind": "note",
+      "lane": 2,
+      "beat": 47.5
+    },
+    {
+      "id": "v3-phrase-0175",
+      "kind": "note",
+      "lane": 3,
+      "beat": 47.5
+    },
+    {
+      "id": "v3-phrase-0176",
+      "kind": "note",
+      "lane": 0,
+      "beat": 48.0
+    },
+    {
+      "id": "v3-phrase-0177",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 48.0,
+      "endBeat": 49.25
+    },
+    {
+      "id": "v3-phrase-0178",
+      "kind": "note",
+      "lane": 3,
+      "beat": 48.0
+    },
+    {
+      "id": "v3-phrase-0179",
+      "kind": "note",
+      "lane": 2,
+      "beat": 48.5
+    },
+    {
+      "id": "v3-phrase-0180",
+      "kind": "note",
+      "lane": 0,
+      "beat": 48.75
+    },
+    {
+      "id": "v3-phrase-0181",
+      "kind": "note",
+      "lane": 2,
+      "beat": 49.0
+    },
+    {
+      "id": "v3-phrase-0182",
+      "kind": "note",
+      "lane": 3,
+      "beat": 49.0
+    },
+    {
+      "id": "v3-phrase-0183",
+      "kind": "note",
+      "lane": 0,
+      "beat": 49.25
+    },
+    {
+      "id": "v3-phrase-0184",
+      "kind": "note",
+      "lane": 3,
+      "beat": 49.375
+    },
+    {
+      "id": "v3-phrase-0185",
+      "kind": "note",
+      "lane": 0,
+      "beat": 49.5
+    },
+    {
+      "id": "v3-phrase-0186",
+      "kind": "note",
+      "lane": 2,
+      "beat": 49.5
+    },
+    {
+      "id": "v3-phrase-0187",
+      "kind": "note",
+      "lane": 1,
+      "beat": 50.0
+    },
+    {
+      "id": "v3-phrase-0188",
+      "kind": "note",
+      "lane": 2,
+      "beat": 50.0
+    },
+    {
+      "id": "v3-phrase-0189",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 50.0,
+      "endBeat": 51.25
+    },
+    {
+      "id": "v3-phrase-0190",
+      "kind": "note",
+      "lane": 0,
+      "beat": 50.5
+    },
+    {
+      "id": "v3-phrase-0191",
+      "kind": "note",
+      "lane": 2,
+      "beat": 50.5
+    },
+    {
+      "id": "v3-phrase-0192",
+      "kind": "note",
+      "lane": 0,
+      "beat": 51.0
+    },
+    {
+      "id": "v3-phrase-0193",
+      "kind": "note",
+      "lane": 1,
+      "beat": 51.0
+    },
+    {
+      "id": "v3-phrase-0194",
+      "kind": "note",
+      "lane": 2,
+      "beat": 51.25
+    },
+    {
+      "id": "v3-phrase-0195",
+      "kind": "note",
+      "lane": 0,
+      "beat": 51.5
+    },
+    {
+      "id": "v3-phrase-0196",
+      "kind": "note",
+      "lane": 1,
+      "beat": 51.5
+    },
+    {
+      "id": "v3-phrase-0197",
+      "kind": "note",
+      "lane": 0,
+      "beat": 52.0
+    },
+    {
+      "id": "v3-phrase-0198",
+      "kind": "note",
+      "lane": 1,
+      "beat": 52.0
+    },
+    {
+      "id": "v3-phrase-0199",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 52.0,
+      "endBeat": 53.5
+    },
+    {
+      "id": "v3-phrase-0200",
+      "kind": "note",
+      "lane": 2,
+      "beat": 52.5
+    },
+    {
+      "id": "v3-phrase-0201",
+      "kind": "note",
+      "lane": 0,
+      "beat": 52.75
+    },
+    {
+      "id": "v3-phrase-0202",
+      "kind": "note",
+      "lane": 1,
+      "beat": 53.0
+    },
+    {
+      "id": "v3-phrase-0203",
+      "kind": "note",
+      "lane": 2,
+      "beat": 53.0
+    },
+    {
+      "id": "v3-phrase-0204",
+      "kind": "note",
+      "lane": 0,
+      "beat": 53.5
+    },
+    {
+      "id": "v3-phrase-0205",
+      "kind": "note",
+      "lane": 2,
+      "beat": 53.5
+    },
+    {
+      "id": "v3-phrase-0206",
+      "kind": "note",
+      "lane": 1,
+      "beat": 54.0
+    },
+    {
+      "id": "v3-phrase-0207",
+      "kind": "note",
+      "lane": 2,
+      "beat": 54.0
+    },
+    {
+      "id": "v3-phrase-0208",
+      "kind": "note",
+      "lane": 3,
+      "beat": 54.0
+    },
+    {
+      "id": "v3-phrase-0209",
+      "kind": "note",
+      "lane": 0,
+      "beat": 54.5
+    },
+    {
+      "id": "v3-phrase-0210",
+      "kind": "note",
+      "lane": 1,
+      "beat": 54.5
+    },
+    {
+      "id": "v3-phrase-0211",
+      "kind": "note",
+      "lane": 2,
+      "beat": 54.5
+    },
+    {
+      "id": "v3-phrase-0212",
+      "kind": "note",
+      "lane": 3,
+      "beat": 54.625
+    },
+    {
+      "id": "v3-phrase-0213",
+      "kind": "note",
+      "lane": 1,
+      "beat": 54.75
+    },
+    {
+      "id": "v3-phrase-0214",
+      "kind": "note",
+      "lane": 0,
+      "beat": 55.0
+    },
+    {
+      "id": "v3-phrase-0215",
+      "kind": "note",
+      "lane": 1,
+      "beat": 55.0
+    },
+    {
+      "id": "v3-phrase-0216",
+      "kind": "note",
+      "lane": 3,
+      "beat": 55.0
+    },
+    {
+      "id": "v3-phrase-0217",
+      "kind": "note",
+      "lane": 0,
+      "beat": 55.5
+    },
+    {
+      "id": "v3-phrase-0218",
+      "kind": "note",
+      "lane": 1,
+      "beat": 55.5
+    },
+    {
+      "id": "v3-phrase-0219",
+      "kind": "note",
+      "lane": 0,
+      "beat": 56.0
+    },
+    {
+      "id": "v3-phrase-0220",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 56.0,
+      "endBeat": 57.5
+    },
+    {
+      "id": "v3-phrase-0221",
+      "kind": "note",
+      "lane": 3,
+      "beat": 56.0
+    },
+    {
+      "id": "v3-phrase-0222",
+      "kind": "note",
+      "lane": 2,
+      "beat": 56.5
+    },
+    {
+      "id": "v3-phrase-0223",
+      "kind": "note",
+      "lane": 0,
+      "beat": 56.75
+    },
+    {
+      "id": "v3-phrase-0224",
+      "kind": "note",
+      "lane": 2,
+      "beat": 57.0
+    },
+    {
+      "id": "v3-phrase-0225",
+      "kind": "note",
+      "lane": 3,
+      "beat": 57.0
+    },
+    {
+      "id": "v3-phrase-0226",
+      "kind": "note",
+      "lane": 0,
+      "beat": 57.5
+    },
+    {
+      "id": "v3-phrase-0227",
+      "kind": "note",
+      "lane": 2,
+      "beat": 57.5
+    },
+    {
+      "id": "v3-phrase-0228",
+      "kind": "note",
+      "lane": 1,
+      "beat": 58.0
+    },
+    {
+      "id": "v3-phrase-0229",
+      "kind": "note",
+      "lane": 2,
+      "beat": 58.0
+    },
+    {
+      "id": "v3-phrase-0230",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 58.0,
+      "endBeat": 59.5
+    },
+    {
+      "id": "v3-phrase-0231",
+      "kind": "note",
+      "lane": 0,
+      "beat": 58.5
+    },
+    {
+      "id": "v3-phrase-0232",
+      "kind": "note",
+      "lane": 2,
+      "beat": 58.5
+    },
+    {
+      "id": "v3-phrase-0233",
+      "kind": "note",
+      "lane": 0,
+      "beat": 59.0
+    },
+    {
+      "id": "v3-phrase-0234",
+      "kind": "note",
+      "lane": 1,
+      "beat": 59.0
+    },
+    {
+      "id": "v3-phrase-0235",
+      "kind": "note",
+      "lane": 0,
+      "beat": 59.5
+    },
+    {
+      "id": "v3-phrase-0236",
+      "kind": "note",
+      "lane": 1,
+      "beat": 59.5
+    },
+    {
+      "id": "v3-phrase-0237",
+      "kind": "note",
+      "lane": 0,
+      "beat": 60.0
+    },
+    {
+      "id": "v3-phrase-0238",
+      "kind": "note",
+      "lane": 1,
+      "beat": 60.0
+    },
+    {
+      "id": "v3-phrase-0239",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 60.0,
+      "endBeat": 61.5
+    },
+    {
+      "id": "v3-phrase-0240",
+      "kind": "note",
+      "lane": 2,
+      "beat": 60.5
+    },
+    {
+      "id": "v3-phrase-0241",
+      "kind": "note",
+      "lane": 0,
+      "beat": 60.75
+    },
+    {
+      "id": "v3-phrase-0242",
+      "kind": "note",
+      "lane": 1,
+      "beat": 61.0
+    },
+    {
+      "id": "v3-phrase-0243",
+      "kind": "note",
+      "lane": 2,
+      "beat": 61.0
+    },
+    {
+      "id": "v3-phrase-0244",
+      "kind": "note",
+      "lane": 0,
+      "beat": 61.5
+    },
+    {
+      "id": "v3-phrase-0245",
+      "kind": "note",
+      "lane": 2,
+      "beat": 61.5
+    },
+    {
+      "id": "v3-phrase-0246",
+      "kind": "note",
+      "lane": 1,
+      "beat": 62.0
+    },
+    {
+      "id": "v3-phrase-0247",
+      "kind": "note",
+      "lane": 2,
+      "beat": 62.0
+    },
+    {
+      "id": "v3-phrase-0248",
+      "kind": "note",
+      "lane": 3,
+      "beat": 62.0
+    },
+    {
+      "id": "v3-phrase-0249",
+      "kind": "note",
+      "lane": 0,
+      "beat": 62.5
+    },
+    {
+      "id": "v3-phrase-0250",
+      "kind": "note",
+      "lane": 1,
+      "beat": 62.5
+    },
+    {
+      "id": "v3-phrase-0251",
+      "kind": "note",
+      "lane": 2,
+      "beat": 62.5
+    },
+    {
+      "id": "v3-phrase-0252",
+      "kind": "note",
+      "lane": 3,
+      "beat": 62.625
+    },
+    {
+      "id": "v3-phrase-0253",
+      "kind": "note",
+      "lane": 1,
+      "beat": 62.75
+    },
+    {
+      "id": "v3-phrase-0254",
+      "kind": "note",
+      "lane": 0,
+      "beat": 63.0
+    },
+    {
+      "id": "v3-phrase-0255",
+      "kind": "note",
+      "lane": 1,
+      "beat": 63.0
+    },
+    {
+      "id": "v3-phrase-0256",
+      "kind": "note",
+      "lane": 3,
+      "beat": 63.0
+    },
+    {
+      "id": "v3-phrase-0257",
+      "kind": "note",
+      "lane": 0,
+      "beat": 63.5
+    },
+    {
+      "id": "v3-phrase-0258",
+      "kind": "note",
+      "lane": 1,
+      "beat": 63.5
+    },
+    {
+      "id": "v3-phrase-0259",
+      "kind": "note",
+      "lane": 0,
+      "beat": 64.0
+    },
+    {
+      "id": "v3-phrase-0260",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 64.0,
+      "endBeat": 65.5
+    },
+    {
+      "id": "v3-phrase-0261",
+      "kind": "note",
+      "lane": 3,
+      "beat": 64.0
+    },
+    {
+      "id": "v3-phrase-0262",
+      "kind": "note",
+      "lane": 2,
+      "beat": 64.5
+    },
+    {
+      "id": "v3-phrase-0263",
+      "kind": "note",
+      "lane": 0,
+      "beat": 64.75
+    },
+    {
+      "id": "v3-phrase-0264",
+      "kind": "note",
+      "lane": 2,
+      "beat": 65.0
+    },
+    {
+      "id": "v3-phrase-0265",
+      "kind": "note",
+      "lane": 3,
+      "beat": 65.0
+    },
+    {
+      "id": "v3-phrase-0266",
+      "kind": "note",
+      "lane": 0,
+      "beat": 65.5
+    },
+    {
+      "id": "v3-phrase-0267",
+      "kind": "note",
+      "lane": 2,
+      "beat": 65.5
+    },
+    {
+      "id": "v3-phrase-0268",
+      "kind": "note",
+      "lane": 1,
+      "beat": 66.0
+    },
+    {
+      "id": "v3-phrase-0269",
+      "kind": "note",
+      "lane": 2,
+      "beat": 66.0
+    },
+    {
+      "id": "v3-phrase-0270",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 66.0,
+      "endBeat": 67.5
+    },
+    {
+      "id": "v3-phrase-0271",
+      "kind": "note",
+      "lane": 0,
+      "beat": 66.5
+    },
+    {
+      "id": "v3-phrase-0272",
+      "kind": "note",
+      "lane": 2,
+      "beat": 66.5
+    },
+    {
+      "id": "v3-phrase-0273",
+      "kind": "note",
+      "lane": 0,
+      "beat": 67.0
+    },
+    {
+      "id": "v3-phrase-0274",
+      "kind": "note",
+      "lane": 1,
+      "beat": 67.0
+    },
+    {
+      "id": "v3-phrase-0275",
+      "kind": "note",
+      "lane": 0,
+      "beat": 67.5
+    },
+    {
+      "id": "v3-phrase-0276",
+      "kind": "note",
+      "lane": 1,
+      "beat": 67.5
+    },
+    {
+      "id": "v3-phrase-0277",
+      "kind": "note",
+      "lane": 0,
+      "beat": 68.0
+    },
+    {
+      "id": "v3-phrase-0278",
+      "kind": "note",
+      "lane": 1,
+      "beat": 68.0
+    },
+    {
+      "id": "v3-phrase-0279",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 68.0,
+      "endBeat": 69.5
+    },
+    {
+      "id": "v3-phrase-0280",
+      "kind": "note",
+      "lane": 2,
+      "beat": 68.5
+    },
+    {
+      "id": "v3-phrase-0281",
+      "kind": "note",
+      "lane": 0,
+      "beat": 68.75
+    },
+    {
+      "id": "v3-phrase-0282",
+      "kind": "note",
+      "lane": 1,
+      "beat": 69.0
+    },
+    {
+      "id": "v3-phrase-0283",
+      "kind": "note",
+      "lane": 2,
+      "beat": 69.0
+    },
+    {
+      "id": "v3-phrase-0284",
+      "kind": "note",
+      "lane": 0,
+      "beat": 69.5
+    },
+    {
+      "id": "v3-phrase-0285",
+      "kind": "note",
+      "lane": 2,
+      "beat": 69.5
+    },
+    {
+      "id": "v3-phrase-0286",
+      "kind": "note",
+      "lane": 1,
+      "beat": 70.0
+    },
+    {
+      "id": "v3-phrase-0287",
+      "kind": "note",
+      "lane": 2,
+      "beat": 70.0
+    },
+    {
+      "id": "v3-phrase-0288",
+      "kind": "note",
+      "lane": 3,
+      "beat": 70.0
+    },
+    {
+      "id": "v3-phrase-0289",
+      "kind": "note",
+      "lane": 0,
+      "beat": 70.5
+    },
+    {
+      "id": "v3-phrase-0290",
+      "kind": "note",
+      "lane": 1,
+      "beat": 70.5
+    },
+    {
+      "id": "v3-phrase-0291",
+      "kind": "note",
+      "lane": 2,
+      "beat": 70.5
+    },
+    {
+      "id": "v3-phrase-0292",
+      "kind": "note",
+      "lane": 3,
+      "beat": 70.625
+    },
+    {
+      "id": "v3-phrase-0293",
+      "kind": "note",
+      "lane": 1,
+      "beat": 70.75
+    },
+    {
+      "id": "v3-phrase-0294",
+      "kind": "note",
+      "lane": 0,
+      "beat": 71.0
+    },
+    {
+      "id": "v3-phrase-0295",
+      "kind": "note",
+      "lane": 1,
+      "beat": 71.0
+    },
+    {
+      "id": "v3-phrase-0296",
+      "kind": "note",
+      "lane": 3,
+      "beat": 71.0
+    },
+    {
+      "id": "v3-phrase-0297",
+      "kind": "note",
+      "lane": 0,
+      "beat": 71.5
+    },
+    {
+      "id": "v3-phrase-0298",
+      "kind": "note",
+      "lane": 1,
+      "beat": 71.5
+    },
+    {
+      "id": "v3-phrase-0299",
+      "kind": "note",
+      "lane": 0,
+      "beat": 72.0
+    },
+    {
+      "id": "v3-phrase-0300",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 72.0,
+      "endBeat": 73.5
+    },
+    {
+      "id": "v3-phrase-0301",
+      "kind": "note",
+      "lane": 3,
+      "beat": 72.0
+    },
+    {
+      "id": "v3-phrase-0302",
+      "kind": "note",
+      "lane": 2,
+      "beat": 72.5
+    },
+    {
+      "id": "v3-phrase-0303",
+      "kind": "note",
+      "lane": 0,
+      "beat": 72.75
+    },
+    {
+      "id": "v3-phrase-0304",
+      "kind": "note",
+      "lane": 2,
+      "beat": 73.0
+    },
+    {
+      "id": "v3-phrase-0305",
+      "kind": "note",
+      "lane": 3,
+      "beat": 73.0
+    },
+    {
+      "id": "v3-phrase-0306",
+      "kind": "note",
+      "lane": 0,
+      "beat": 73.5
+    },
+    {
+      "id": "v3-phrase-0307",
+      "kind": "note",
+      "lane": 2,
+      "beat": 73.5
+    },
+    {
+      "id": "v3-phrase-0308",
+      "kind": "note",
+      "lane": 1,
+      "beat": 74.0
+    },
+    {
+      "id": "v3-phrase-0309",
+      "kind": "note",
+      "lane": 2,
+      "beat": 74.0
+    },
+    {
+      "id": "v3-phrase-0310",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 74.0,
+      "endBeat": 75.5
+    },
+    {
+      "id": "v3-phrase-0311",
+      "kind": "note",
+      "lane": 0,
+      "beat": 74.5
+    },
+    {
+      "id": "v3-phrase-0312",
+      "kind": "note",
+      "lane": 2,
+      "beat": 74.5
+    },
+    {
+      "id": "v3-phrase-0313",
+      "kind": "note",
+      "lane": 0,
+      "beat": 75.0
+    },
+    {
+      "id": "v3-phrase-0314",
+      "kind": "note",
+      "lane": 1,
+      "beat": 75.0
+    },
+    {
+      "id": "v3-phrase-0315",
+      "kind": "note",
+      "lane": 0,
+      "beat": 75.5
+    },
+    {
+      "id": "v3-phrase-0316",
+      "kind": "note",
+      "lane": 1,
+      "beat": 75.5
+    },
+    {
+      "id": "v3-phrase-0317",
+      "kind": "note",
+      "lane": 0,
+      "beat": 76.0
+    },
+    {
+      "id": "v3-phrase-0318",
+      "kind": "note",
+      "lane": 1,
+      "beat": 76.0
+    },
+    {
+      "id": "v3-phrase-0319",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 76.0,
+      "endBeat": 77.25
+    },
+    {
+      "id": "v3-phrase-0320",
+      "kind": "note",
+      "lane": 2,
+      "beat": 76.5
+    },
+    {
+      "id": "v3-phrase-0321",
+      "kind": "note",
+      "lane": 0,
+      "beat": 76.75
+    },
+    {
+      "id": "v3-phrase-0322",
+      "kind": "note",
+      "lane": 1,
+      "beat": 77.0
+    },
+    {
+      "id": "v3-phrase-0323",
+      "kind": "note",
+      "lane": 2,
+      "beat": 77.0
+    },
+    {
+      "id": "v3-phrase-0324",
+      "kind": "note",
+      "lane": 0,
+      "beat": 77.5
+    },
+    {
+      "id": "v3-phrase-0325",
+      "kind": "note",
+      "lane": 2,
+      "beat": 77.5
+    },
+    {
+      "id": "v3-phrase-0326",
+      "kind": "note",
+      "lane": 1,
+      "beat": 78.0
+    },
+    {
+      "id": "v3-phrase-0327",
+      "kind": "note",
+      "lane": 2,
+      "beat": 78.0
+    },
+    {
+      "id": "v3-phrase-0328",
+      "kind": "note",
+      "lane": 3,
+      "beat": 78.0
+    },
+    {
+      "id": "v3-phrase-0329",
+      "kind": "note",
+      "lane": 0,
+      "beat": 78.5
+    },
+    {
+      "id": "v3-phrase-0330",
+      "kind": "note",
+      "lane": 1,
+      "beat": 78.5
+    },
+    {
+      "id": "v3-phrase-0331",
+      "kind": "note",
+      "lane": 2,
+      "beat": 78.5
+    },
+    {
+      "id": "v3-phrase-0332",
+      "kind": "note",
+      "lane": 3,
+      "beat": 78.625
+    },
+    {
+      "id": "v3-phrase-0333",
+      "kind": "note",
+      "lane": 1,
+      "beat": 78.75
+    },
+    {
+      "id": "v3-phrase-0334",
+      "kind": "note",
+      "lane": 0,
+      "beat": 79.0
+    },
+    {
+      "id": "v3-phrase-0335",
+      "kind": "note",
+      "lane": 1,
+      "beat": 79.0
+    },
+    {
+      "id": "v3-phrase-0336",
+      "kind": "note",
+      "lane": 3,
+      "beat": 79.0
+    },
+    {
+      "id": "v3-phrase-0337",
+      "kind": "note",
+      "lane": 2,
+      "beat": 79.25
+    },
+    {
+      "id": "v3-phrase-0338",
+      "kind": "note",
+      "lane": 0,
+      "beat": 79.5
+    },
+    {
+      "id": "v3-phrase-0339",
+      "kind": "note",
+      "lane": 1,
+      "beat": 79.5
+    },
+    {
+      "id": "v3-phrase-0340",
+      "kind": "note",
+      "lane": 0,
+      "beat": 80.0
+    },
+    {
+      "id": "v3-phrase-0341",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 80.0,
+      "endBeat": 81.25
+    },
+    {
+      "id": "v3-phrase-0342",
+      "kind": "note",
+      "lane": 3,
+      "beat": 80.0
+    },
+    {
+      "id": "v3-phrase-0343",
+      "kind": "note",
+      "lane": 1,
+      "beat": 80.5
+    },
+    {
+      "id": "v3-phrase-0344",
+      "kind": "note",
+      "lane": 3,
+      "beat": 80.75
+    },
+    {
+      "id": "v3-phrase-0345",
+      "kind": "note",
+      "lane": 0,
+      "beat": 81.0
+    },
+    {
+      "id": "v3-phrase-0346",
+      "kind": "note",
+      "lane": 1,
+      "beat": 81.0
+    },
+    {
+      "id": "v3-phrase-0347",
+      "kind": "note",
+      "lane": 3,
+      "beat": 81.25
+    },
+    {
+      "id": "v3-phrase-0348",
+      "kind": "note",
+      "lane": 0,
+      "beat": 81.375
+    },
+    {
+      "id": "v3-phrase-0349",
+      "kind": "note",
+      "lane": 1,
+      "beat": 81.5
+    },
+    {
+      "id": "v3-phrase-0350",
+      "kind": "note",
+      "lane": 3,
+      "beat": 81.5
+    },
+    {
+      "id": "v3-phrase-0351",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 82.0,
+      "endBeat": 83.25
+    },
+    {
+      "id": "v3-phrase-0352",
+      "kind": "note",
+      "lane": 1,
+      "beat": 82.0
+    },
+    {
+      "id": "v3-phrase-0353",
+      "kind": "note",
+      "lane": 2,
+      "beat": 82.0
+    },
+    {
+      "id": "v3-phrase-0354",
+      "kind": "note",
+      "lane": 1,
+      "beat": 82.5
+    },
+    {
+      "id": "v3-phrase-0355",
+      "kind": "note",
+      "lane": 3,
+      "beat": 82.5
+    },
+    {
+      "id": "v3-phrase-0356",
+      "kind": "note",
+      "lane": 2,
+      "beat": 83.0
+    },
+    {
+      "id": "v3-phrase-0357",
+      "kind": "note",
+      "lane": 3,
+      "beat": 83.0
+    },
+    {
+      "id": "v3-phrase-0358",
+      "kind": "note",
+      "lane": 1,
+      "beat": 83.25
+    },
+    {
+      "id": "v3-phrase-0359",
+      "kind": "note",
+      "lane": 2,
+      "beat": 83.5
+    },
+    {
+      "id": "v3-phrase-0360",
+      "kind": "note",
+      "lane": 3,
+      "beat": 83.5
+    },
+    {
+      "id": "v3-phrase-0361",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 84.0,
+      "endBeat": 85.5
+    },
+    {
+      "id": "v3-phrase-0362",
+      "kind": "note",
+      "lane": 2,
+      "beat": 84.0
+    },
+    {
+      "id": "v3-phrase-0363",
+      "kind": "note",
+      "lane": 3,
+      "beat": 84.0
+    },
+    {
+      "id": "v3-phrase-0364",
+      "kind": "note",
+      "lane": 1,
+      "beat": 84.5
+    },
+    {
+      "id": "v3-phrase-0365",
+      "kind": "note",
+      "lane": 3,
+      "beat": 84.75
+    },
+    {
+      "id": "v3-phrase-0366",
+      "kind": "note",
+      "lane": 1,
+      "beat": 85.0
+    },
+    {
+      "id": "v3-phrase-0367",
+      "kind": "note",
+      "lane": 2,
+      "beat": 85.0
+    },
+    {
+      "id": "v3-phrase-0368",
+      "kind": "note",
+      "lane": 1,
+      "beat": 85.5
+    },
+    {
+      "id": "v3-phrase-0369",
+      "kind": "note",
+      "lane": 3,
+      "beat": 85.5
+    },
+    {
+      "id": "v3-phrase-0370",
+      "kind": "note",
+      "lane": 0,
+      "beat": 86.0
+    },
+    {
+      "id": "v3-phrase-0371",
+      "kind": "note",
+      "lane": 1,
+      "beat": 86.0
+    },
+    {
+      "id": "v3-phrase-0372",
+      "kind": "note",
+      "lane": 2,
+      "beat": 86.0
+    },
+    {
+      "id": "v3-phrase-0373",
+      "kind": "note",
+      "lane": 1,
+      "beat": 86.5
+    },
+    {
+      "id": "v3-phrase-0374",
+      "kind": "note",
+      "lane": 2,
+      "beat": 86.5
+    },
+    {
+      "id": "v3-phrase-0375",
+      "kind": "note",
+      "lane": 3,
+      "beat": 86.5
+    },
+    {
+      "id": "v3-phrase-0376",
+      "kind": "note",
+      "lane": 0,
+      "beat": 86.625
+    },
+    {
+      "id": "v3-phrase-0377",
+      "kind": "note",
+      "lane": 2,
+      "beat": 86.75
+    },
+    {
+      "id": "v3-phrase-0378",
+      "kind": "note",
+      "lane": 0,
+      "beat": 87.0
+    },
+    {
+      "id": "v3-phrase-0379",
+      "kind": "note",
+      "lane": 2,
+      "beat": 87.0
+    },
+    {
+      "id": "v3-phrase-0380",
+      "kind": "note",
+      "lane": 3,
+      "beat": 87.0
+    },
+    {
+      "id": "v3-phrase-0381",
+      "kind": "note",
+      "lane": 2,
+      "beat": 87.5
+    },
+    {
+      "id": "v3-phrase-0382",
+      "kind": "note",
+      "lane": 3,
+      "beat": 87.5
+    },
+    {
+      "id": "v3-phrase-0383",
+      "kind": "note",
+      "lane": 0,
+      "beat": 88.0
+    },
+    {
+      "id": "v3-phrase-0384",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 88.0,
+      "endBeat": 89.5
+    },
+    {
+      "id": "v3-phrase-0385",
+      "kind": "note",
+      "lane": 3,
+      "beat": 88.0
+    },
+    {
+      "id": "v3-phrase-0386",
+      "kind": "note",
+      "lane": 1,
+      "beat": 88.5
+    },
+    {
+      "id": "v3-phrase-0387",
+      "kind": "note",
+      "lane": 3,
+      "beat": 88.75
+    },
+    {
+      "id": "v3-phrase-0388",
+      "kind": "note",
+      "lane": 0,
+      "beat": 89.0
+    },
+    {
+      "id": "v3-phrase-0389",
+      "kind": "note",
+      "lane": 1,
+      "beat": 89.0
+    },
+    {
+      "id": "v3-phrase-0390",
+      "kind": "note",
+      "lane": 1,
+      "beat": 89.5
+    },
+    {
+      "id": "v3-phrase-0391",
+      "kind": "note",
+      "lane": 3,
+      "beat": 89.5
+    },
+    {
+      "id": "v3-phrase-0392",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 90.0,
+      "endBeat": 91.5
+    },
+    {
+      "id": "v3-phrase-0393",
+      "kind": "note",
+      "lane": 1,
+      "beat": 90.0
+    },
+    {
+      "id": "v3-phrase-0394",
+      "kind": "note",
+      "lane": 2,
+      "beat": 90.0
+    },
+    {
+      "id": "v3-phrase-0395",
+      "kind": "note",
+      "lane": 1,
+      "beat": 90.5
+    },
+    {
+      "id": "v3-phrase-0396",
+      "kind": "note",
+      "lane": 3,
+      "beat": 90.5
+    },
+    {
+      "id": "v3-phrase-0397",
+      "kind": "note",
+      "lane": 2,
+      "beat": 91.0
+    },
+    {
+      "id": "v3-phrase-0398",
+      "kind": "note",
+      "lane": 3,
+      "beat": 91.0
+    },
+    {
+      "id": "v3-phrase-0399",
+      "kind": "note",
+      "lane": 2,
+      "beat": 91.5
+    },
+    {
+      "id": "v3-phrase-0400",
+      "kind": "note",
+      "lane": 3,
+      "beat": 91.5
+    },
+    {
+      "id": "v3-phrase-0401",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 92.0,
+      "endBeat": 93.5
+    },
+    {
+      "id": "v3-phrase-0402",
+      "kind": "note",
+      "lane": 2,
+      "beat": 92.0
+    },
+    {
+      "id": "v3-phrase-0403",
+      "kind": "note",
+      "lane": 3,
+      "beat": 92.0
+    },
+    {
+      "id": "v3-phrase-0404",
+      "kind": "note",
+      "lane": 1,
+      "beat": 92.5
+    },
+    {
+      "id": "v3-phrase-0405",
+      "kind": "note",
+      "lane": 3,
+      "beat": 92.75
+    },
+    {
+      "id": "v3-phrase-0406",
+      "kind": "note",
+      "lane": 1,
+      "beat": 93.0
+    },
+    {
+      "id": "v3-phrase-0407",
+      "kind": "note",
+      "lane": 2,
+      "beat": 93.0
+    },
+    {
+      "id": "v3-phrase-0408",
+      "kind": "note",
+      "lane": 1,
+      "beat": 93.5
+    },
+    {
+      "id": "v3-phrase-0409",
+      "kind": "note",
+      "lane": 3,
+      "beat": 93.5
+    },
+    {
+      "id": "v3-phrase-0410",
+      "kind": "note",
+      "lane": 0,
+      "beat": 94.0
+    },
+    {
+      "id": "v3-phrase-0411",
+      "kind": "note",
+      "lane": 1,
+      "beat": 94.0
+    },
+    {
+      "id": "v3-phrase-0412",
+      "kind": "note",
+      "lane": 2,
+      "beat": 94.0
+    },
+    {
+      "id": "v3-phrase-0413",
+      "kind": "note",
+      "lane": 1,
+      "beat": 94.5
+    },
+    {
+      "id": "v3-phrase-0414",
+      "kind": "note",
+      "lane": 2,
+      "beat": 94.5
+    },
+    {
+      "id": "v3-phrase-0415",
+      "kind": "note",
+      "lane": 3,
+      "beat": 94.5
+    },
+    {
+      "id": "v3-phrase-0416",
+      "kind": "note",
+      "lane": 0,
+      "beat": 94.625
+    },
+    {
+      "id": "v3-phrase-0417",
+      "kind": "note",
+      "lane": 2,
+      "beat": 94.75
+    },
+    {
+      "id": "v3-phrase-0418",
+      "kind": "note",
+      "lane": 0,
+      "beat": 95.0
+    },
+    {
+      "id": "v3-phrase-0419",
+      "kind": "note",
+      "lane": 2,
+      "beat": 95.0
+    },
+    {
+      "id": "v3-phrase-0420",
+      "kind": "note",
+      "lane": 3,
+      "beat": 95.0
+    },
+    {
+      "id": "v3-phrase-0421",
+      "kind": "note",
+      "lane": 2,
+      "beat": 95.5
+    },
+    {
+      "id": "v3-phrase-0422",
+      "kind": "note",
+      "lane": 3,
+      "beat": 95.5
+    },
+    {
+      "id": "v3-phrase-0423",
+      "kind": "note",
+      "lane": 0,
+      "beat": 96.0
+    },
+    {
+      "id": "v3-phrase-0424",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 96.0,
+      "endBeat": 98.0
+    },
+    {
+      "id": "v3-phrase-0425",
+      "kind": "note",
+      "lane": 2,
+      "beat": 96.0
+    },
+    {
+      "id": "v3-phrase-0426",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 96.0,
+      "endBeat": 98.0
+    },
+    {
+      "id": "v3-phrase-0427",
+      "kind": "note",
+      "lane": 2,
+      "beat": 96.5
+    },
+    {
+      "id": "v3-phrase-0428",
+      "kind": "note",
+      "lane": 0,
+      "beat": 96.75
+    },
+    {
+      "id": "v3-phrase-0429",
+      "kind": "note",
+      "lane": 0,
+      "beat": 97.0
+    },
+    {
+      "id": "v3-phrase-0430",
+      "kind": "note",
+      "lane": 2,
+      "beat": 97.0
+    },
+    {
+      "id": "v3-phrase-0431",
+      "kind": "note",
+      "lane": 0,
+      "beat": 97.5
+    },
+    {
+      "id": "v3-phrase-0432",
+      "kind": "note",
+      "lane": 0,
+      "beat": 98.0
+    },
+    {
+      "id": "v3-phrase-0433",
+      "kind": "note",
+      "lane": 2,
+      "beat": 98.0
+    },
+    {
+      "id": "v3-phrase-0434",
+      "kind": "note",
+      "lane": 1,
+      "beat": 98.5
+    },
+    {
+      "id": "v3-phrase-0435",
+      "kind": "note",
+      "lane": 2,
+      "beat": 98.5
+    },
+    {
+      "id": "v3-phrase-0436",
+      "kind": "note",
+      "lane": 3,
+      "beat": 98.5
+    },
+    {
+      "id": "v3-phrase-0437",
+      "kind": "note",
+      "lane": 0,
+      "beat": 98.625
+    },
+    {
+      "id": "v3-phrase-0438",
+      "kind": "note",
+      "lane": 2,
+      "beat": 98.75
+    },
+    {
+      "id": "v3-phrase-0439",
+      "kind": "note",
+      "lane": 0,
+      "beat": 99.0
+    },
+    {
+      "id": "v3-phrase-0440",
+      "kind": "note",
+      "lane": 1,
+      "beat": 99.0
+    },
+    {
+      "id": "v3-phrase-0441",
+      "kind": "note",
+      "lane": 3,
+      "beat": 99.0
+    },
+    {
+      "id": "v3-phrase-0442",
+      "kind": "note",
+      "lane": 1,
+      "beat": 99.5
+    },
+    {
+      "id": "v3-phrase-0443",
+      "kind": "note",
+      "lane": 2,
+      "beat": 99.5
+    },
+    {
+      "id": "v3-phrase-0444",
+      "kind": "note",
+      "lane": 0,
+      "beat": 100.0
+    },
+    {
+      "id": "v3-phrase-0445",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 100.0,
+      "endBeat": 102.0
+    },
+    {
+      "id": "v3-phrase-0446",
+      "kind": "note",
+      "lane": 2,
+      "beat": 100.0
+    },
+    {
+      "id": "v3-phrase-0447",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 100.0,
+      "endBeat": 102.0
+    },
+    {
+      "id": "v3-phrase-0448",
+      "kind": "note",
+      "lane": 2,
+      "beat": 100.5
+    },
+    {
+      "id": "v3-phrase-0449",
+      "kind": "note",
+      "lane": 0,
+      "beat": 100.75
+    },
+    {
+      "id": "v3-phrase-0450",
+      "kind": "note",
+      "lane": 0,
+      "beat": 101.0
+    },
+    {
+      "id": "v3-phrase-0451",
+      "kind": "note",
+      "lane": 2,
+      "beat": 101.0
+    },
+    {
+      "id": "v3-phrase-0452",
+      "kind": "note",
+      "lane": 0,
+      "beat": 101.5
+    },
+    {
+      "id": "v3-phrase-0453",
+      "kind": "note",
+      "lane": 0,
+      "beat": 102.0
+    },
+    {
+      "id": "v3-phrase-0454",
+      "kind": "note",
+      "lane": 2,
+      "beat": 102.0
+    },
+    {
+      "id": "v3-phrase-0455",
+      "kind": "note",
+      "lane": 1,
+      "beat": 102.5
+    },
+    {
+      "id": "v3-phrase-0456",
+      "kind": "note",
+      "lane": 2,
+      "beat": 102.5
+    },
+    {
+      "id": "v3-phrase-0457",
+      "kind": "note",
+      "lane": 3,
+      "beat": 102.5
+    },
+    {
+      "id": "v3-phrase-0458",
+      "kind": "note",
+      "lane": 0,
+      "beat": 102.625
+    },
+    {
+      "id": "v3-phrase-0459",
+      "kind": "note",
+      "lane": 2,
+      "beat": 102.75
+    },
+    {
+      "id": "v3-phrase-0460",
+      "kind": "note",
+      "lane": 0,
+      "beat": 103.0
+    },
+    {
+      "id": "v3-phrase-0461",
+      "kind": "note",
+      "lane": 1,
+      "beat": 103.0
+    },
+    {
+      "id": "v3-phrase-0462",
+      "kind": "note",
+      "lane": 3,
+      "beat": 103.0
+    },
+    {
+      "id": "v3-phrase-0463",
+      "kind": "note",
+      "lane": 1,
+      "beat": 103.5
+    },
+    {
+      "id": "v3-phrase-0464",
+      "kind": "note",
+      "lane": 2,
+      "beat": 103.5
+    },
+    {
+      "id": "v3-phrase-0465",
+      "kind": "note",
+      "lane": 0,
+      "beat": 104.0
+    },
+    {
+      "id": "v3-phrase-0466",
+      "kind": "note",
+      "lane": 2,
+      "beat": 104.0
+    },
+    {
+      "id": "v3-phrase-0467",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 104.0,
+      "endBeat": 105.5
+    },
+    {
+      "id": "v3-phrase-0468",
+      "kind": "note",
+      "lane": 2,
+      "beat": 104.5
+    },
+    {
+      "id": "v3-phrase-0469",
+      "kind": "note",
+      "lane": 0,
+      "beat": 104.75
+    },
+    {
+      "id": "v3-phrase-0470",
+      "kind": "note",
+      "lane": 1,
+      "beat": 105.0
+    },
+    {
+      "id": "v3-phrase-0471",
+      "kind": "note",
+      "lane": 2,
+      "beat": 105.0
+    },
+    {
+      "id": "v3-phrase-0472",
+      "kind": "note",
+      "lane": 0,
+      "beat": 105.375
+    },
+    {
+      "id": "v3-phrase-0473",
+      "kind": "note",
+      "lane": 1,
+      "beat": 105.5
+    },
+    {
+      "id": "v3-phrase-0474",
+      "kind": "note",
+      "lane": 2,
+      "beat": 105.5
+    },
+    {
+      "id": "v3-phrase-0475",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 106.0,
+      "endBeat": 107.5
+    },
+    {
+      "id": "v3-phrase-0476",
+      "kind": "note",
+      "lane": 2,
+      "beat": 106.0
+    },
+    {
+      "id": "v3-phrase-0477",
+      "kind": "note",
+      "lane": 3,
+      "beat": 106.0
+    },
+    {
+      "id": "v3-phrase-0478",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 106.25,
+      "endBeat": 107.5
+    },
+    {
+      "id": "v3-phrase-0479",
+      "kind": "note",
+      "lane": 2,
+      "beat": 106.5
+    },
+    {
+      "id": "v3-phrase-0480",
+      "kind": "note",
+      "lane": 3,
+      "beat": 106.5
+    },
+    {
+      "id": "v3-phrase-0481",
+      "kind": "note",
+      "lane": 2,
+      "beat": 107.0
+    },
+    {
+      "id": "v3-phrase-0482",
+      "kind": "note",
+      "lane": 3,
+      "beat": 107.0
+    },
+    {
+      "id": "v3-phrase-0483",
+      "kind": "note",
+      "lane": 3,
+      "beat": 107.375
+    },
+    {
+      "id": "v3-phrase-0484",
+      "kind": "note",
+      "lane": 2,
+      "beat": 107.5
+    },
+    {
+      "id": "v3-phrase-0485",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 108.0,
+      "endBeat": 109.5
+    },
+    {
+      "id": "v3-phrase-0486",
+      "kind": "note",
+      "lane": 1,
+      "beat": 108.0
+    },
+    {
+      "id": "v3-phrase-0487",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 108.0,
+      "endBeat": 109.5
+    },
+    {
+      "id": "v3-phrase-0488",
+      "kind": "note",
+      "lane": 3,
+      "beat": 108.0
+    },
+    {
+      "id": "v3-phrase-0489",
+      "kind": "note",
+      "lane": 1,
+      "beat": 108.5
+    },
+    {
+      "id": "v3-phrase-0490",
+      "kind": "note",
+      "lane": 3,
+      "beat": 108.75
+    },
+    {
+      "id": "v3-phrase-0491",
+      "kind": "note",
+      "lane": 1,
+      "beat": 109.0
+    },
+    {
+      "id": "v3-phrase-0492",
+      "kind": "note",
+      "lane": 3,
+      "beat": 109.0
+    },
+    {
+      "id": "v3-phrase-0493",
+      "kind": "note",
+      "lane": 1,
+      "beat": 109.5
+    },
+    {
+      "id": "v3-phrase-0494",
+      "kind": "note",
+      "lane": 3,
+      "beat": 109.5
+    },
+    {
+      "id": "v3-phrase-0495",
+      "kind": "note",
+      "lane": 0,
+      "beat": 110.0
+    },
+    {
+      "id": "v3-phrase-0496",
+      "kind": "note",
+      "lane": 1,
+      "beat": 110.0
+    },
+    {
+      "id": "v3-phrase-0497",
+      "kind": "note",
+      "lane": 2,
+      "beat": 110.0
+    },
+    {
+      "id": "v3-phrase-0498",
+      "kind": "note",
+      "lane": 0,
+      "beat": 110.5
+    },
+    {
+      "id": "v3-phrase-0499",
+      "kind": "note",
+      "lane": 1,
+      "beat": 110.5
+    },
+    {
+      "id": "v3-phrase-0500",
+      "kind": "note",
+      "lane": 3,
+      "beat": 110.5
+    },
+    {
+      "id": "v3-phrase-0501",
+      "kind": "note",
+      "lane": 0,
+      "beat": 111.0
+    },
+    {
+      "id": "v3-phrase-0502",
+      "kind": "note",
+      "lane": 2,
+      "beat": 111.0
+    },
+    {
+      "id": "v3-phrase-0503",
+      "kind": "note",
+      "lane": 3,
+      "beat": 111.0
+    },
+    {
+      "id": "v3-phrase-0504",
+      "kind": "note",
+      "lane": 1,
+      "beat": 111.5
+    },
+    {
+      "id": "v3-phrase-0505",
+      "kind": "note",
+      "lane": 2,
+      "beat": 111.5
+    },
+    {
+      "id": "v3-phrase-0506",
+      "kind": "note",
+      "lane": 0,
+      "beat": 112.0
+    },
+    {
+      "id": "v3-phrase-0507",
+      "kind": "note",
+      "lane": 2,
+      "beat": 112.0
+    },
+    {
+      "id": "v3-phrase-0508",
+      "kind": "note",
+      "lane": 3,
+      "beat": 112.0
+    },
+    {
+      "id": "v3-phrase-0509",
+      "kind": "note",
+      "lane": 0,
+      "beat": 112.5
+    },
+    {
+      "id": "v3-phrase-0510",
+      "kind": "note",
+      "lane": 1,
+      "beat": 112.5
+    },
+    {
+      "id": "v3-phrase-0511",
+      "kind": "note",
+      "lane": 3,
+      "beat": 112.75
+    },
+    {
+      "id": "v3-phrase-0512",
+      "kind": "note",
+      "lane": 0,
+      "beat": 113.0
+    },
+    {
+      "id": "v3-phrase-0513",
+      "kind": "note",
+      "lane": 1,
+      "beat": 113.0
+    },
+    {
+      "id": "v3-phrase-0514",
+      "kind": "note",
+      "lane": 2,
+      "beat": 113.0
+    },
+    {
+      "id": "v3-phrase-0515",
+      "kind": "note",
+      "lane": 1,
+      "beat": 113.5
+    },
+    {
+      "id": "v3-phrase-0516",
+      "kind": "note",
+      "lane": 3,
+      "beat": 113.5
+    },
+    {
+      "id": "v3-phrase-0517",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 114.0,
+      "endBeat": 115.0
+    },
+    {
+      "id": "v3-phrase-0518",
+      "kind": "note",
+      "lane": 1,
+      "beat": 114.0
+    },
+    {
+      "id": "v3-phrase-0519",
+      "kind": "note",
+      "lane": 2,
+      "beat": 114.0
+    },
+    {
+      "id": "v3-phrase-0520",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 114.0,
+      "endBeat": 115.0
+    },
+    {
+      "id": "v3-phrase-0521",
+      "kind": "note",
+      "lane": 1,
+      "beat": 114.5
+    },
+    {
+      "id": "v3-phrase-0522",
+      "kind": "note",
+      "lane": 2,
+      "beat": 114.5
+    },
+    {
+      "id": "v3-phrase-0523",
+      "kind": "note",
+      "lane": 1,
+      "beat": 115.0
+    },
+    {
+      "id": "v3-phrase-0524",
+      "kind": "note",
+      "lane": 2,
+      "beat": 115.0
+    },
+    {
+      "id": "v3-phrase-0525",
+      "kind": "note",
+      "lane": 3,
+      "beat": 115.375
+    },
+    {
+      "id": "v3-phrase-0526",
+      "kind": "note",
+      "lane": 1,
+      "beat": 115.5
+    },
+    {
+      "id": "v3-phrase-0527",
+      "kind": "note",
+      "lane": 2,
+      "beat": 115.5
+    },
+    {
+      "id": "v3-phrase-0528",
+      "kind": "note",
+      "lane": 0,
+      "beat": 116.0
+    },
+    {
+      "id": "v3-phrase-0529",
+      "kind": "note",
+      "lane": 2,
+      "beat": 116.0
+    },
+    {
+      "id": "v3-phrase-0530",
+      "kind": "note",
+      "lane": 3,
+      "beat": 116.0
+    },
+    {
+      "id": "v3-phrase-0531",
+      "kind": "note",
+      "lane": 0,
+      "beat": 116.5
+    },
+    {
+      "id": "v3-phrase-0532",
+      "kind": "note",
+      "lane": 1,
+      "beat": 116.5
+    },
+    {
+      "id": "v3-phrase-0533",
+      "kind": "note",
+      "lane": 3,
+      "beat": 116.75
+    },
+    {
+      "id": "v3-phrase-0534",
+      "kind": "note",
+      "lane": 0,
+      "beat": 117.0
+    },
+    {
+      "id": "v3-phrase-0535",
+      "kind": "note",
+      "lane": 1,
+      "beat": 117.0
+    },
+    {
+      "id": "v3-phrase-0536",
+      "kind": "note",
+      "lane": 2,
+      "beat": 117.0
+    },
+    {
+      "id": "v3-phrase-0537",
+      "kind": "note",
+      "lane": 1,
+      "beat": 117.5
+    },
+    {
+      "id": "v3-phrase-0538",
+      "kind": "note",
+      "lane": 3,
+      "beat": 117.5
+    },
+    {
+      "id": "v3-phrase-0539",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 118.0,
+      "endBeat": 119.0
+    },
+    {
+      "id": "v3-phrase-0540",
+      "kind": "note",
+      "lane": 1,
+      "beat": 118.0
+    },
+    {
+      "id": "v3-phrase-0541",
+      "kind": "note",
+      "lane": 3,
+      "beat": 118.0
+    },
+    {
+      "id": "v3-phrase-0542",
+      "kind": "note",
+      "lane": 2,
+      "beat": 118.375
+    },
+    {
+      "id": "v3-phrase-0543",
+      "kind": "note",
+      "lane": 1,
+      "beat": 118.5
+    },
+    {
+      "id": "v3-phrase-0544",
+      "kind": "note",
+      "lane": 3,
+      "beat": 118.5
+    },
+    {
+      "id": "v3-phrase-0545",
+      "kind": "note",
+      "lane": 1,
+      "beat": 119.0
+    },
+    {
+      "id": "v3-phrase-0546",
+      "kind": "note",
+      "lane": 2,
+      "beat": 119.0
+    },
+    {
+      "id": "v3-phrase-0547",
+      "kind": "note",
+      "lane": 3,
+      "beat": 119.0
+    },
+    {
+      "id": "v3-phrase-0548",
+      "kind": "note",
+      "lane": 1,
+      "beat": 119.5
+    },
+    {
+      "id": "v3-phrase-0549",
+      "kind": "note",
+      "lane": 2,
+      "beat": 119.5
+    },
+    {
+      "id": "v3-phrase-0550",
+      "kind": "note",
+      "lane": 0,
+      "beat": 120.0
+    },
+    {
+      "id": "v3-phrase-0551",
+      "kind": "note",
+      "lane": 2,
+      "beat": 120.0
+    },
+    {
+      "id": "v3-phrase-0552",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 120.0,
+      "endBeat": 121.5
+    },
+    {
+      "id": "v3-phrase-0553",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 120.25,
+      "endBeat": 121.25
+    },
+    {
+      "id": "v3-phrase-0554",
+      "kind": "note",
+      "lane": 2,
+      "beat": 120.5
+    },
+    {
+      "id": "v3-phrase-0555",
+      "kind": "note",
+      "lane": 0,
+      "beat": 120.75
+    },
+    {
+      "id": "v3-phrase-0556",
+      "kind": "note",
+      "lane": 0,
+      "beat": 121.0
+    },
+    {
+      "id": "v3-phrase-0557",
+      "kind": "note",
+      "lane": 2,
+      "beat": 121.0
+    },
+    {
+      "id": "v3-phrase-0558",
+      "kind": "note",
+      "lane": 1,
+      "beat": 121.5
+    },
+    {
+      "id": "v3-phrase-0559",
+      "kind": "note",
+      "lane": 2,
+      "beat": 121.5
+    },
+    {
+      "id": "v3-phrase-0560",
+      "kind": "note",
+      "lane": 0,
+      "beat": 122.0
+    },
+    {
+      "id": "v3-phrase-0561",
+      "kind": "note",
+      "lane": 1,
+      "beat": 122.0
+    },
+    {
+      "id": "v3-phrase-0562",
+      "kind": "note",
+      "lane": 2,
+      "beat": 122.0
+    },
+    {
+      "id": "v3-phrase-0563",
+      "kind": "note",
+      "lane": 0,
+      "beat": 122.5
+    },
+    {
+      "id": "v3-phrase-0564",
+      "kind": "note",
+      "lane": 1,
+      "beat": 122.5
+    },
+    {
+      "id": "v3-phrase-0565",
+      "kind": "note",
+      "lane": 3,
+      "beat": 122.5
+    },
+    {
+      "id": "v3-phrase-0566",
+      "kind": "note",
+      "lane": 0,
+      "beat": 123.0
+    },
+    {
+      "id": "v3-phrase-0567",
+      "kind": "note",
+      "lane": 2,
+      "beat": 123.0
+    },
+    {
+      "id": "v3-phrase-0568",
+      "kind": "note",
+      "lane": 3,
+      "beat": 123.0
+    },
+    {
+      "id": "v3-phrase-0569",
+      "kind": "note",
+      "lane": 2,
+      "beat": 123.5
+    },
+    {
+      "id": "v3-phrase-0570",
+      "kind": "note",
+      "lane": 0,
+      "beat": 123.75
+    },
+    {
+      "id": "v3-phrase-0571",
+      "kind": "note",
+      "lane": 1,
+      "beat": 124.0
+    },
+    {
+      "id": "v3-phrase-0572",
+      "kind": "note",
+      "lane": 2,
+      "beat": 124.0
+    },
+    {
+      "id": "v3-phrase-0573",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 124.0,
+      "endBeat": 126.0
+    },
+    {
+      "id": "v3-phrase-0574",
+      "kind": "note",
+      "lane": 2,
+      "beat": 124.5
+    },
+    {
+      "id": "v3-phrase-0575",
+      "kind": "note",
+      "lane": 1,
+      "beat": 124.75
+    },
+    {
+      "id": "v3-phrase-0576",
+      "kind": "note",
+      "lane": 0,
+      "beat": 125.0
+    },
+    {
+      "id": "v3-phrase-0577",
+      "kind": "note",
+      "lane": 2,
+      "beat": 125.0
+    },
+    {
+      "id": "v3-phrase-0578",
+      "kind": "note",
+      "lane": 1,
+      "beat": 125.5
+    },
+    {
+      "id": "v3-phrase-0579",
+      "kind": "note",
+      "lane": 2,
+      "beat": 125.5
+    },
+    {
+      "id": "v3-phrase-0580",
+      "kind": "note",
+      "lane": 0,
+      "beat": 126.0
+    },
+    {
+      "id": "v3-phrase-0581",
+      "kind": "note",
+      "lane": 1,
+      "beat": 126.0
+    },
+    {
+      "id": "v3-phrase-0582",
+      "kind": "note",
+      "lane": 2,
+      "beat": 126.0
+    },
+    {
+      "id": "v3-phrase-0583",
+      "kind": "note",
+      "lane": 1,
+      "beat": 126.5
+    },
+    {
+      "id": "v3-phrase-0584",
+      "kind": "note",
+      "lane": 2,
+      "beat": 126.5
+    },
+    {
+      "id": "v3-phrase-0585",
+      "kind": "note",
+      "lane": 3,
+      "beat": 126.5
+    },
+    {
+      "id": "v3-phrase-0586",
+      "kind": "note",
+      "lane": 0,
+      "beat": 127.0
+    },
+    {
+      "id": "v3-phrase-0587",
+      "kind": "note",
+      "lane": 3,
+      "beat": 127.0
+    },
+    {
+      "id": "v3-phrase-0588",
+      "kind": "note",
+      "lane": 1,
+      "beat": 127.5
+    },
+    {
+      "id": "v3-phrase-0589",
+      "kind": "note",
+      "lane": 2,
+      "beat": 127.5
+    },
+    {
+      "id": "v3-phrase-0590",
+      "kind": "note",
+      "lane": 0,
+      "beat": 128.0
+    },
+    {
+      "id": "v3-phrase-0591",
+      "kind": "note",
+      "lane": 3,
+      "beat": 128.0
+    },
+    {
+      "id": "v3-phrase-0592",
+      "kind": "note",
+      "lane": 1,
+      "beat": 128.5
+    },
+    {
+      "id": "v3-phrase-0593",
+      "kind": "note",
+      "lane": 2,
+      "beat": 128.5
+    },
+    {
+      "id": "v3-phrase-0594",
+      "kind": "note",
+      "lane": 0,
+      "beat": 129.0
+    },
+    {
+      "id": "v3-phrase-0595",
+      "kind": "note",
+      "lane": 2,
+      "beat": 129.0
+    },
+    {
+      "id": "v3-phrase-0596",
+      "kind": "note",
+      "lane": 1,
+      "beat": 129.5
+    },
+    {
+      "id": "v3-phrase-0597",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 130.0,
+      "endBeat": 131.0
+    },
+    {
+      "id": "v3-phrase-0598",
+      "kind": "note",
+      "lane": 2,
+      "beat": 130.0
+    },
+    {
+      "id": "v3-phrase-0599",
+      "kind": "note",
+      "lane": 1,
+      "beat": 130.5
+    },
+    {
+      "id": "v3-phrase-0600",
+      "kind": "note",
+      "lane": 2,
+      "beat": 131.0
+    },
+    {
+      "id": "v3-phrase-0601",
+      "kind": "note",
+      "lane": 3,
+      "beat": 131.0
+    },
+    {
+      "id": "v3-phrase-0602",
+      "kind": "note",
+      "lane": 1,
+      "beat": 131.5
+    },
+    {
+      "id": "v3-phrase-0603",
+      "kind": "note",
+      "lane": 0,
+      "beat": 132.0
+    },
+    {
+      "id": "v3-phrase-0604",
+      "kind": "note",
+      "lane": 3,
+      "beat": 132.0
+    },
+    {
+      "id": "v3-phrase-0605",
+      "kind": "note",
+      "lane": 1,
+      "beat": 132.5
+    },
+    {
+      "id": "v3-phrase-0606",
+      "kind": "note",
+      "lane": 2,
+      "beat": 132.5
+    },
+    {
+      "id": "v3-phrase-0607",
+      "kind": "note",
+      "lane": 0,
+      "beat": 133.0
+    },
+    {
+      "id": "v3-phrase-0608",
+      "kind": "note",
+      "lane": 2,
+      "beat": 133.0
+    },
+    {
+      "id": "v3-phrase-0609",
+      "kind": "note",
+      "lane": 1,
+      "beat": 133.5
+    },
+    {
+      "id": "v3-phrase-0610",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 134.0,
+      "endBeat": 135.5
+    },
+    {
+      "id": "v3-phrase-0611",
+      "kind": "note",
+      "lane": 2,
+      "beat": 134.0
+    },
+    {
+      "id": "v3-phrase-0612",
+      "kind": "note",
+      "lane": 1,
+      "beat": 134.5
+    },
+    {
+      "id": "v3-phrase-0613",
+      "kind": "note",
+      "lane": 3,
+      "beat": 135.0
+    },
+    {
+      "id": "v3-phrase-0614",
+      "kind": "note",
+      "lane": 2,
+      "beat": 135.5
+    },
+    {
+      "id": "v3-phrase-0615",
+      "kind": "note",
+      "lane": 0,
+      "beat": 135.75
+    },
+    {
+      "id": "v3-phrase-0616",
+      "kind": "note",
+      "lane": 0,
+      "beat": 136.0
+    },
+    {
+      "id": "v3-phrase-0617",
+      "kind": "note",
+      "lane": 3,
+      "beat": 136.0
+    },
+    {
+      "id": "v3-phrase-0618",
+      "kind": "note",
+      "lane": 1,
+      "beat": 136.5
+    },
+    {
+      "id": "v3-phrase-0619",
+      "kind": "note",
+      "lane": 2,
+      "beat": 136.5
+    },
+    {
+      "id": "v3-phrase-0620",
+      "kind": "note",
+      "lane": 1,
+      "beat": 137.0
+    },
+    {
+      "id": "v3-phrase-0621",
+      "kind": "note",
+      "lane": 3,
+      "beat": 137.0
+    },
+    {
+      "id": "v3-phrase-0622",
+      "kind": "note",
+      "lane": 2,
+      "beat": 137.5
+    },
+    {
+      "id": "v3-phrase-0623",
+      "kind": "note",
+      "lane": 1,
+      "beat": 138.0
+    },
+    {
+      "id": "v3-phrase-0624",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 138.0,
+      "endBeat": 139.0
+    },
+    {
+      "id": "v3-phrase-0625",
+      "kind": "note",
+      "lane": 2,
+      "beat": 138.5
+    },
+    {
+      "id": "v3-phrase-0626",
+      "kind": "note",
+      "lane": 0,
+      "beat": 139.0
+    },
+    {
+      "id": "v3-phrase-0627",
+      "kind": "note",
+      "lane": 1,
+      "beat": 139.0
+    },
+    {
+      "id": "v3-phrase-0628",
+      "kind": "note",
+      "lane": 2,
+      "beat": 139.5
+    },
+    {
+      "id": "v3-phrase-0629",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 140.0,
+      "endBeat": 141.5
+    },
+    {
+      "id": "v3-phrase-0630",
+      "kind": "note",
+      "lane": 3,
+      "beat": 140.0
+    },
+    {
+      "id": "v3-phrase-0631",
+      "kind": "note",
+      "lane": 1,
+      "beat": 140.5
+    },
+    {
+      "id": "v3-phrase-0632",
+      "kind": "note",
+      "lane": 3,
+      "beat": 141.0
+    },
+    {
+      "id": "v3-phrase-0633",
+      "kind": "note",
+      "lane": 2,
+      "beat": 141.5
+    },
+    {
+      "id": "v3-phrase-0634",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 142.0,
+      "endBeat": 143.75
+    },
+    {
+      "id": "v3-phrase-0635",
+      "kind": "note",
+      "lane": 3,
+      "beat": 142.0
+    },
+    {
+      "id": "v3-phrase-0636",
+      "kind": "note",
+      "lane": 2,
+      "beat": 142.5
+    },
+    {
+      "id": "v3-phrase-0637",
+      "kind": "note",
+      "lane": 0,
+      "beat": 143.0
+    },
+    {
+      "id": "v3-phrase-0638",
+      "kind": "note",
+      "lane": 3,
+      "beat": 143.75
+    },
+    {
+      "id": "v3-phrase-0639",
+      "kind": "note",
+      "lane": 0,
+      "beat": 143.875
+    },
+    {
+      "id": "v3-phrase-0640",
+      "kind": "note",
+      "lane": 1,
+      "beat": 144.0
+    },
+    {
+      "id": "v3-phrase-0641",
+      "kind": "note",
+      "lane": 3,
+      "beat": 144.0
+    },
+    {
+      "id": "v3-phrase-0642",
+      "kind": "note",
+      "lane": 1,
+      "beat": 144.5
+    },
+    {
+      "id": "v3-phrase-0643",
+      "kind": "note",
+      "lane": 2,
+      "beat": 144.5
+    },
+    {
+      "id": "v3-phrase-0644",
+      "kind": "note",
+      "lane": 0,
+      "beat": 145.0
+    },
+    {
+      "id": "v3-phrase-0645",
+      "kind": "note",
+      "lane": 2,
+      "beat": 145.0
+    },
+    {
+      "id": "v3-phrase-0646",
+      "kind": "note",
+      "lane": 1,
+      "beat": 145.5
+    },
+    {
+      "id": "v3-phrase-0647",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 146.0,
+      "endBeat": 147.0
+    },
+    {
+      "id": "v3-phrase-0648",
+      "kind": "note",
+      "lane": 2,
+      "beat": 146.0
+    },
+    {
+      "id": "v3-phrase-0649",
+      "kind": "note",
+      "lane": 1,
+      "beat": 146.5
+    },
+    {
+      "id": "v3-phrase-0650",
+      "kind": "note",
+      "lane": 2,
+      "beat": 147.0
+    },
+    {
+      "id": "v3-phrase-0651",
+      "kind": "note",
+      "lane": 3,
+      "beat": 147.0
+    },
+    {
+      "id": "v3-phrase-0652",
+      "kind": "note",
+      "lane": 1,
+      "beat": 147.5
+    },
+    {
+      "id": "v3-phrase-0653",
+      "kind": "note",
+      "lane": 0,
+      "beat": 148.0
+    },
+    {
+      "id": "v3-phrase-0654",
+      "kind": "note",
+      "lane": 3,
+      "beat": 148.0
+    },
+    {
+      "id": "v3-phrase-0655",
+      "kind": "note",
+      "lane": 1,
+      "beat": 148.5
+    },
+    {
+      "id": "v3-phrase-0656",
+      "kind": "note",
+      "lane": 2,
+      "beat": 148.5
+    },
+    {
+      "id": "v3-phrase-0657",
+      "kind": "note",
+      "lane": 0,
+      "beat": 149.0
+    },
+    {
+      "id": "v3-phrase-0658",
+      "kind": "note",
+      "lane": 2,
+      "beat": 149.0
+    },
+    {
+      "id": "v3-phrase-0659",
+      "kind": "note",
+      "lane": 1,
+      "beat": 149.5
+    },
+    {
+      "id": "v3-phrase-0660",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 150.0,
+      "endBeat": 151.0
+    },
+    {
+      "id": "v3-phrase-0661",
+      "kind": "note",
+      "lane": 2,
+      "beat": 150.0
+    },
+    {
+      "id": "v3-phrase-0662",
+      "kind": "note",
+      "lane": 1,
+      "beat": 150.5
+    },
+    {
+      "id": "v3-phrase-0663",
+      "kind": "note",
+      "lane": 1,
+      "beat": 151.0
+    },
+    {
+      "id": "v3-phrase-0664",
+      "kind": "note",
+      "lane": 3,
+      "beat": 151.0
+    },
+    {
+      "id": "v3-phrase-0665",
+      "kind": "note",
+      "lane": 2,
+      "beat": 151.5
+    },
+    {
+      "id": "v3-phrase-0666",
+      "kind": "note",
+      "lane": 0,
+      "beat": 152.0
+    },
+    {
+      "id": "v3-phrase-0667",
+      "kind": "note",
+      "lane": 3,
+      "beat": 152.0
+    },
+    {
+      "id": "v3-phrase-0668",
+      "kind": "note",
+      "lane": 1,
+      "beat": 152.5
+    },
+    {
+      "id": "v3-phrase-0669",
+      "kind": "note",
+      "lane": 2,
+      "beat": 152.5
+    },
+    {
+      "id": "v3-phrase-0670",
+      "kind": "note",
+      "lane": 1,
+      "beat": 153.0
+    },
+    {
+      "id": "v3-phrase-0671",
+      "kind": "note",
+      "lane": 3,
+      "beat": 153.0
+    },
+    {
+      "id": "v3-phrase-0672",
+      "kind": "note",
+      "lane": 2,
+      "beat": 153.5
+    },
+    {
+      "id": "v3-phrase-0673",
+      "kind": "note",
+      "lane": 1,
+      "beat": 154.0
+    },
+    {
+      "id": "v3-phrase-0674",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 154.0,
+      "endBeat": 155.0
+    },
+    {
+      "id": "v3-phrase-0675",
+      "kind": "note",
+      "lane": 2,
+      "beat": 154.5
+    },
+    {
+      "id": "v3-phrase-0676",
+      "kind": "note",
+      "lane": 0,
+      "beat": 155.0
+    },
+    {
+      "id": "v3-phrase-0677",
+      "kind": "note",
+      "lane": 1,
+      "beat": 155.0
+    },
+    {
+      "id": "v3-phrase-0678",
+      "kind": "note",
+      "lane": 2,
+      "beat": 155.5
+    },
+    {
+      "id": "v3-phrase-0679",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 156.0,
+      "endBeat": 157.5
+    },
+    {
+      "id": "v3-phrase-0680",
+      "kind": "note",
+      "lane": 2,
+      "beat": 157.5
+    },
+    {
+      "id": "v3-phrase-0681",
+      "kind": "note",
+      "lane": 1,
+      "beat": 158.0
+    },
+    {
+      "id": "v3-phrase-0682",
+      "kind": "note",
+      "lane": 3,
+      "beat": 158.0
+    },
+    {
+      "id": "v3-phrase-0683",
+      "kind": "note",
+      "lane": 2,
+      "beat": 158.5
+    },
+    {
+      "id": "v3-phrase-0684",
+      "kind": "note",
+      "lane": 0,
+      "beat": 159.0
+    },
+    {
+      "id": "v3-phrase-0685",
+      "kind": "note",
+      "lane": 3,
+      "beat": 159.0
+    },
+    {
+      "id": "v3-phrase-0686",
+      "kind": "note",
+      "lane": 1,
+      "beat": 159.5
+    },
+    {
+      "id": "v3-phrase-0687",
+      "kind": "note",
+      "lane": 0,
+      "beat": 160.0
+    },
+    {
+      "id": "v3-phrase-0688",
+      "kind": "note",
+      "lane": 2,
+      "beat": 160.0
+    },
+    {
+      "id": "v3-phrase-0689",
+      "kind": "note",
+      "lane": 1,
+      "beat": 160.25
+    },
+    {
+      "id": "v3-phrase-0690",
+      "kind": "note",
+      "lane": 2,
+      "beat": 160.5
+    },
+    {
+      "id": "v3-phrase-0691",
+      "kind": "note",
+      "lane": 3,
+      "beat": 160.5
+    },
+    {
+      "id": "v3-phrase-0692",
+      "kind": "note",
+      "lane": 0,
+      "beat": 160.75
+    },
+    {
+      "id": "v3-phrase-0693",
+      "kind": "note",
+      "lane": 2,
+      "beat": 161.0
+    },
+    {
+      "id": "v3-phrase-0694",
+      "kind": "note",
+      "lane": 3,
+      "beat": 161.0
+    },
+    {
+      "id": "v3-phrase-0695",
+      "kind": "note",
+      "lane": 0,
+      "beat": 161.25
+    },
+    {
+      "id": "v3-phrase-0696",
+      "kind": "note",
+      "lane": 1,
+      "beat": 161.5
+    },
+    {
+      "id": "v3-phrase-0697",
+      "kind": "note",
+      "lane": 3,
+      "beat": 161.5
+    },
+    {
+      "id": "v3-phrase-0698",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 162.0,
+      "endBeat": 163.0
+    },
+    {
+      "id": "v3-phrase-0699",
+      "kind": "note",
+      "lane": 2,
+      "beat": 162.0
+    },
+    {
+      "id": "v3-phrase-0700",
+      "kind": "note",
+      "lane": 1,
+      "beat": 162.5
+    },
+    {
+      "id": "v3-phrase-0701",
+      "kind": "note",
+      "lane": 3,
+      "beat": 162.5
+    },
+    {
+      "id": "v3-phrase-0702",
+      "kind": "note",
+      "lane": 2,
+      "beat": 163.0
+    },
+    {
+      "id": "v3-phrase-0703",
+      "kind": "note",
+      "lane": 3,
+      "beat": 163.0
+    },
+    {
+      "id": "v3-phrase-0704",
+      "kind": "note",
+      "lane": 1,
+      "beat": 163.5
+    },
+    {
+      "id": "v3-phrase-0705",
+      "kind": "note",
+      "lane": 2,
+      "beat": 163.5
+    },
+    {
+      "id": "v3-phrase-0706",
+      "kind": "note",
+      "lane": 0,
+      "beat": 164.0
+    },
+    {
+      "id": "v3-phrase-0707",
+      "kind": "note",
+      "lane": 2,
+      "beat": 164.0
+    },
+    {
+      "id": "v3-phrase-0708",
+      "kind": "note",
+      "lane": 3,
+      "beat": 164.0
+    },
+    {
+      "id": "v3-phrase-0709",
+      "kind": "note",
+      "lane": 1,
+      "beat": 164.5
+    },
+    {
+      "id": "v3-phrase-0710",
+      "kind": "note",
+      "lane": 2,
+      "beat": 164.5
+    },
+    {
+      "id": "v3-phrase-0711",
+      "kind": "note",
+      "lane": 0,
+      "beat": 165.0
+    },
+    {
+      "id": "v3-phrase-0712",
+      "kind": "note",
+      "lane": 2,
+      "beat": 165.0
+    },
+    {
+      "id": "v3-phrase-0713",
+      "kind": "note",
+      "lane": 3,
+      "beat": 165.0
+    },
+    {
+      "id": "v3-phrase-0714",
+      "kind": "note",
+      "lane": 1,
+      "beat": 165.5
+    },
+    {
+      "id": "v3-phrase-0715",
+      "kind": "note",
+      "lane": 3,
+      "beat": 165.5
+    },
+    {
+      "id": "v3-phrase-0716",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 166.0,
+      "endBeat": 167.5
+    },
+    {
+      "id": "v3-phrase-0717",
+      "kind": "note",
+      "lane": 1,
+      "beat": 166.0
+    },
+    {
+      "id": "v3-phrase-0718",
+      "kind": "note",
+      "lane": 2,
+      "beat": 166.0
+    },
+    {
+      "id": "v3-phrase-0719",
+      "kind": "note",
+      "lane": 1,
+      "beat": 166.5
+    },
+    {
+      "id": "v3-phrase-0720",
+      "kind": "note",
+      "lane": 3,
+      "beat": 166.5
+    },
+    {
+      "id": "v3-phrase-0721",
+      "kind": "note",
+      "lane": 2,
+      "beat": 167.0
+    },
+    {
+      "id": "v3-phrase-0722",
+      "kind": "note",
+      "lane": 3,
+      "beat": 167.0
+    },
+    {
+      "id": "v3-phrase-0723",
+      "kind": "note",
+      "lane": 1,
+      "beat": 167.5
+    },
+    {
+      "id": "v3-phrase-0724",
+      "kind": "note",
+      "lane": 2,
+      "beat": 167.5
+    },
+    {
+      "id": "v3-phrase-0725",
+      "kind": "note",
+      "lane": 0,
+      "beat": 167.75
+    },
+    {
+      "id": "v3-phrase-0726",
+      "kind": "note",
+      "lane": 1,
+      "beat": 168.0
+    },
+    {
+      "id": "v3-phrase-0727",
+      "kind": "note",
+      "lane": 2,
+      "beat": 168.0
+    },
+    {
+      "id": "v3-phrase-0728",
+      "kind": "note",
+      "lane": 3,
+      "beat": 168.0
+    },
+    {
+      "id": "v3-phrase-0729",
+      "kind": "note",
+      "lane": 1,
+      "beat": 168.5
+    },
+    {
+      "id": "v3-phrase-0730",
+      "kind": "note",
+      "lane": 2,
+      "beat": 168.5
+    },
+    {
+      "id": "v3-phrase-0731",
+      "kind": "note",
+      "lane": 0,
+      "beat": 169.0
+    },
+    {
+      "id": "v3-phrase-0732",
+      "kind": "note",
+      "lane": 2,
+      "beat": 169.0
+    },
+    {
+      "id": "v3-phrase-0733",
+      "kind": "note",
+      "lane": 3,
+      "beat": 169.0
+    },
+    {
+      "id": "v3-phrase-0734",
+      "kind": "note",
+      "lane": 1,
+      "beat": 169.5
+    },
+    {
+      "id": "v3-phrase-0735",
+      "kind": "note",
+      "lane": 3,
+      "beat": 169.5
+    },
+    {
+      "id": "v3-phrase-0736",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 170.0,
+      "endBeat": 171.0
+    },
+    {
+      "id": "v3-phrase-0737",
+      "kind": "note",
+      "lane": 1,
+      "beat": 170.0
+    },
+    {
+      "id": "v3-phrase-0738",
+      "kind": "note",
+      "lane": 2,
+      "beat": 170.0
+    },
+    {
+      "id": "v3-phrase-0739",
+      "kind": "note",
+      "lane": 1,
+      "beat": 170.5
+    },
+    {
+      "id": "v3-phrase-0740",
+      "kind": "note",
+      "lane": 3,
+      "beat": 170.5
+    },
+    {
+      "id": "v3-phrase-0741",
+      "kind": "note",
+      "lane": 1,
+      "beat": 171.0
+    },
+    {
+      "id": "v3-phrase-0742",
+      "kind": "note",
+      "lane": 2,
+      "beat": 171.0
+    },
+    {
+      "id": "v3-phrase-0743",
+      "kind": "note",
+      "lane": 3,
+      "beat": 171.0
+    },
+    {
+      "id": "v3-phrase-0744",
+      "kind": "note",
+      "lane": 1,
+      "beat": 171.5
+    },
+    {
+      "id": "v3-phrase-0745",
+      "kind": "note",
+      "lane": 2,
+      "beat": 171.5
+    },
+    {
+      "id": "v3-phrase-0746",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 172.0,
+      "endBeat": 173.5
+    },
+    {
+      "id": "v3-phrase-0747",
+      "kind": "note",
+      "lane": 2,
+      "beat": 172.0
+    },
+    {
+      "id": "v3-phrase-0748",
+      "kind": "note",
+      "lane": 3,
+      "beat": 172.0
+    },
+    {
+      "id": "v3-phrase-0749",
+      "kind": "note",
+      "lane": 1,
+      "beat": 172.5
+    },
+    {
+      "id": "v3-phrase-0750",
+      "kind": "note",
+      "lane": 3,
+      "beat": 172.75
+    },
+    {
+      "id": "v3-phrase-0751",
+      "kind": "note",
+      "lane": 1,
+      "beat": 173.0
+    },
+    {
+      "id": "v3-phrase-0752",
+      "kind": "note",
+      "lane": 2,
+      "beat": 173.0
+    },
+    {
+      "id": "v3-phrase-0753",
+      "kind": "note",
+      "lane": 1,
+      "beat": 173.5
+    },
+    {
+      "id": "v3-phrase-0754",
+      "kind": "note",
+      "lane": 3,
+      "beat": 173.5
+    },
+    {
+      "id": "v3-phrase-0755",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 174.0,
+      "endBeat": 175.5
+    },
+    {
+      "id": "v3-phrase-0756",
+      "kind": "note",
+      "lane": 1,
+      "beat": 174.0
+    },
+    {
+      "id": "v3-phrase-0757",
+      "kind": "note",
+      "lane": 2,
+      "beat": 174.0
+    },
+    {
+      "id": "v3-phrase-0758",
+      "kind": "note",
+      "lane": 1,
+      "beat": 174.5
+    },
+    {
+      "id": "v3-phrase-0759",
+      "kind": "note",
+      "lane": 3,
+      "beat": 174.5
+    },
+    {
+      "id": "v3-phrase-0760",
+      "kind": "note",
+      "lane": 2,
+      "beat": 175.0
+    },
+    {
+      "id": "v3-phrase-0761",
+      "kind": "note",
+      "lane": 3,
+      "beat": 175.0
+    },
+    {
+      "id": "v3-phrase-0762",
+      "kind": "note",
+      "lane": 1,
+      "beat": 175.5
+    },
+    {
+      "id": "v3-phrase-0763",
+      "kind": "note",
+      "lane": 2,
+      "beat": 175.5
+    },
+    {
+      "id": "v3-phrase-0764",
+      "kind": "note",
+      "lane": 0,
+      "beat": 175.75
+    },
+    {
+      "id": "v3-phrase-0765",
+      "kind": "note",
+      "lane": 1,
+      "beat": 176.0
+    },
+    {
+      "id": "v3-phrase-0766",
+      "kind": "note",
+      "lane": 3,
+      "beat": 176.0
+    },
+    {
+      "id": "v3-phrase-0767",
+      "kind": "note",
+      "lane": 2,
+      "beat": 176.25
+    },
+    {
+      "id": "v3-phrase-0768",
+      "kind": "note",
+      "lane": 0,
+      "beat": 176.5
+    },
+    {
+      "id": "v3-phrase-0769",
+      "kind": "note",
+      "lane": 1,
+      "beat": 176.5
+    },
+    {
+      "id": "v3-phrase-0770",
+      "kind": "note",
+      "lane": 3,
+      "beat": 176.75
+    },
+    {
+      "id": "v3-phrase-0771",
+      "kind": "note",
+      "lane": 0,
+      "beat": 177.0
+    },
+    {
+      "id": "v3-phrase-0772",
+      "kind": "note",
+      "lane": 1,
+      "beat": 177.0
+    },
+    {
+      "id": "v3-phrase-0773",
+      "kind": "note",
+      "lane": 3,
+      "beat": 177.25
+    },
+    {
+      "id": "v3-phrase-0774",
+      "kind": "note",
+      "lane": 0,
+      "beat": 177.5
+    },
+    {
+      "id": "v3-phrase-0775",
+      "kind": "note",
+      "lane": 2,
+      "beat": 177.5
+    },
+    {
+      "id": "v3-phrase-0776",
+      "kind": "note",
+      "lane": 1,
+      "beat": 178.0
+    },
+    {
+      "id": "v3-phrase-0777",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 178.0,
+      "endBeat": 179.0
+    },
+    {
+      "id": "v3-phrase-0778",
+      "kind": "note",
+      "lane": 0,
+      "beat": 178.5
+    },
+    {
+      "id": "v3-phrase-0779",
+      "kind": "note",
+      "lane": 2,
+      "beat": 178.5
+    },
+    {
+      "id": "v3-phrase-0780",
+      "kind": "note",
+      "lane": 0,
+      "beat": 179.0
+    },
+    {
+      "id": "v3-phrase-0781",
+      "kind": "note",
+      "lane": 1,
+      "beat": 179.0
+    },
+    {
+      "id": "v3-phrase-0782",
+      "kind": "note",
+      "lane": 1,
+      "beat": 179.5
+    },
+    {
+      "id": "v3-phrase-0783",
+      "kind": "note",
+      "lane": 2,
+      "beat": 179.5
+    },
+    {
+      "id": "v3-phrase-0784",
+      "kind": "note",
+      "lane": 0,
+      "beat": 180.0
+    },
+    {
+      "id": "v3-phrase-0785",
+      "kind": "note",
+      "lane": 1,
+      "beat": 180.0
+    },
+    {
+      "id": "v3-phrase-0786",
+      "kind": "note",
+      "lane": 3,
+      "beat": 180.0
+    },
+    {
+      "id": "v3-phrase-0787",
+      "kind": "note",
+      "lane": 1,
+      "beat": 180.5
+    },
+    {
+      "id": "v3-phrase-0788",
+      "kind": "note",
+      "lane": 2,
+      "beat": 180.5
+    },
+    {
+      "id": "v3-phrase-0789",
+      "kind": "note",
+      "lane": 0,
+      "beat": 181.0
+    },
+    {
+      "id": "v3-phrase-0790",
+      "kind": "note",
+      "lane": 1,
+      "beat": 181.0
+    },
+    {
+      "id": "v3-phrase-0791",
+      "kind": "note",
+      "lane": 3,
+      "beat": 181.0
+    },
+    {
+      "id": "v3-phrase-0792",
+      "kind": "note",
+      "lane": 0,
+      "beat": 181.5
+    },
+    {
+      "id": "v3-phrase-0793",
+      "kind": "note",
+      "lane": 2,
+      "beat": 181.5
+    },
+    {
+      "id": "v3-phrase-0794",
+      "kind": "note",
+      "lane": 1,
+      "beat": 182.0
+    },
+    {
+      "id": "v3-phrase-0795",
+      "kind": "note",
+      "lane": 2,
+      "beat": 182.0
+    },
+    {
+      "id": "v3-phrase-0796",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 182.0,
+      "endBeat": 183.0
+    },
+    {
+      "id": "v3-phrase-0797",
+      "kind": "note",
+      "lane": 0,
+      "beat": 182.5
+    },
+    {
+      "id": "v3-phrase-0798",
+      "kind": "note",
+      "lane": 2,
+      "beat": 182.5
+    },
+    {
+      "id": "v3-phrase-0799",
+      "kind": "note",
+      "lane": 0,
+      "beat": 183.0
+    },
+    {
+      "id": "v3-phrase-0800",
+      "kind": "note",
+      "lane": 1,
+      "beat": 183.0
+    },
+    {
+      "id": "v3-phrase-0801",
+      "kind": "note",
+      "lane": 2,
+      "beat": 183.0
+    },
+    {
+      "id": "v3-phrase-0802",
+      "kind": "note",
+      "lane": 1,
+      "beat": 183.5
+    },
+    {
+      "id": "v3-phrase-0803",
+      "kind": "note",
+      "lane": 2,
+      "beat": 183.5
+    },
+    {
+      "id": "v3-phrase-0804",
+      "kind": "note",
+      "lane": 0,
+      "beat": 184.0
+    },
+    {
+      "id": "v3-phrase-0805",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 184.0,
+      "endBeat": 185.5
+    },
+    {
+      "id": "v3-phrase-0806",
+      "kind": "note",
+      "lane": 2,
+      "beat": 184.0
+    },
+    {
+      "id": "v3-phrase-0807",
+      "kind": "note",
+      "lane": 2,
+      "beat": 184.5
+    },
+    {
+      "id": "v3-phrase-0808",
+      "kind": "note",
+      "lane": 0,
+      "beat": 184.75
+    },
+    {
+      "id": "v3-phrase-0809",
+      "kind": "note",
+      "lane": 0,
+      "beat": 185.0
+    },
+    {
+      "id": "v3-phrase-0810",
+      "kind": "note",
+      "lane": 3,
+      "beat": 185.0
+    },
+    {
+      "id": "v3-phrase-0811",
+      "kind": "note",
+      "lane": 0,
+      "beat": 185.5
+    },
+    {
+      "id": "v3-phrase-0812",
+      "kind": "note",
+      "lane": 2,
+      "beat": 185.5
+    },
+    {
+      "id": "v3-phrase-0813",
+      "kind": "note",
+      "lane": 3,
+      "beat": 185.5
+    },
+    {
+      "id": "v3-phrase-0814",
+      "kind": "note",
+      "lane": 1,
+      "beat": 186.0
+    },
+    {
+      "id": "v3-phrase-0815",
+      "kind": "note",
+      "lane": 2,
+      "beat": 186.0
+    },
+    {
+      "id": "v3-phrase-0816",
+      "kind": "note",
+      "lane": 3,
+      "beat": 186.0
+    },
+    {
+      "id": "v3-phrase-0817",
+      "kind": "note",
+      "lane": 0,
+      "beat": 186.5
+    },
+    {
+      "id": "v3-phrase-0818",
+      "kind": "note",
+      "lane": 2,
+      "beat": 186.5
+    },
+    {
+      "id": "v3-phrase-0819",
+      "kind": "note",
+      "lane": 3,
+      "beat": 186.5
+    },
+    {
+      "id": "v3-phrase-0820",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 187.0,
+      "endBeat": 187.75
+    },
+    {
+      "id": "v3-phrase-0821",
+      "kind": "note",
+      "lane": 1,
+      "beat": 187.0
+    },
+    {
+      "id": "v3-phrase-0822",
+      "kind": "note",
+      "lane": 2,
+      "beat": 187.0
+    },
+    {
+      "id": "v3-phrase-0823",
+      "kind": "note",
+      "lane": 1,
+      "beat": 187.5
+    },
+    {
+      "id": "v3-phrase-0824",
+      "kind": "note",
+      "lane": 2,
+      "beat": 187.75
+    },
+    {
+      "id": "v3-phrase-0825",
+      "kind": "note",
+      "lane": 0,
+      "beat": 188.0
+    },
+    {
+      "id": "v3-phrase-0826",
+      "kind": "note",
+      "lane": 1,
+      "beat": 188.0
+    },
+    {
+      "id": "v3-phrase-0827",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 188.0,
+      "endBeat": 189.5
+    },
+    {
+      "id": "v3-phrase-0828",
+      "kind": "note",
+      "lane": 2,
+      "beat": 188.5
+    },
+    {
+      "id": "v3-phrase-0829",
+      "kind": "note",
+      "lane": 1,
+      "beat": 189.0
+    },
+    {
+      "id": "v3-phrase-0830",
+      "kind": "note",
+      "lane": 2,
+      "beat": 189.0
+    },
+    {
+      "id": "v3-phrase-0831",
+      "kind": "note",
+      "lane": 0,
+      "beat": 189.5
+    },
+    {
+      "id": "v3-phrase-0832",
+      "kind": "note",
+      "lane": 2,
+      "beat": 189.5
+    },
+    {
+      "id": "v3-phrase-0833",
+      "kind": "note",
+      "lane": 1,
+      "beat": 190.0
+    },
+    {
+      "id": "v3-phrase-0834",
+      "kind": "note",
+      "lane": 2,
+      "beat": 190.0
+    },
+    {
+      "id": "v3-phrase-0835",
+      "kind": "note",
+      "lane": 3,
+      "beat": 190.0
+    },
+    {
+      "id": "v3-phrase-0836",
+      "kind": "note",
+      "lane": 0,
+      "beat": 190.5
+    },
+    {
+      "id": "v3-phrase-0837",
+      "kind": "note",
+      "lane": 1,
+      "beat": 190.5
+    },
+    {
+      "id": "v3-phrase-0838",
+      "kind": "note",
+      "lane": 2,
+      "beat": 190.5
+    },
+    {
+      "id": "v3-phrase-0839",
+      "kind": "note",
+      "lane": 0,
+      "beat": 191.0
+    },
+    {
+      "id": "v3-phrase-0840",
+      "kind": "note",
+      "lane": 1,
+      "beat": 191.0
+    },
+    {
+      "id": "v3-phrase-0841",
+      "kind": "note",
+      "lane": 3,
+      "beat": 191.0
+    },
+    {
+      "id": "v3-phrase-0842",
+      "kind": "note",
+      "lane": 1,
+      "beat": 191.5
+    },
+    {
+      "id": "v3-phrase-0843",
+      "kind": "note",
+      "lane": 2,
+      "beat": 191.5
+    },
+    {
+      "id": "v3-phrase-0844",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 192.0,
+      "endBeat": 193.5
+    },
+    {
+      "id": "v3-phrase-0845",
+      "kind": "note",
+      "lane": 2,
+      "beat": 192.0
+    },
+    {
+      "id": "v3-phrase-0846",
+      "kind": "note",
+      "lane": 3,
+      "beat": 192.0
+    },
+    {
+      "id": "v3-phrase-0847",
+      "kind": "note",
+      "lane": 1,
+      "beat": 192.5
+    },
+    {
+      "id": "v3-phrase-0848",
+      "kind": "note",
+      "lane": 3,
+      "beat": 192.75
+    },
+    {
+      "id": "v3-phrase-0849",
+      "kind": "note",
+      "lane": 1,
+      "beat": 193.0
+    },
+    {
+      "id": "v3-phrase-0850",
+      "kind": "note",
+      "lane": 2,
+      "beat": 193.0
+    },
+    {
+      "id": "v3-phrase-0851",
+      "kind": "note",
+      "lane": 1,
+      "beat": 193.5
+    },
+    {
+      "id": "v3-phrase-0852",
+      "kind": "note",
+      "lane": 2,
+      "beat": 193.5
+    },
+    {
+      "id": "v3-phrase-0853",
+      "kind": "note",
+      "lane": 3,
+      "beat": 193.5
+    },
+    {
+      "id": "v3-phrase-0854",
+      "kind": "note",
+      "lane": 0,
+      "beat": 194.0
+    },
+    {
+      "id": "v3-phrase-0855",
+      "kind": "note",
+      "lane": 1,
+      "beat": 194.0
+    },
+    {
+      "id": "v3-phrase-0856",
+      "kind": "note",
+      "lane": 2,
+      "beat": 194.0
+    },
+    {
+      "id": "v3-phrase-0857",
+      "kind": "note",
+      "lane": 0,
+      "beat": 194.5
+    },
+    {
+      "id": "v3-phrase-0858",
+      "kind": "note",
+      "lane": 1,
+      "beat": 194.5
+    },
+    {
+      "id": "v3-phrase-0859",
+      "kind": "note",
+      "lane": 3,
+      "beat": 194.5
+    },
+    {
+      "id": "v3-phrase-0860",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 195.0,
+      "endBeat": 195.75
+    },
+    {
+      "id": "v3-phrase-0861",
+      "kind": "note",
+      "lane": 2,
+      "beat": 195.0
+    },
+    {
+      "id": "v3-phrase-0862",
+      "kind": "note",
+      "lane": 3,
+      "beat": 195.0
+    },
+    {
+      "id": "v3-phrase-0863",
+      "kind": "note",
+      "lane": 2,
+      "beat": 195.5
+    },
+    {
+      "id": "v3-phrase-0864",
+      "kind": "note",
+      "lane": 1,
+      "beat": 195.75
+    },
+    {
+      "id": "v3-phrase-0865",
+      "kind": "note",
+      "lane": 0,
+      "beat": 196.0
+    },
+    {
+      "id": "v3-phrase-0866",
+      "kind": "note",
+      "lane": 2,
+      "beat": 196.0
+    },
+    {
+      "id": "v3-phrase-0867",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 196.0,
+      "endBeat": 197.5
+    },
+    {
+      "id": "v3-phrase-0868",
+      "kind": "note",
+      "lane": 1,
+      "beat": 196.5
+    },
+    {
+      "id": "v3-phrase-0869",
+      "kind": "note",
+      "lane": 0,
+      "beat": 197.0
+    },
+    {
+      "id": "v3-phrase-0870",
+      "kind": "note",
+      "lane": 2,
+      "beat": 197.0
+    },
+    {
+      "id": "v3-phrase-0871",
+      "kind": "note",
+      "lane": 1,
+      "beat": 197.5
+    },
+    {
+      "id": "v3-phrase-0872",
+      "kind": "note",
+      "lane": 2,
+      "beat": 197.5
+    },
+    {
+      "id": "v3-phrase-0873",
+      "kind": "note",
+      "lane": 0,
+      "beat": 198.0
+    },
+    {
+      "id": "v3-phrase-0874",
+      "kind": "note",
+      "lane": 1,
+      "beat": 198.0
+    },
+    {
+      "id": "v3-phrase-0875",
+      "kind": "note",
+      "lane": 2,
+      "beat": 198.0
+    },
+    {
+      "id": "v3-phrase-0876",
+      "kind": "note",
+      "lane": 0,
+      "beat": 198.5
+    },
+    {
+      "id": "v3-phrase-0877",
+      "kind": "note",
+      "lane": 1,
+      "beat": 198.5
+    },
+    {
+      "id": "v3-phrase-0878",
+      "kind": "note",
+      "lane": 3,
+      "beat": 198.5
+    },
+    {
+      "id": "v3-phrase-0879",
+      "kind": "note",
+      "lane": 0,
+      "beat": 199.0
+    },
+    {
+      "id": "v3-phrase-0880",
+      "kind": "note",
+      "lane": 2,
+      "beat": 199.0
+    },
+    {
+      "id": "v3-phrase-0881",
+      "kind": "note",
+      "lane": 3,
+      "beat": 199.0
+    },
+    {
+      "id": "v3-phrase-0882",
+      "kind": "note",
+      "lane": 1,
+      "beat": 199.5
+    },
+    {
+      "id": "v3-phrase-0883",
+      "kind": "note",
+      "lane": 2,
+      "beat": 199.5
+    },
+    {
+      "id": "v3-phrase-0884",
+      "kind": "note",
+      "lane": 0,
+      "beat": 200.0
+    },
+    {
+      "id": "v3-phrase-0885",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 200.0,
+      "endBeat": 200.75
+    },
+    {
+      "id": "v3-phrase-0886",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 200.75,
+      "endBeat": 201.5
+    },
+    {
+      "id": "v3-phrase-0887",
+      "kind": "note",
+      "lane": 1,
+      "beat": 201.5
+    },
+    {
+      "id": "v3-phrase-0888",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 202.0,
+      "endBeat": 202.75
+    },
+    {
+      "id": "v3-phrase-0889",
+      "kind": "note",
+      "lane": 2,
+      "beat": 202.0
+    },
+    {
+      "id": "v3-phrase-0890",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 202.75,
+      "endBeat": 203.5
+    },
+    {
+      "id": "v3-phrase-0891",
+      "kind": "note",
+      "lane": 1,
+      "beat": 203.5
+    },
+    {
+      "id": "v3-phrase-0892",
+      "kind": "note",
+      "lane": 0,
+      "beat": 204.0
+    },
+    {
+      "id": "v3-phrase-0893",
+      "kind": "note",
+      "lane": 2,
+      "beat": 204.0
+    },
+    {
+      "id": "v3-phrase-0894",
+      "kind": "note",
+      "lane": 0,
+      "beat": 204.75
+    },
+    {
+      "id": "v3-phrase-0895",
+      "kind": "note",
+      "lane": 1,
+      "beat": 205.5
+    },
+    {
+      "id": "v3-phrase-0896",
+      "kind": "note",
+      "lane": 0,
+      "beat": 206.0
+    },
+    {
+      "id": "v3-phrase-0897",
+      "kind": "note",
+      "lane": 2,
+      "beat": 206.0
+    },
+    {
+      "id": "v3-phrase-0898",
+      "kind": "note",
+      "lane": 1,
+      "beat": 206.5
+    },
+    {
+      "id": "v3-phrase-0899",
+      "kind": "note",
+      "lane": 0,
+      "beat": 206.625
+    },
+    {
+      "id": "v3-phrase-0900",
+      "kind": "note",
+      "lane": 2,
+      "beat": 206.75
+    },
+    {
+      "id": "v3-phrase-0901",
+      "kind": "note",
+      "lane": 3,
+      "beat": 207.0
+    },
+    {
+      "id": "v3-phrase-0902",
+      "kind": "note",
+      "lane": 1,
+      "beat": 207.5
+    },
+    {
+      "id": "v3-phrase-0903",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 208.0,
+      "endBeat": 210.5
+    },
+    {
+      "id": "v3-phrase-0904",
+      "kind": "note",
+      "lane": 2,
+      "beat": 208.0
+    },
+    {
+      "id": "v3-phrase-0905",
+      "kind": "note",
+      "lane": 3,
+      "beat": 208.0
+    },
+    {
+      "id": "v3-phrase-0906",
+      "kind": "note",
+      "lane": 1,
+      "beat": 208.5
+    },
+    {
+      "id": "v3-phrase-0907",
+      "kind": "note",
+      "lane": 3,
+      "beat": 208.75
+    },
+    {
+      "id": "v3-phrase-0908",
+      "kind": "note",
+      "lane": 1,
+      "beat": 209.0
+    },
+    {
+      "id": "v3-phrase-0909",
+      "kind": "note",
+      "lane": 2,
+      "beat": 209.0
+    },
+    {
+      "id": "v3-phrase-0910",
+      "kind": "note",
+      "lane": 3,
+      "beat": 209.5
+    },
+    {
+      "id": "v3-phrase-0911",
+      "kind": "note",
+      "lane": 1,
+      "beat": 210.0
+    },
+    {
+      "id": "v3-phrase-0912",
+      "kind": "note",
+      "lane": 2,
+      "beat": 210.0
+    },
+    {
+      "id": "v3-phrase-0913",
+      "kind": "note",
+      "lane": 1,
+      "beat": 210.5
+    },
+    {
+      "id": "v3-phrase-0914",
+      "kind": "note",
+      "lane": 2,
+      "beat": 210.5
+    },
+    {
+      "id": "v3-phrase-0915",
+      "kind": "note",
+      "lane": 3,
+      "beat": 210.5
+    },
+    {
+      "id": "v3-phrase-0916",
+      "kind": "note",
+      "lane": 0,
+      "beat": 211.0
+    },
+    {
+      "id": "v3-phrase-0917",
+      "kind": "note",
+      "lane": 2,
+      "beat": 211.0
+    },
+    {
+      "id": "v3-phrase-0918",
+      "kind": "note",
+      "lane": 3,
+      "beat": 211.0
+    },
+    {
+      "id": "v3-phrase-0919",
+      "kind": "note",
+      "lane": 1,
+      "beat": 211.5
+    },
+    {
+      "id": "v3-phrase-0920",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 211.5,
+      "endBeat": 212.75
+    },
+    {
+      "id": "v3-phrase-0921",
+      "kind": "note",
+      "lane": 0,
+      "beat": 212.0
+    },
+    {
+      "id": "v3-phrase-0922",
+      "kind": "note",
+      "lane": 2,
+      "beat": 212.0
+    },
+    {
+      "id": "v3-phrase-0923",
+      "kind": "note",
+      "lane": 2,
+      "beat": 212.5
+    },
+    {
+      "id": "v3-phrase-0924",
+      "kind": "note",
+      "lane": 0,
+      "beat": 212.75
+    },
+    {
+      "id": "v3-phrase-0925",
+      "kind": "note",
+      "lane": 1,
+      "beat": 212.75
+    },
+    {
+      "id": "v3-phrase-0926",
+      "kind": "note",
+      "lane": 2,
+      "beat": 212.875
+    },
+    {
+      "id": "v3-phrase-0927",
+      "kind": "note",
+      "lane": 0,
+      "beat": 213.0
+    },
+    {
+      "id": "v3-phrase-0928",
+      "kind": "note",
+      "lane": 1,
+      "beat": 213.0
+    },
+    {
+      "id": "v3-phrase-0929",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 213.0,
+      "endBeat": 214.0
+    },
+    {
+      "id": "v3-phrase-0930",
+      "kind": "note",
+      "lane": 1,
+      "beat": 213.5
+    },
+    {
+      "id": "v3-phrase-0931",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 214.0,
+      "endBeat": 214.875
+    },
+    {
+      "id": "v3-phrase-0932",
+      "kind": "note",
+      "lane": 1,
+      "beat": 214.0
+    },
+    {
+      "id": "v3-phrase-0933",
+      "kind": "note",
+      "lane": 2,
+      "beat": 214.0
+    },
+    {
+      "id": "v3-phrase-0934",
+      "kind": "note",
+      "lane": 1,
+      "beat": 214.5
+    },
+    {
+      "id": "v3-phrase-0935",
+      "kind": "note",
+      "lane": 3,
+      "beat": 214.5
+    },
+    {
+      "id": "v3-phrase-0936",
+      "kind": "note",
+      "lane": 2,
+      "beat": 214.625
+    },
+    {
+      "id": "v3-phrase-0937",
+      "kind": "note",
+      "lane": 1,
+      "beat": 215.0
+    },
+    {
+      "id": "v3-phrase-0938",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 215.0,
+      "endBeat": 216.0
+    },
+    {
+      "id": "v3-phrase-0939",
+      "kind": "note",
+      "lane": 3,
+      "beat": 215.0
+    },
+    {
+      "id": "v3-phrase-0940",
+      "kind": "note",
+      "lane": 1,
+      "beat": 215.5
+    },
+    {
+      "id": "v3-phrase-0941",
+      "kind": "note",
+      "lane": 0,
+      "beat": 216.0
+    },
+    {
+      "id": "v3-phrase-0942",
+      "kind": "note",
+      "lane": 1,
+      "beat": 216.0
+    },
+    {
+      "id": "v3-phrase-0943",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 216.0,
+      "endBeat": 216.75
+    },
+    {
+      "id": "v3-phrase-0944",
+      "kind": "note",
+      "lane": 2,
+      "beat": 216.5
+    },
+    {
+      "id": "v3-phrase-0945",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 216.75,
+      "endBeat": 217.5
+    },
+    {
+      "id": "v3-phrase-0946",
+      "kind": "note",
+      "lane": 1,
+      "beat": 216.75
+    },
+    {
+      "id": "v3-phrase-0947",
+      "kind": "note",
+      "lane": 2,
+      "beat": 217.0
+    },
+    {
+      "id": "v3-phrase-0948",
+      "kind": "note",
+      "lane": 3,
+      "beat": 217.0
+    },
+    {
+      "id": "v3-phrase-0949",
+      "kind": "note",
+      "lane": 1,
+      "beat": 217.5
+    },
+    {
+      "id": "v3-phrase-0950",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 217.5,
+      "endBeat": 219.0
+    },
+    {
+      "id": "v3-phrase-0951",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 218.0,
+      "endBeat": 219.0
+    },
+    {
+      "id": "v3-phrase-0952",
+      "kind": "note",
+      "lane": 1,
+      "beat": 218.0
+    },
+    {
+      "id": "v3-phrase-0953",
+      "kind": "note",
+      "lane": 2,
+      "beat": 218.0
+    },
+    {
+      "id": "v3-phrase-0954",
+      "kind": "note",
+      "lane": 1,
+      "beat": 218.5
+    },
+    {
+      "id": "v3-phrase-0955",
+      "kind": "note",
+      "lane": 2,
+      "beat": 218.5
+    },
+    {
+      "id": "v3-phrase-0956",
+      "kind": "note",
+      "lane": 1,
+      "beat": 219.0
+    },
+    {
+      "id": "v3-phrase-0957",
+      "kind": "note",
+      "lane": 2,
+      "beat": 219.0
+    },
+    {
+      "id": "v3-phrase-0958",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 219.5,
+      "endBeat": 221.0
+    },
+    {
+      "id": "v3-phrase-0959",
+      "kind": "note",
+      "lane": 2,
+      "beat": 219.5
+    },
+    {
+      "id": "v3-phrase-0960",
+      "kind": "note",
+      "lane": 0,
+      "beat": 220.0
+    },
+    {
+      "id": "v3-phrase-0961",
+      "kind": "note",
+      "lane": 3,
+      "beat": 220.0
+    },
+    {
+      "id": "v3-phrase-0962",
+      "kind": "note",
+      "lane": 2,
+      "beat": 220.5
+    },
+    {
+      "id": "v3-phrase-0963",
+      "kind": "note",
+      "lane": 0,
+      "beat": 220.75
+    },
+    {
+      "id": "v3-phrase-0964",
+      "kind": "note",
+      "lane": 0,
+      "beat": 221.0
+    },
+    {
+      "id": "v3-phrase-0965",
+      "kind": "note",
+      "lane": 2,
+      "beat": 221.0
+    },
+    {
+      "id": "v3-phrase-0966",
+      "kind": "note",
+      "lane": 3,
+      "beat": 221.0
+    },
+    {
+      "id": "v3-phrase-0967",
+      "kind": "note",
+      "lane": 1,
+      "beat": 221.5
+    },
+    {
+      "id": "v3-phrase-0968",
+      "kind": "note",
+      "lane": 3,
+      "beat": 221.5
+    },
+    {
+      "id": "v3-phrase-0969",
+      "kind": "note",
+      "lane": 0,
+      "beat": 222.0
+    },
+    {
+      "id": "v3-phrase-0970",
+      "kind": "note",
+      "lane": 1,
+      "beat": 222.0
+    },
+    {
+      "id": "v3-phrase-0971",
+      "kind": "note",
+      "lane": 2,
+      "beat": 222.0
+    },
+    {
+      "id": "v3-phrase-0972",
+      "kind": "note",
+      "lane": 0,
+      "beat": 222.5
+    },
+    {
+      "id": "v3-phrase-0973",
+      "kind": "note",
+      "lane": 1,
+      "beat": 222.5
+    },
+    {
+      "id": "v3-phrase-0974",
+      "kind": "note",
+      "lane": 3,
+      "beat": 222.5
+    },
+    {
+      "id": "v3-phrase-0975",
+      "kind": "note",
+      "lane": 0,
+      "beat": 223.0
+    },
+    {
+      "id": "v3-phrase-0976",
+      "kind": "note",
+      "lane": 2,
+      "beat": 223.0
+    },
+    {
+      "id": "v3-phrase-0977",
+      "kind": "note",
+      "lane": 3,
+      "beat": 223.0
+    },
+    {
+      "id": "v3-phrase-0978",
+      "kind": "note",
+      "lane": 1,
+      "beat": 223.5
+    },
+    {
+      "id": "v3-phrase-0979",
+      "kind": "note",
+      "lane": 2,
+      "beat": 223.5
+    },
+    {
+      "id": "v3-phrase-0980",
+      "kind": "note",
+      "lane": 0,
+      "beat": 224.0
+    },
+    {
+      "id": "v3-phrase-0981",
+      "kind": "note",
+      "lane": 2,
+      "beat": 224.0
+    },
+    {
+      "id": "v3-phrase-0982",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 224.0,
+      "endBeat": 224.75
+    },
+    {
+      "id": "v3-phrase-0983",
+      "kind": "note",
+      "lane": 2,
+      "beat": 224.5
+    },
+    {
+      "id": "v3-phrase-0984",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 224.75,
+      "endBeat": 225.5
+    },
+    {
+      "id": "v3-phrase-0985",
+      "kind": "note",
+      "lane": 1,
+      "beat": 224.75
+    },
+    {
+      "id": "v3-phrase-0986",
+      "kind": "note",
+      "lane": 2,
+      "beat": 225.0
+    },
+    {
+      "id": "v3-phrase-0987",
+      "kind": "note",
+      "lane": 3,
+      "beat": 225.0
+    },
+    {
+      "id": "v3-phrase-0988",
+      "kind": "note",
+      "lane": 1,
+      "beat": 225.5
+    },
+    {
+      "id": "v3-phrase-0989",
+      "kind": "note",
+      "lane": 3,
+      "beat": 225.5
+    },
+    {
+      "id": "v3-phrase-0990",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 226.0,
+      "endBeat": 226.75
+    },
+    {
+      "id": "v3-phrase-0991",
+      "kind": "note",
+      "lane": 1,
+      "beat": 226.0
+    },
+    {
+      "id": "v3-phrase-0992",
+      "kind": "note",
+      "lane": 2,
+      "beat": 226.0
+    },
+    {
+      "id": "v3-phrase-0993",
+      "kind": "note",
+      "lane": 1,
+      "beat": 226.5
+    },
+    {
+      "id": "v3-phrase-0994",
+      "kind": "note",
+      "lane": 3,
+      "beat": 226.5
+    },
+    {
+      "id": "v3-phrase-0995",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 226.75,
+      "endBeat": 227.5
+    },
+    {
+      "id": "v3-phrase-0996",
+      "kind": "note",
+      "lane": 0,
+      "beat": 227.0
+    },
+    {
+      "id": "v3-phrase-0997",
+      "kind": "note",
+      "lane": 1,
+      "beat": 227.0
+    },
+    {
+      "id": "v3-phrase-0998",
+      "kind": "note",
+      "lane": 1,
+      "beat": 227.5
+    },
+    {
+      "id": "v3-phrase-0999",
+      "kind": "note",
+      "lane": 3,
+      "beat": 227.5
+    },
+    {
+      "id": "v3-phrase-1000",
+      "kind": "note",
+      "lane": 0,
+      "beat": 228.0
+    },
+    {
+      "id": "v3-phrase-1001",
+      "kind": "note",
+      "lane": 2,
+      "beat": 228.0
+    },
+    {
+      "id": "v3-phrase-1002",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 228.0,
+      "endBeat": 229.75
+    },
+    {
+      "id": "v3-phrase-1003",
+      "kind": "note",
+      "lane": 2,
+      "beat": 228.5
+    },
+    {
+      "id": "v3-phrase-1004",
+      "kind": "note",
+      "lane": 1,
+      "beat": 228.75
+    },
+    {
+      "id": "v3-phrase-1005",
+      "kind": "note",
+      "lane": 0,
+      "beat": 229.0
+    },
+    {
+      "id": "v3-phrase-1006",
+      "kind": "note",
+      "lane": 2,
+      "beat": 229.0
+    },
+    {
+      "id": "v3-phrase-1007",
+      "kind": "note",
+      "lane": 1,
+      "beat": 229.5
+    },
+    {
+      "id": "v3-phrase-1008",
+      "kind": "note",
+      "lane": 2,
+      "beat": 229.75
+    },
+    {
+      "id": "v3-phrase-1009",
+      "kind": "note",
+      "lane": 0,
+      "beat": 229.875
+    },
+    {
+      "id": "v3-phrase-1010",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 230.0,
+      "endBeat": 230.875
+    },
+    {
+      "id": "v3-phrase-1011",
+      "kind": "note",
+      "lane": 2,
+      "beat": 230.0
+    },
+    {
+      "id": "v3-phrase-1012",
+      "kind": "note",
+      "lane": 3,
+      "beat": 230.0
+    },
+    {
+      "id": "v3-phrase-1013",
+      "kind": "note",
+      "lane": 2,
+      "beat": 230.5
+    },
+    {
+      "id": "v3-phrase-1014",
+      "kind": "note",
+      "lane": 3,
+      "beat": 230.5
+    },
+    {
+      "id": "v3-phrase-1015",
+      "kind": "note",
+      "lane": 0,
+      "beat": 230.625
+    },
+    {
+      "id": "v3-phrase-1016",
+      "kind": "note",
+      "lane": 0,
+      "beat": 231.0
+    },
+    {
+      "id": "v3-phrase-1017",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 231.0,
+      "endBeat": 232.0
+    },
+    {
+      "id": "v3-phrase-1018",
+      "kind": "note",
+      "lane": 3,
+      "beat": 231.0
+    },
+    {
+      "id": "v3-phrase-1019",
+      "kind": "note",
+      "lane": 1,
+      "beat": 231.5
+    },
+    {
+      "id": "v3-phrase-1020",
+      "kind": "note",
+      "lane": 0,
+      "beat": 232.0
+    },
+    {
+      "id": "v3-phrase-1021",
+      "kind": "note",
+      "lane": 1,
+      "beat": 232.0
+    },
+    {
+      "id": "v3-phrase-1022",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 232.0,
+      "endBeat": 232.75
+    },
+    {
+      "id": "v3-phrase-1023",
+      "kind": "note",
+      "lane": 2,
+      "beat": 232.5
+    },
+    {
+      "id": "v3-phrase-1024",
+      "kind": "note",
+      "lane": 0,
+      "beat": 232.75
+    },
+    {
+      "id": "v3-phrase-1025",
+      "kind": "note",
+      "lane": 1,
+      "beat": 232.75
+    },
+    {
+      "id": "v3-phrase-1026",
+      "kind": "note",
+      "lane": 2,
+      "beat": 233.0
+    },
+    {
+      "id": "v3-phrase-1027",
+      "kind": "note",
+      "lane": 3,
+      "beat": 233.0
+    },
+    {
+      "id": "v3-phrase-1028",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 233.5,
+      "endBeat": 235.0
+    },
+    {
+      "id": "v3-phrase-1029",
+      "kind": "note",
+      "lane": 3,
+      "beat": 233.5
+    },
+    {
+      "id": "v3-phrase-1030",
+      "kind": "note",
+      "lane": 0,
+      "beat": 234.0
+    },
+    {
+      "id": "v3-phrase-1031",
+      "kind": "note",
+      "lane": 2,
+      "beat": 234.0
+    },
+    {
+      "id": "v3-phrase-1032",
+      "kind": "note",
+      "lane": 0,
+      "beat": 234.5
+    },
+    {
+      "id": "v3-phrase-1033",
+      "kind": "note",
+      "lane": 3,
+      "beat": 234.5
+    },
+    {
+      "id": "v3-phrase-1034",
+      "kind": "note",
+      "lane": 0,
+      "beat": 235.0
+    },
+    {
+      "id": "v3-phrase-1035",
+      "kind": "note",
+      "lane": 2,
+      "beat": 235.0
+    },
+    {
+      "id": "v3-phrase-1036",
+      "kind": "note",
+      "lane": 3,
+      "beat": 235.0
+    },
+    {
+      "id": "v3-phrase-1037",
+      "kind": "note",
+      "lane": 1,
+      "beat": 235.5
+    },
+    {
+      "id": "v3-phrase-1038",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 235.5,
+      "endBeat": 237.75
+    },
+    {
+      "id": "v3-phrase-1039",
+      "kind": "note",
+      "lane": 0,
+      "beat": 236.0
+    },
+    {
+      "id": "v3-phrase-1040",
+      "kind": "note",
+      "lane": 2,
+      "beat": 236.0
+    },
+    {
+      "id": "v3-phrase-1041",
+      "kind": "note",
+      "lane": 2,
+      "beat": 236.5
+    },
+    {
+      "id": "v3-phrase-1042",
+      "kind": "note",
+      "lane": 0,
+      "beat": 236.75
+    },
+    {
+      "id": "v3-phrase-1043",
+      "kind": "note",
+      "lane": 1,
+      "beat": 237.0
+    },
+    {
+      "id": "v3-phrase-1044",
+      "kind": "note",
+      "lane": 2,
+      "beat": 237.0
+    },
+    {
+      "id": "v3-phrase-1045",
+      "kind": "note",
+      "lane": 1,
+      "beat": 237.5
+    },
+    {
+      "id": "v3-phrase-1046",
+      "kind": "note",
+      "lane": 2,
+      "beat": 237.75
+    },
+    {
+      "id": "v3-phrase-1047",
+      "kind": "note",
+      "lane": 0,
+      "beat": 237.875
+    },
+    {
+      "id": "v3-phrase-1048",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 238.0,
+      "endBeat": 238.875
+    },
+    {
+      "id": "v3-phrase-1049",
+      "kind": "note",
+      "lane": 2,
+      "beat": 238.0
+    },
+    {
+      "id": "v3-phrase-1050",
+      "kind": "note",
+      "lane": 3,
+      "beat": 238.0
+    },
+    {
+      "id": "v3-phrase-1051",
+      "kind": "note",
+      "lane": 2,
+      "beat": 238.5
+    },
+    {
+      "id": "v3-phrase-1052",
+      "kind": "note",
+      "lane": 3,
+      "beat": 238.5
+    },
+    {
+      "id": "v3-phrase-1053",
+      "kind": "note",
+      "lane": 0,
+      "beat": 238.625
+    },
+    {
+      "id": "v3-phrase-1054",
+      "kind": "note",
+      "lane": 0,
+      "beat": 239.0
+    },
+    {
+      "id": "v3-phrase-1055",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 239.0,
+      "endBeat": 240.0
+    },
+    {
+      "id": "v3-phrase-1056",
+      "kind": "note",
+      "lane": 3,
+      "beat": 239.0
+    },
+    {
+      "id": "v3-phrase-1057",
+      "kind": "note",
+      "lane": 1,
+      "beat": 239.5
+    },
+    {
+      "id": "v3-phrase-1058",
+      "kind": "note",
+      "lane": 0,
+      "beat": 240.0
+    },
+    {
+      "id": "v3-phrase-1059",
+      "kind": "note",
+      "lane": 1,
+      "beat": 240.0
+    },
+    {
+      "id": "v3-phrase-1060",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 240.0,
+      "endBeat": 242.5
+    },
+    {
+      "id": "v3-phrase-1061",
+      "kind": "note",
+      "lane": 2,
+      "beat": 240.5
+    },
+    {
+      "id": "v3-phrase-1062",
+      "kind": "note",
+      "lane": 0,
+      "beat": 240.75
+    },
+    {
+      "id": "v3-phrase-1063",
+      "kind": "note",
+      "lane": 1,
+      "beat": 241.0
+    },
+    {
+      "id": "v3-phrase-1064",
+      "kind": "note",
+      "lane": 2,
+      "beat": 241.0
+    },
+    {
+      "id": "v3-phrase-1065",
+      "kind": "note",
+      "lane": 0,
+      "beat": 241.5
+    },
+    {
+      "id": "v3-phrase-1066",
+      "kind": "note",
+      "lane": 1,
+      "beat": 242.0
+    },
+    {
+      "id": "v3-phrase-1067",
+      "kind": "note",
+      "lane": 2,
+      "beat": 242.0
+    },
+    {
+      "id": "v3-phrase-1068",
+      "kind": "note",
+      "lane": 0,
+      "beat": 242.5
+    },
+    {
+      "id": "v3-phrase-1069",
+      "kind": "note",
+      "lane": 1,
+      "beat": 242.5
+    },
+    {
+      "id": "v3-phrase-1070",
+      "kind": "note",
+      "lane": 2,
+      "beat": 242.5
+    },
+    {
+      "id": "v3-phrase-1071",
+      "kind": "note",
+      "lane": 0,
+      "beat": 243.0
+    },
+    {
+      "id": "v3-phrase-1072",
+      "kind": "note",
+      "lane": 1,
+      "beat": 243.0
+    },
+    {
+      "id": "v3-phrase-1073",
+      "kind": "note",
+      "lane": 3,
+      "beat": 243.0
+    },
+    {
+      "id": "v3-phrase-1074",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 243.5,
+      "endBeat": 244.75
+    },
+    {
+      "id": "v3-phrase-1075",
+      "kind": "note",
+      "lane": 2,
+      "beat": 243.5
+    },
+    {
+      "id": "v3-phrase-1076",
+      "kind": "note",
+      "lane": 1,
+      "beat": 244.0
+    },
+    {
+      "id": "v3-phrase-1077",
+      "kind": "note",
+      "lane": 3,
+      "beat": 244.0
+    },
+    {
+      "id": "v3-phrase-1078",
+      "kind": "note",
+      "lane": 1,
+      "beat": 244.5
+    },
+    {
+      "id": "v3-phrase-1079",
+      "kind": "note",
+      "lane": 2,
+      "beat": 244.75
+    },
+    {
+      "id": "v3-phrase-1080",
+      "kind": "note",
+      "lane": 3,
+      "beat": 244.75
+    },
+    {
+      "id": "v3-phrase-1081",
+      "kind": "note",
+      "lane": 1,
+      "beat": 244.875
+    },
+    {
+      "id": "v3-phrase-1082",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 245.0,
+      "endBeat": 246.0
+    },
+    {
+      "id": "v3-phrase-1083",
+      "kind": "note",
+      "lane": 2,
+      "beat": 245.0
+    },
+    {
+      "id": "v3-phrase-1084",
+      "kind": "note",
+      "lane": 3,
+      "beat": 245.0
+    },
+    {
+      "id": "v3-phrase-1085",
+      "kind": "note",
+      "lane": 2,
+      "beat": 245.5
+    },
+    {
+      "id": "v3-phrase-1086",
+      "kind": "note",
+      "lane": 1,
+      "beat": 246.0
+    },
+    {
+      "id": "v3-phrase-1087",
+      "kind": "note",
+      "lane": 2,
+      "beat": 246.0
+    },
+    {
+      "id": "v3-phrase-1088",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 246.0,
+      "endBeat": 246.875
+    },
+    {
+      "id": "v3-phrase-1089",
+      "kind": "note",
+      "lane": 0,
+      "beat": 246.5
+    },
+    {
+      "id": "v3-phrase-1090",
+      "kind": "note",
+      "lane": 2,
+      "beat": 246.5
+    },
+    {
+      "id": "v3-phrase-1091",
+      "kind": "note",
+      "lane": 1,
+      "beat": 246.625
+    },
+    {
+      "id": "v3-phrase-1092",
+      "kind": "note",
+      "lane": 0,
+      "beat": 247.0
+    },
+    {
+      "id": "v3-phrase-1093",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 247.0,
+      "endBeat": 248.0
+    },
+    {
+      "id": "v3-phrase-1094",
+      "kind": "note",
+      "lane": 2,
+      "beat": 247.0
+    },
+    {
+      "id": "v3-phrase-1095",
+      "kind": "note",
+      "lane": 2,
+      "beat": 247.5
+    },
+    {
+      "id": "v3-phrase-1096",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 248.0,
+      "endBeat": 248.75
+    },
+    {
+      "id": "v3-phrase-1097",
+      "kind": "note",
+      "lane": 2,
+      "beat": 248.0
+    },
+    {
+      "id": "v3-phrase-1098",
+      "kind": "note",
+      "lane": 3,
+      "beat": 248.0
+    },
+    {
+      "id": "v3-phrase-1099",
+      "kind": "note",
+      "lane": 1,
+      "beat": 248.5
+    },
+    {
+      "id": "v3-phrase-1100",
+      "kind": "note",
+      "lane": 2,
+      "beat": 248.75
+    },
+    {
+      "id": "v3-phrase-1101",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 248.75,
+      "endBeat": 249.5
+    },
+    {
+      "id": "v3-phrase-1102",
+      "kind": "note",
+      "lane": 0,
+      "beat": 249.0
+    },
+    {
+      "id": "v3-phrase-1103",
+      "kind": "note",
+      "lane": 1,
+      "beat": 249.0
+    },
+    {
+      "id": "v3-phrase-1104",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 249.5,
+      "endBeat": 251.0
+    },
+    {
+      "id": "v3-phrase-1105",
+      "kind": "note",
+      "lane": 2,
+      "beat": 249.5
+    },
+    {
+      "id": "v3-phrase-1106",
+      "kind": "note",
+      "lane": 1,
+      "beat": 250.0
+    },
+    {
+      "id": "v3-phrase-1107",
+      "kind": "note",
+      "lane": 2,
+      "beat": 250.0
+    },
+    {
+      "id": "v3-phrase-1108",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 250.0,
+      "endBeat": 251.0
+    },
+    {
+      "id": "v3-phrase-1109",
+      "kind": "note",
+      "lane": 1,
+      "beat": 250.5
+    },
+    {
+      "id": "v3-phrase-1110",
+      "kind": "note",
+      "lane": 2,
+      "beat": 250.5
+    },
+    {
+      "id": "v3-phrase-1111",
+      "kind": "note",
+      "lane": 1,
+      "beat": 251.0
+    },
+    {
+      "id": "v3-phrase-1112",
+      "kind": "note",
+      "lane": 2,
+      "beat": 251.0
+    },
+    {
+      "id": "v3-phrase-1113",
+      "kind": "note",
+      "lane": 1,
+      "beat": 251.5
+    },
+    {
+      "id": "v3-phrase-1114",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 251.5,
+      "endBeat": 253.0
+    },
+    {
+      "id": "v3-phrase-1115",
+      "kind": "note",
+      "lane": 0,
+      "beat": 252.0
+    },
+    {
+      "id": "v3-phrase-1116",
+      "kind": "note",
+      "lane": 3,
+      "beat": 252.0
+    },
+    {
+      "id": "v3-phrase-1117",
+      "kind": "note",
+      "lane": 1,
+      "beat": 252.5
+    },
+    {
+      "id": "v3-phrase-1118",
+      "kind": "note",
+      "lane": 3,
+      "beat": 252.75
+    },
+    {
+      "id": "v3-phrase-1119",
+      "kind": "note",
+      "lane": 0,
+      "beat": 253.0
+    },
+    {
+      "id": "v3-phrase-1120",
+      "kind": "note",
+      "lane": 1,
+      "beat": 253.0
+    },
+    {
+      "id": "v3-phrase-1121",
+      "kind": "note",
+      "lane": 3,
+      "beat": 253.0
+    },
+    {
+      "id": "v3-phrase-1122",
+      "kind": "note",
+      "lane": 0,
+      "beat": 253.5
+    },
+    {
+      "id": "v3-phrase-1123",
+      "kind": "note",
+      "lane": 2,
+      "beat": 253.5
+    },
+    {
+      "id": "v3-phrase-1124",
+      "kind": "note",
+      "lane": 1,
+      "beat": 254.0
+    },
+    {
+      "id": "v3-phrase-1125",
+      "kind": "note",
+      "lane": 2,
+      "beat": 254.0
+    },
+    {
+      "id": "v3-phrase-1126",
+      "kind": "note",
+      "lane": 3,
+      "beat": 254.0
+    },
+    {
+      "id": "v3-phrase-1127",
+      "kind": "note",
+      "lane": 0,
+      "beat": 254.5
+    },
+    {
+      "id": "v3-phrase-1128",
+      "kind": "note",
+      "lane": 2,
+      "beat": 254.5
+    },
+    {
+      "id": "v3-phrase-1129",
+      "kind": "note",
+      "lane": 3,
+      "beat": 254.5
+    },
+    {
+      "id": "v3-phrase-1130",
+      "kind": "note",
+      "lane": 0,
+      "beat": 255.0
+    },
+    {
+      "id": "v3-phrase-1131",
+      "kind": "note",
+      "lane": 1,
+      "beat": 255.0
+    },
+    {
+      "id": "v3-phrase-1132",
+      "kind": "note",
+      "lane": 3,
+      "beat": 255.0
+    },
+    {
+      "id": "v3-phrase-1133",
+      "kind": "note",
+      "lane": 1,
+      "beat": 255.5
+    },
+    {
+      "id": "v3-phrase-1134",
+      "kind": "note",
+      "lane": 2,
+      "beat": 255.5
+    },
+    {
+      "id": "v3-phrase-1135",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 256.0,
+      "endBeat": 256.75
+    },
+    {
+      "id": "v3-phrase-1136",
+      "kind": "note",
+      "lane": 1,
+      "beat": 256.0
+    },
+    {
+      "id": "v3-phrase-1137",
+      "kind": "note",
+      "lane": 3,
+      "beat": 256.0
+    },
+    {
+      "id": "v3-phrase-1138",
+      "kind": "note",
+      "lane": 1,
+      "beat": 256.5
+    },
+    {
+      "id": "v3-phrase-1139",
+      "kind": "note",
+      "lane": 2,
+      "beat": 256.75
+    },
+    {
+      "id": "v3-phrase-1140",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 256.75,
+      "endBeat": 257.5
+    },
+    {
+      "id": "v3-phrase-1141",
+      "kind": "note",
+      "lane": 0,
+      "beat": 257.0
+    },
+    {
+      "id": "v3-phrase-1142",
+      "kind": "note",
+      "lane": 1,
+      "beat": 257.0
+    },
+    {
+      "id": "v3-phrase-1143",
+      "kind": "note",
+      "lane": 0,
+      "beat": 257.5
+    },
+    {
+      "id": "v3-phrase-1144",
+      "kind": "note",
+      "lane": 2,
+      "beat": 257.5
+    },
+    {
+      "id": "v3-phrase-1145",
+      "kind": "note",
+      "lane": 1,
+      "beat": 258.0
+    },
+    {
+      "id": "v3-phrase-1146",
+      "kind": "note",
+      "lane": 2,
+      "beat": 258.0
+    },
+    {
+      "id": "v3-phrase-1147",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 258.0,
+      "endBeat": 258.75
+    },
+    {
+      "id": "v3-phrase-1148",
+      "kind": "note",
+      "lane": 0,
+      "beat": 258.5
+    },
+    {
+      "id": "v3-phrase-1149",
+      "kind": "note",
+      "lane": 2,
+      "beat": 258.5
+    },
+    {
+      "id": "v3-phrase-1150",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 258.75,
+      "endBeat": 259.5
+    },
+    {
+      "id": "v3-phrase-1151",
+      "kind": "note",
+      "lane": 2,
+      "beat": 259.0
+    },
+    {
+      "id": "v3-phrase-1152",
+      "kind": "note",
+      "lane": 3,
+      "beat": 259.0
+    },
+    {
+      "id": "v3-phrase-1153",
+      "kind": "note",
+      "lane": 0,
+      "beat": 259.5
+    },
+    {
+      "id": "v3-phrase-1154",
+      "kind": "note",
+      "lane": 2,
+      "beat": 259.5
+    },
+    {
+      "id": "v3-phrase-1155",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 260.0,
+      "endBeat": 261.75
+    },
+    {
+      "id": "v3-phrase-1156",
+      "kind": "note",
+      "lane": 1,
+      "beat": 260.0
+    },
+    {
+      "id": "v3-phrase-1157",
+      "kind": "note",
+      "lane": 3,
+      "beat": 260.0
+    },
+    {
+      "id": "v3-phrase-1158",
+      "kind": "note",
+      "lane": 1,
+      "beat": 260.5
+    },
+    {
+      "id": "v3-phrase-1159",
+      "kind": "note",
+      "lane": 2,
+      "beat": 260.75
+    },
+    {
+      "id": "v3-phrase-1160",
+      "kind": "note",
+      "lane": 1,
+      "beat": 261.0
+    },
+    {
+      "id": "v3-phrase-1161",
+      "kind": "note",
+      "lane": 3,
+      "beat": 261.0
+    },
+    {
+      "id": "v3-phrase-1162",
+      "kind": "note",
+      "lane": 2,
+      "beat": 261.5
+    },
+    {
+      "id": "v3-phrase-1163",
+      "kind": "note",
+      "lane": 1,
+      "beat": 261.75
+    },
+    {
+      "id": "v3-phrase-1164",
+      "kind": "note",
+      "lane": 3,
+      "beat": 261.875
+    },
+    {
+      "id": "v3-phrase-1165",
+      "kind": "note",
+      "lane": 0,
+      "beat": 262.0
+    },
+    {
+      "id": "v3-phrase-1166",
+      "kind": "note",
+      "lane": 1,
+      "beat": 262.0
+    },
+    {
+      "id": "v3-phrase-1167",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 262.0,
+      "endBeat": 262.875
+    },
+    {
+      "id": "v3-phrase-1168",
+      "kind": "note",
+      "lane": 0,
+      "beat": 262.5
+    },
+    {
+      "id": "v3-phrase-1169",
+      "kind": "note",
+      "lane": 1,
+      "beat": 262.5
+    },
+    {
+      "id": "v3-phrase-1170",
+      "kind": "note",
+      "lane": 3,
+      "beat": 262.625
+    },
+    {
+      "id": "v3-phrase-1171",
+      "kind": "note",
+      "lane": 0,
+      "beat": 263.0
+    },
+    {
+      "id": "v3-phrase-1172",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 263.0,
+      "endBeat": 264.0
+    },
+    {
+      "id": "v3-phrase-1173",
+      "kind": "note",
+      "lane": 3,
+      "beat": 263.0
+    },
+    {
+      "id": "v3-phrase-1174",
+      "kind": "note",
+      "lane": 2,
+      "beat": 263.5
+    },
+    {
+      "id": "v3-phrase-1175",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 264.0,
+      "endBeat": 264.75
+    },
+    {
+      "id": "v3-phrase-1176",
+      "kind": "note",
+      "lane": 2,
+      "beat": 264.0
+    },
+    {
+      "id": "v3-phrase-1177",
+      "kind": "note",
+      "lane": 3,
+      "beat": 264.0
+    },
+    {
+      "id": "v3-phrase-1178",
+      "kind": "note",
+      "lane": 1,
+      "beat": 264.5
+    },
+    {
+      "id": "v3-phrase-1179",
+      "kind": "note",
+      "lane": 2,
+      "beat": 264.75
+    },
+    {
+      "id": "v3-phrase-1180",
+      "kind": "note",
+      "lane": 3,
+      "beat": 264.75
+    },
+    {
+      "id": "v3-phrase-1181",
+      "kind": "note",
+      "lane": 0,
+      "beat": 265.0
+    },
+    {
+      "id": "v3-phrase-1182",
+      "kind": "note",
+      "lane": 1,
+      "beat": 265.0
+    },
+    {
+      "id": "v3-phrase-1183",
+      "kind": "note",
+      "lane": 0,
+      "beat": 265.5
+    },
+    {
+      "id": "v3-phrase-1184",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 265.5,
+      "endBeat": 267.0
+    },
+    {
+      "id": "v3-phrase-1185",
+      "kind": "note",
+      "lane": 1,
+      "beat": 266.0
+    },
+    {
+      "id": "v3-phrase-1186",
+      "kind": "note",
+      "lane": 3,
+      "beat": 266.0
+    },
+    {
+      "id": "v3-phrase-1187",
+      "kind": "note",
+      "lane": 0,
+      "beat": 266.5
+    },
+    {
+      "id": "v3-phrase-1188",
+      "kind": "note",
+      "lane": 3,
+      "beat": 266.5
+    },
+    {
+      "id": "v3-phrase-1189",
+      "kind": "note",
+      "lane": 0,
+      "beat": 267.0
+    },
+    {
+      "id": "v3-phrase-1190",
+      "kind": "note",
+      "lane": 1,
+      "beat": 267.0
+    },
+    {
+      "id": "v3-phrase-1191",
+      "kind": "note",
+      "lane": 3,
+      "beat": 267.0
+    },
+    {
+      "id": "v3-phrase-1192",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 267.5,
+      "endBeat": 269.75
+    },
+    {
+      "id": "v3-phrase-1193",
+      "kind": "note",
+      "lane": 2,
+      "beat": 267.5
+    },
+    {
+      "id": "v3-phrase-1194",
+      "kind": "note",
+      "lane": 1,
+      "beat": 268.0
+    },
+    {
+      "id": "v3-phrase-1195",
+      "kind": "note",
+      "lane": 3,
+      "beat": 268.0
+    },
+    {
+      "id": "v3-phrase-1196",
+      "kind": "note",
+      "lane": 1,
+      "beat": 268.5
+    },
+    {
+      "id": "v3-phrase-1197",
+      "kind": "note",
+      "lane": 3,
+      "beat": 268.75
+    },
+    {
+      "id": "v3-phrase-1198",
+      "kind": "note",
+      "lane": 1,
+      "beat": 269.0
+    },
+    {
+      "id": "v3-phrase-1199",
+      "kind": "note",
+      "lane": 2,
+      "beat": 269.0
+    },
+    {
+      "id": "v3-phrase-1200",
+      "kind": "note",
+      "lane": 2,
+      "beat": 269.5
+    },
+    {
+      "id": "v3-phrase-1201",
+      "kind": "note",
+      "lane": 1,
+      "beat": 269.75
+    },
+    {
+      "id": "v3-phrase-1202",
+      "kind": "note",
+      "lane": 3,
+      "beat": 269.875
+    },
+    {
+      "id": "v3-phrase-1203",
+      "kind": "note",
+      "lane": 0,
+      "beat": 270.0
+    },
+    {
+      "id": "v3-phrase-1204",
+      "kind": "note",
+      "lane": 1,
+      "beat": 270.0
+    },
+    {
+      "id": "v3-phrase-1205",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 270.0,
+      "endBeat": 270.875
+    },
+    {
+      "id": "v3-phrase-1206",
+      "kind": "note",
+      "lane": 0,
+      "beat": 270.5
+    },
+    {
+      "id": "v3-phrase-1207",
+      "kind": "note",
+      "lane": 1,
+      "beat": 270.5
+    },
+    {
+      "id": "v3-phrase-1208",
+      "kind": "note",
+      "lane": 3,
+      "beat": 270.625
+    },
+    {
+      "id": "v3-phrase-1209",
+      "kind": "note",
+      "lane": 0,
+      "beat": 271.0
+    },
+    {
+      "id": "v3-phrase-1210",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 271.0,
+      "endBeat": 272.0
+    },
+    {
+      "id": "v3-phrase-1211",
+      "kind": "note",
+      "lane": 3,
+      "beat": 271.0
+    },
+    {
+      "id": "v3-phrase-1212",
+      "kind": "note",
+      "lane": 2,
+      "beat": 271.5
+    },
+    {
+      "id": "v3-phrase-1213",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 272.0,
+      "endBeat": 274.0
+    },
+    {
+      "id": "v3-phrase-1214",
+      "kind": "note",
+      "lane": 2,
+      "beat": 272.0
+    },
+    {
+      "id": "v3-phrase-1215",
+      "kind": "note",
+      "lane": 3,
+      "beat": 272.0
+    },
+    {
+      "id": "v3-phrase-1216",
+      "kind": "note",
+      "lane": 1,
+      "beat": 272.5
+    },
+    {
+      "id": "v3-phrase-1217",
+      "kind": "note",
+      "lane": 3,
+      "beat": 272.75
+    },
+    {
+      "id": "v3-phrase-1218",
+      "kind": "note",
+      "lane": 1,
+      "beat": 273.0
+    },
+    {
+      "id": "v3-phrase-1219",
+      "kind": "note",
+      "lane": 3,
+      "beat": 273.0
+    },
+    {
+      "id": "v3-phrase-1220",
+      "kind": "note",
+      "lane": 3,
+      "beat": 273.5
+    },
+    {
+      "id": "v3-phrase-1221",
+      "kind": "note",
+      "lane": 1,
+      "beat": 274.0
+    },
+    {
+      "id": "v3-phrase-1222",
+      "kind": "note",
+      "lane": 2,
+      "beat": 274.0
+    },
+    {
+      "id": "v3-phrase-1223",
+      "kind": "note",
+      "lane": 3,
+      "beat": 274.0
+    },
+    {
+      "id": "v3-phrase-1224",
+      "kind": "note",
+      "lane": 0,
+      "beat": 274.5
+    },
+    {
+      "id": "v3-phrase-1225",
+      "kind": "note",
+      "lane": 1,
+      "beat": 274.5
+    },
+    {
+      "id": "v3-phrase-1226",
+      "kind": "note",
+      "lane": 2,
+      "beat": 274.5
+    },
+    {
+      "id": "v3-phrase-1227",
+      "kind": "note",
+      "lane": 3,
+      "beat": 274.625
+    },
+    {
+      "id": "v3-phrase-1228",
+      "kind": "note",
+      "lane": 1,
+      "beat": 274.75
+    },
+    {
+      "id": "v3-phrase-1229",
+      "kind": "note",
+      "lane": 0,
+      "beat": 275.0
+    },
+    {
+      "id": "v3-phrase-1230",
+      "kind": "note",
+      "lane": 2,
+      "beat": 275.0
+    },
+    {
+      "id": "v3-phrase-1231",
+      "kind": "note",
+      "lane": 3,
+      "beat": 275.0
+    },
+    {
+      "id": "v3-phrase-1232",
+      "kind": "note",
+      "lane": 1,
+      "beat": 275.5
+    },
+    {
+      "id": "v3-phrase-1233",
+      "kind": "note",
+      "lane": 2,
+      "beat": 275.5
+    },
+    {
+      "id": "v3-phrase-1234",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 276.0,
+      "endBeat": 278.0
+    },
+    {
+      "id": "v3-phrase-1235",
+      "kind": "note",
+      "lane": 1,
+      "beat": 276.0
+    },
+    {
+      "id": "v3-phrase-1236",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 276.0,
+      "endBeat": 278.0
+    },
+    {
+      "id": "v3-phrase-1237",
+      "kind": "note",
+      "lane": 3,
+      "beat": 276.0
+    },
+    {
+      "id": "v3-phrase-1238",
+      "kind": "note",
+      "lane": 1,
+      "beat": 276.5
+    },
+    {
+      "id": "v3-phrase-1239",
+      "kind": "note",
+      "lane": 3,
+      "beat": 276.75
+    },
+    {
+      "id": "v3-phrase-1240",
+      "kind": "note",
+      "lane": 1,
+      "beat": 277.0
+    },
+    {
+      "id": "v3-phrase-1241",
+      "kind": "note",
+      "lane": 3,
+      "beat": 277.0
+    },
+    {
+      "id": "v3-phrase-1242",
+      "kind": "note",
+      "lane": 3,
+      "beat": 277.5
+    },
+    {
+      "id": "v3-phrase-1243",
+      "kind": "note",
+      "lane": 1,
+      "beat": 278.0
+    },
+    {
+      "id": "v3-phrase-1244",
+      "kind": "note",
+      "lane": 3,
+      "beat": 278.0
+    },
+    {
+      "id": "v3-phrase-1245",
+      "kind": "note",
+      "lane": 0,
+      "beat": 278.5
+    },
+    {
+      "id": "v3-phrase-1246",
+      "kind": "note",
+      "lane": 1,
+      "beat": 278.5
+    },
+    {
+      "id": "v3-phrase-1247",
+      "kind": "note",
+      "lane": 2,
+      "beat": 278.5
+    },
+    {
+      "id": "v3-phrase-1248",
+      "kind": "note",
+      "lane": 3,
+      "beat": 278.625
+    },
+    {
+      "id": "v3-phrase-1249",
+      "kind": "note",
+      "lane": 1,
+      "beat": 278.75
+    },
+    {
+      "id": "v3-phrase-1250",
+      "kind": "note",
+      "lane": 0,
+      "beat": 279.0
+    },
+    {
+      "id": "v3-phrase-1251",
+      "kind": "note",
+      "lane": 2,
+      "beat": 279.0
+    },
+    {
+      "id": "v3-phrase-1252",
+      "kind": "note",
+      "lane": 3,
+      "beat": 279.0
+    },
+    {
+      "id": "v3-phrase-1253",
+      "kind": "note",
+      "lane": 1,
+      "beat": 279.5
+    },
+    {
+      "id": "v3-phrase-1254",
+      "kind": "note",
+      "lane": 2,
+      "beat": 279.5
+    },
+    {
+      "id": "v3-phrase-1255",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 280.0,
+      "endBeat": 281.5
+    },
+    {
+      "id": "v3-phrase-1256",
+      "kind": "note",
+      "lane": 1,
+      "beat": 280.0
+    },
+    {
+      "id": "v3-phrase-1257",
+      "kind": "note",
+      "lane": 3,
+      "beat": 280.0
+    },
+    {
+      "id": "v3-phrase-1258",
+      "kind": "note",
+      "lane": 1,
+      "beat": 280.5
+    },
+    {
+      "id": "v3-phrase-1259",
+      "kind": "note",
+      "lane": 3,
+      "beat": 280.75
+    },
+    {
+      "id": "v3-phrase-1260",
+      "kind": "note",
+      "lane": 1,
+      "beat": 281.0
+    },
+    {
+      "id": "v3-phrase-1261",
+      "kind": "note",
+      "lane": 2,
+      "beat": 281.0
+    },
+    {
+      "id": "v3-phrase-1262",
+      "kind": "note",
+      "lane": 3,
+      "beat": 281.375
+    },
+    {
+      "id": "v3-phrase-1263",
+      "kind": "note",
+      "lane": 1,
+      "beat": 281.5
+    },
+    {
+      "id": "v3-phrase-1264",
+      "kind": "note",
+      "lane": 2,
+      "beat": 281.5
+    },
+    {
+      "id": "v3-phrase-1265",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 282.0,
+      "endBeat": 283.5
+    },
+    {
+      "id": "v3-phrase-1266",
+      "kind": "note",
+      "lane": 1,
+      "beat": 282.0
+    },
+    {
+      "id": "v3-phrase-1267",
+      "kind": "note",
+      "lane": 2,
+      "beat": 282.0
+    },
+    {
+      "id": "v3-phrase-1268",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 282.0,
+      "endBeat": 284.0
+    },
+    {
+      "id": "v3-phrase-1269",
+      "kind": "note",
+      "lane": 2,
+      "beat": 282.25
+    },
+    {
+      "id": "v3-phrase-1270",
+      "kind": "note",
+      "lane": 1,
+      "beat": 282.5
+    },
+    {
+      "id": "v3-phrase-1271",
+      "kind": "note",
+      "lane": 1,
+      "beat": 283.0
+    },
+    {
+      "id": "v3-phrase-1272",
+      "kind": "note",
+      "lane": 2,
+      "beat": 283.375
+    },
+    {
+      "id": "v3-phrase-1273",
+      "kind": "note",
+      "lane": 1,
+      "beat": 283.5
+    },
+    {
+      "id": "v3-phrase-1274",
+      "kind": "note",
+      "lane": 0,
+      "beat": 284.0
+    },
+    {
+      "id": "v3-phrase-1275",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 284.0,
+      "endBeat": 286.0
+    },
+    {
+      "id": "v3-phrase-1276",
+      "kind": "note",
+      "lane": 2,
+      "beat": 284.0
+    },
+    {
+      "id": "v3-phrase-1277",
+      "kind": "note",
+      "lane": 2,
+      "beat": 284.5
+    },
+    {
+      "id": "v3-phrase-1278",
+      "kind": "note",
+      "lane": 0,
+      "beat": 284.75
+    },
+    {
+      "id": "v3-phrase-1279",
+      "kind": "note",
+      "lane": 0,
+      "beat": 285.0
+    },
+    {
+      "id": "v3-phrase-1280",
+      "kind": "note",
+      "lane": 2,
+      "beat": 285.0
+    },
+    {
+      "id": "v3-phrase-1281",
+      "kind": "note",
+      "lane": 0,
+      "beat": 285.5
+    },
+    {
+      "id": "v3-phrase-1282",
+      "kind": "note",
+      "lane": 2,
+      "beat": 285.5
+    },
+    {
+      "id": "v3-phrase-1283",
+      "kind": "note",
+      "lane": 0,
+      "beat": 286.0
+    },
+    {
+      "id": "v3-phrase-1284",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 286.0,
+      "endBeat": 287.0
+    },
+    {
+      "id": "v3-phrase-1285",
+      "kind": "note",
+      "lane": 3,
+      "beat": 286.0
+    },
+    {
+      "id": "v3-phrase-1286",
+      "kind": "note",
+      "lane": 0,
+      "beat": 286.5
+    },
+    {
+      "id": "v3-phrase-1287",
+      "kind": "note",
+      "lane": 1,
+      "beat": 286.5
+    },
+    {
+      "id": "v3-phrase-1288",
+      "kind": "note",
+      "lane": 3,
+      "beat": 286.5
+    },
+    {
+      "id": "v3-phrase-1289",
+      "kind": "note",
+      "lane": 0,
+      "beat": 287.0
+    },
+    {
+      "id": "v3-phrase-1290",
+      "kind": "note",
+      "lane": 1,
+      "beat": 287.0
+    },
+    {
+      "id": "v3-phrase-1291",
+      "kind": "note",
+      "lane": 3,
+      "beat": 287.0
+    },
+    {
+      "id": "v3-phrase-1292",
+      "kind": "note",
+      "lane": 1,
+      "beat": 287.5
+    },
+    {
+      "id": "v3-phrase-1293",
+      "kind": "note",
+      "lane": 2,
+      "beat": 287.5
+    },
+    {
+      "id": "v3-phrase-1294",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 288.0,
+      "endBeat": 291.0
+    },
+    {
+      "id": "v3-phrase-1295",
+      "kind": "note",
+      "lane": 1,
+      "beat": 288.0
+    },
+    {
+      "id": "v3-phrase-1296",
+      "kind": "note",
+      "lane": 2,
+      "beat": 288.0
+    },
+    {
+      "id": "v3-phrase-1297",
+      "kind": "note",
+      "lane": 3,
+      "beat": 288.0
+    },
+    {
+      "id": "v3-phrase-1298",
+      "kind": "note",
+      "lane": 2,
+      "beat": 288.5
+    },
+    {
+      "id": "v3-phrase-1299",
+      "kind": "note",
+      "lane": 3,
+      "beat": 288.5
+    },
+    {
+      "id": "v3-phrase-1300",
+      "kind": "note",
+      "lane": 1,
+      "beat": 288.75
+    },
+    {
+      "id": "v3-phrase-1301",
+      "kind": "note",
+      "lane": 1,
+      "beat": 289.0
+    },
+    {
+      "id": "v3-phrase-1302",
+      "kind": "note",
+      "lane": 2,
+      "beat": 289.0
+    },
+    {
+      "id": "v3-phrase-1303",
+      "kind": "note",
+      "lane": 3,
+      "beat": 289.0
+    },
+    {
+      "id": "v3-phrase-1304",
+      "kind": "note",
+      "lane": 1,
+      "beat": 289.5
+    },
+    {
+      "id": "v3-phrase-1305",
+      "kind": "note",
+      "lane": 2,
+      "beat": 289.5
+    },
+    {
+      "id": "v3-phrase-1306",
+      "kind": "note",
+      "lane": 1,
+      "beat": 290.0
+    },
+    {
+      "id": "v3-phrase-1307",
+      "kind": "note",
+      "lane": 2,
+      "beat": 290.0
+    },
+    {
+      "id": "v3-phrase-1308",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 290.0,
+      "endBeat": 291.5
+    },
+    {
+      "id": "v3-phrase-1309",
+      "kind": "note",
+      "lane": 1,
+      "beat": 290.5
+    },
+    {
+      "id": "v3-phrase-1310",
+      "kind": "note",
+      "lane": 1,
+      "beat": 291.0
+    },
+    {
+      "id": "v3-phrase-1311",
+      "kind": "note",
+      "lane": 2,
+      "beat": 291.0
+    },
+    {
+      "id": "v3-phrase-1312",
+      "kind": "note",
+      "lane": 0,
+      "beat": 291.375
+    },
+    {
+      "id": "v3-phrase-1313",
+      "kind": "note",
+      "lane": 1,
+      "beat": 291.5
+    },
+    {
+      "id": "v3-phrase-1314",
+      "kind": "note",
+      "lane": 2,
+      "beat": 291.5
+    },
+    {
+      "id": "v3-phrase-1315",
+      "kind": "note",
+      "lane": 0,
+      "beat": 292.0
+    },
+    {
+      "id": "v3-phrase-1316",
+      "kind": "note",
+      "lane": 1,
+      "beat": 292.0
+    },
+    {
+      "id": "v3-phrase-1317",
+      "kind": "note",
+      "lane": 3,
+      "beat": 292.0
+    },
+    {
+      "id": "v3-phrase-1318",
+      "kind": "note",
+      "lane": 2,
+      "beat": 292.5
+    },
+    {
+      "id": "v3-phrase-1319",
+      "kind": "note",
+      "lane": 3,
+      "beat": 292.5
+    },
+    {
+      "id": "v3-phrase-1320",
+      "kind": "note",
+      "lane": 0,
+      "beat": 292.75
+    },
+    {
+      "id": "v3-phrase-1321",
+      "kind": "note",
+      "lane": 1,
+      "beat": 293.0
+    },
+    {
+      "id": "v3-phrase-1322",
+      "kind": "note",
+      "lane": 2,
+      "beat": 293.0
+    },
+    {
+      "id": "v3-phrase-1323",
+      "kind": "note",
+      "lane": 3,
+      "beat": 293.0
+    },
+    {
+      "id": "v3-phrase-1324",
+      "kind": "note",
+      "lane": 0,
+      "beat": 293.5
+    },
+    {
+      "id": "v3-phrase-1325",
+      "kind": "note",
+      "lane": 2,
+      "beat": 293.5
+    },
+    {
+      "id": "v3-phrase-1326",
+      "kind": "note",
+      "lane": 0,
+      "beat": 294.0
+    },
+    {
+      "id": "v3-phrase-1327",
+      "kind": "note",
+      "lane": 2,
+      "beat": 294.0
+    },
+    {
+      "id": "v3-phrase-1328",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 294.0,
+      "endBeat": 295.0
+    },
+    {
+      "id": "v3-phrase-1329",
+      "kind": "note",
+      "lane": 1,
+      "beat": 294.375
+    },
+    {
+      "id": "v3-phrase-1330",
+      "kind": "note",
+      "lane": 0,
+      "beat": 294.5
+    },
+    {
+      "id": "v3-phrase-1331",
+      "kind": "note",
+      "lane": 2,
+      "beat": 294.5
+    },
+    {
+      "id": "v3-phrase-1332",
+      "kind": "note",
+      "lane": 0,
+      "beat": 295.0
+    },
+    {
+      "id": "v3-phrase-1333",
+      "kind": "note",
+      "lane": 1,
+      "beat": 295.0
+    },
+    {
+      "id": "v3-phrase-1334",
+      "kind": "note",
+      "lane": 2,
+      "beat": 295.0
+    },
+    {
+      "id": "v3-phrase-1335",
+      "kind": "note",
+      "lane": 1,
+      "beat": 295.5
+    },
+    {
+      "id": "v3-phrase-1336",
+      "kind": "note",
+      "lane": 2,
+      "beat": 295.5
+    },
+    {
+      "id": "v3-phrase-1337",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 296.0,
+      "endBeat": 297.5
+    },
+    {
+      "id": "v3-phrase-1338",
+      "kind": "note",
+      "lane": 1,
+      "beat": 296.0
+    },
+    {
+      "id": "v3-phrase-1339",
+      "kind": "note",
+      "lane": 3,
+      "beat": 296.0
+    },
+    {
+      "id": "v3-phrase-1340",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 296.25,
+      "endBeat": 297.25
+    },
+    {
+      "id": "v3-phrase-1341",
+      "kind": "note",
+      "lane": 1,
+      "beat": 296.5
+    },
+    {
+      "id": "v3-phrase-1342",
+      "kind": "note",
+      "lane": 3,
+      "beat": 296.75
+    },
+    {
+      "id": "v3-phrase-1343",
+      "kind": "note",
+      "lane": 1,
+      "beat": 297.0
+    },
+    {
+      "id": "v3-phrase-1344",
+      "kind": "note",
+      "lane": 3,
+      "beat": 297.0
+    },
+    {
+      "id": "v3-phrase-1345",
+      "kind": "note",
+      "lane": 1,
+      "beat": 297.5
+    },
+    {
+      "id": "v3-phrase-1346",
+      "kind": "note",
+      "lane": 2,
+      "beat": 297.5
+    },
+    {
+      "id": "v3-phrase-1347",
+      "kind": "note",
+      "lane": 1,
+      "beat": 298.0
+    },
+    {
+      "id": "v3-phrase-1348",
+      "kind": "note",
+      "lane": 2,
+      "beat": 298.0
+    },
+    {
+      "id": "v3-phrase-1349",
+      "kind": "note",
+      "lane": 3,
+      "beat": 298.0
+    },
+    {
+      "id": "v3-phrase-1350",
+      "kind": "note",
+      "lane": 0,
+      "beat": 298.5
+    },
+    {
+      "id": "v3-phrase-1351",
+      "kind": "note",
+      "lane": 2,
+      "beat": 298.5
+    },
+    {
+      "id": "v3-phrase-1352",
+      "kind": "note",
+      "lane": 3,
+      "beat": 298.5
+    },
+    {
+      "id": "v3-phrase-1353",
+      "kind": "note",
+      "lane": 0,
+      "beat": 299.0
+    },
+    {
+      "id": "v3-phrase-1354",
+      "kind": "note",
+      "lane": 1,
+      "beat": 299.0
+    },
+    {
+      "id": "v3-phrase-1355",
+      "kind": "note",
+      "lane": 3,
+      "beat": 299.0
+    },
+    {
+      "id": "v3-phrase-1356",
+      "kind": "note",
+      "lane": 1,
+      "beat": 299.5
+    },
+    {
+      "id": "v3-phrase-1357",
+      "kind": "note",
+      "lane": 3,
+      "beat": 299.75
+    },
+    {
+      "id": "v3-phrase-1358",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 300.0,
+      "endBeat": 302.0
+    },
+    {
+      "id": "v3-phrase-1359",
+      "kind": "note",
+      "lane": 1,
+      "beat": 300.0
+    },
+    {
+      "id": "v3-phrase-1360",
+      "kind": "note",
+      "lane": 2,
+      "beat": 300.0
+    },
+    {
+      "id": "v3-phrase-1361",
+      "kind": "note",
+      "lane": 1,
+      "beat": 300.5
+    },
+    {
+      "id": "v3-phrase-1362",
+      "kind": "note",
+      "lane": 2,
+      "beat": 300.75
+    },
+    {
+      "id": "v3-phrase-1363",
+      "kind": "note",
+      "lane": 1,
+      "beat": 301.0
+    },
+    {
+      "id": "v3-phrase-1364",
+      "kind": "note",
+      "lane": 3,
+      "beat": 301.0
+    },
+    {
+      "id": "v3-phrase-1365",
+      "kind": "note",
+      "lane": 2,
+      "beat": 301.5
+    },
+    {
+      "id": "v3-phrase-1366",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 302.0,
+      "endBeat": 303.0
+    },
+    {
+      "id": "v3-phrase-1367",
+      "kind": "note",
+      "lane": 2,
+      "beat": 302.0
+    },
+    {
+      "id": "v3-phrase-1368",
+      "kind": "note",
+      "lane": 3,
+      "beat": 302.0
+    },
+    {
+      "id": "v3-phrase-1369",
+      "kind": "note",
+      "lane": 0,
+      "beat": 302.5
+    },
+    {
+      "id": "v3-phrase-1370",
+      "kind": "note",
+      "lane": 2,
+      "beat": 302.5
+    },
+    {
+      "id": "v3-phrase-1371",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 303.0,
+      "endBeat": 304.0
+    },
+    {
+      "id": "v3-phrase-1372",
+      "kind": "note",
+      "lane": 2,
+      "beat": 303.0
+    },
+    {
+      "id": "v3-phrase-1373",
+      "kind": "note",
+      "lane": 3,
+      "beat": 303.0
+    },
+    {
+      "id": "v3-phrase-1374",
+      "kind": "note",
+      "lane": 1,
+      "beat": 303.5
+    },
+    {
+      "id": "v3-phrase-1375",
+      "kind": "note",
+      "lane": 1,
+      "beat": 304.0
+    },
+    {
+      "id": "v3-phrase-1376",
+      "kind": "note",
+      "lane": 2,
+      "beat": 304.0
+    },
+    {
+      "id": "v3-phrase-1377",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 304.0,
+      "endBeat": 306.0
+    },
+    {
+      "id": "v3-phrase-1378",
+      "kind": "note",
+      "lane": 2,
+      "beat": 304.5
+    },
+    {
+      "id": "v3-phrase-1379",
+      "kind": "note",
+      "lane": 0,
+      "beat": 305.5
+    },
+    {
+      "id": "v3-phrase-1380",
+      "kind": "note",
+      "lane": 0,
+      "beat": 306.0
+    },
+    {
+      "id": "v3-phrase-1381",
+      "kind": "note",
+      "lane": 2,
+      "beat": 306.0
+    },
+    {
+      "id": "v3-phrase-1382",
+      "kind": "note",
+      "lane": 1,
+      "beat": 306.5
+    },
+    {
+      "id": "v3-phrase-1383",
+      "kind": "note",
+      "lane": 3,
+      "beat": 306.5
+    },
+    {
+      "id": "v3-phrase-1384",
+      "kind": "note",
+      "lane": 0,
+      "beat": 306.625
+    },
+    {
+      "id": "v3-phrase-1385",
+      "kind": "note",
+      "lane": 2,
+      "beat": 306.75
+    },
+    {
+      "id": "v3-phrase-1386",
+      "kind": "note",
+      "lane": 1,
+      "beat": 307.0
+    },
+    {
+      "id": "v3-phrase-1387",
+      "kind": "note",
+      "lane": 1,
+      "beat": 307.5
+    },
+    {
+      "id": "v3-phrase-1388",
+      "kind": "note",
+      "lane": 2,
+      "beat": 307.5
+    },
+    {
+      "id": "v3-phrase-1389",
+      "kind": "note",
+      "lane": 0,
+      "beat": 308.0
+    },
+    {
+      "id": "v3-phrase-1390",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 308.0,
+      "endBeat": 310.0
+    },
+    {
+      "id": "v3-phrase-1391",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 308.0,
+      "endBeat": 310.0
+    },
+    {
+      "id": "v3-phrase-1392",
+      "kind": "note",
+      "lane": 0,
+      "beat": 308.5
+    },
+    {
+      "id": "v3-phrase-1393",
+      "kind": "note",
+      "lane": 2,
+      "beat": 308.5
+    },
+    {
+      "id": "v3-phrase-1394",
+      "kind": "note",
+      "lane": 0,
+      "beat": 309.125
+    },
+    {
+      "id": "v3-phrase-1395",
+      "kind": "note",
+      "lane": 2,
+      "beat": 309.375
+    },
+    {
+      "id": "v3-phrase-1396",
+      "kind": "note",
+      "lane": 0,
+      "beat": 309.5
+    },
+    {
+      "id": "v3-phrase-1397",
+      "kind": "note",
+      "lane": 0,
+      "beat": 310.0
+    },
+    {
+      "id": "v3-phrase-1398",
+      "kind": "note",
+      "lane": 2,
+      "beat": 310.0
+    },
+    {
+      "id": "v3-phrase-1399",
+      "kind": "note",
+      "lane": 1,
+      "beat": 310.5
+    },
+    {
+      "id": "v3-phrase-1400",
+      "kind": "note",
+      "lane": 3,
+      "beat": 310.5
+    },
+    {
+      "id": "v3-phrase-1401",
+      "kind": "note",
+      "lane": 0,
+      "beat": 310.625
+    },
+    {
+      "id": "v3-phrase-1402",
+      "kind": "note",
+      "lane": 2,
+      "beat": 310.75
+    },
+    {
+      "id": "v3-phrase-1403",
+      "kind": "note",
+      "lane": 1,
+      "beat": 311.0
+    },
+    {
+      "id": "v3-phrase-1404",
+      "kind": "note",
+      "lane": 1,
+      "beat": 311.5
+    },
+    {
+      "id": "v3-phrase-1405",
+      "kind": "note",
+      "lane": 2,
+      "beat": 311.5
+    },
+    {
+      "id": "v3-phrase-1406",
+      "kind": "note",
+      "lane": 0,
+      "beat": 312.0
+    },
+    {
+      "id": "v3-phrase-1407",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 312.0,
+      "endBeat": 313.5
+    },
+    {
+      "id": "v3-phrase-1408",
+      "kind": "note",
+      "lane": 2,
+      "beat": 312.5
+    },
+    {
+      "id": "v3-phrase-1409",
+      "kind": "note",
+      "lane": 0,
+      "beat": 313.375
+    },
+    {
+      "id": "v3-phrase-1410",
+      "kind": "note",
+      "lane": 2,
+      "beat": 313.375
+    },
+    {
+      "id": "v3-phrase-1411",
+      "kind": "note",
+      "lane": 1,
+      "beat": 313.5
+    },
+    {
+      "id": "v3-phrase-1412",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 314.0,
+      "endBeat": 315.5
+    },
+    {
+      "id": "v3-phrase-1413",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 314.0,
+      "endBeat": 315.5
+    },
+    {
+      "id": "v3-phrase-1414",
+      "kind": "note",
+      "lane": 3,
+      "beat": 314.0
+    },
+    {
+      "id": "v3-phrase-1415",
+      "kind": "note",
+      "lane": 1,
+      "beat": 314.25
+    },
+    {
+      "id": "v3-phrase-1416",
+      "kind": "note",
+      "lane": 3,
+      "beat": 314.5
+    },
+    {
+      "id": "v3-phrase-1417",
+      "kind": "note",
+      "lane": 3,
+      "beat": 315.375
+    },
+    {
+      "id": "v3-phrase-1418",
+      "kind": "note",
+      "lane": 1,
+      "beat": 315.5
+    },
+    {
+      "id": "v3-phrase-1419",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 316.0,
+      "endBeat": 317.5
+    },
+    {
+      "id": "v3-phrase-1420",
+      "kind": "note",
+      "lane": 1,
+      "beat": 316.0
+    },
+    {
+      "id": "v3-phrase-1421",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 316.0,
+      "endBeat": 318.0
+    },
+    {
+      "id": "v3-phrase-1422",
+      "kind": "note",
+      "lane": 3,
+      "beat": 316.0
+    },
+    {
+      "id": "v3-phrase-1423",
+      "kind": "note",
+      "lane": 1,
+      "beat": 317.5
+    },
+    {
+      "id": "v3-phrase-1424",
+      "kind": "note",
+      "lane": 3,
+      "beat": 317.5
+    },
+    {
+      "id": "v3-phrase-1425",
+      "kind": "note",
+      "lane": 0,
+      "beat": 318.0
+    },
+    {
+      "id": "v3-phrase-1426",
+      "kind": "note",
+      "lane": 1,
+      "beat": 318.0
+    },
+    {
+      "id": "v3-phrase-1427",
+      "kind": "note",
+      "lane": 1,
+      "beat": 318.5
+    },
+    {
+      "id": "v3-phrase-1428",
+      "kind": "note",
+      "lane": 3,
+      "beat": 318.5
+    },
+    {
+      "id": "v3-phrase-1429",
+      "kind": "note",
+      "lane": 0,
+      "beat": 319.0
+    },
+    {
+      "id": "v3-phrase-1430",
+      "kind": "note",
+      "lane": 1,
+      "beat": 319.5
+    },
+    {
+      "id": "v3-phrase-1431",
+      "kind": "note",
+      "lane": 2,
+      "beat": 319.5
+    },
+    {
+      "id": "v3-phrase-1432",
+      "kind": "note",
+      "lane": 0,
+      "beat": 320.0
+    },
+    {
+      "id": "v3-phrase-1433",
+      "kind": "note",
+      "lane": 3,
+      "beat": 320.0
+    },
+    {
+      "id": "v3-phrase-1434",
+      "kind": "note",
+      "lane": 0,
+      "beat": 320.5
+    },
+    {
+      "id": "v3-phrase-1435",
+      "kind": "note",
+      "lane": 1,
+      "beat": 320.5
+    },
+    {
+      "id": "v3-phrase-1436",
+      "kind": "note",
+      "lane": 2,
+      "beat": 321.0
+    },
+    {
+      "id": "v3-phrase-1437",
+      "kind": "note",
+      "lane": 1,
+      "beat": 321.5
+    },
+    {
+      "id": "v3-phrase-1438",
+      "kind": "note",
+      "lane": 3,
+      "beat": 321.5
+    },
+    {
+      "id": "v3-phrase-1439",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 322.0,
+      "endBeat": 323.0
+    },
+    {
+      "id": "v3-phrase-1440",
+      "kind": "note",
+      "lane": 2,
+      "beat": 322.0
+    },
+    {
+      "id": "v3-phrase-1441",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 322.0,
+      "endBeat": 323.0
+    },
+    {
+      "id": "v3-phrase-1442",
+      "kind": "note",
+      "lane": 1,
+      "beat": 322.5
+    },
+    {
+      "id": "v3-phrase-1443",
+      "kind": "note",
+      "lane": 2,
+      "beat": 323.0
+    },
+    {
+      "id": "v3-phrase-1444",
+      "kind": "note",
+      "lane": 3,
+      "beat": 323.375
+    },
+    {
+      "id": "v3-phrase-1445",
+      "kind": "note",
+      "lane": 1,
+      "beat": 323.5
+    },
+    {
+      "id": "v3-phrase-1446",
+      "kind": "note",
+      "lane": 2,
+      "beat": 323.5
+    },
+    {
+      "id": "v3-phrase-1447",
+      "kind": "note",
+      "lane": 0,
+      "beat": 324.0
+    },
+    {
+      "id": "v3-phrase-1448",
+      "kind": "note",
+      "lane": 2,
+      "beat": 324.0
+    },
+    {
+      "id": "v3-phrase-1449",
+      "kind": "note",
+      "lane": 0,
+      "beat": 324.5
+    },
+    {
+      "id": "v3-phrase-1450",
+      "kind": "note",
+      "lane": 1,
+      "beat": 324.5
+    },
+    {
+      "id": "v3-phrase-1451",
+      "kind": "note",
+      "lane": 2,
+      "beat": 325.0
+    },
+    {
+      "id": "v3-phrase-1452",
+      "kind": "note",
+      "lane": 1,
+      "beat": 325.5
+    },
+    {
+      "id": "v3-phrase-1453",
+      "kind": "note",
+      "lane": 3,
+      "beat": 325.5
+    },
+    {
+      "id": "v3-phrase-1454",
+      "kind": "hold",
+      "lane": 0,
+      "beat": 326.0,
+      "endBeat": 327.0
+    },
+    {
+      "id": "v3-phrase-1455",
+      "kind": "note",
+      "lane": 3,
+      "beat": 326.0
+    },
+    {
+      "id": "v3-phrase-1456",
+      "kind": "note",
+      "lane": 2,
+      "beat": 326.375
+    },
+    {
+      "id": "v3-phrase-1457",
+      "kind": "note",
+      "lane": 1,
+      "beat": 326.5
+    },
+    {
+      "id": "v3-phrase-1458",
+      "kind": "note",
+      "lane": 3,
+      "beat": 326.5
+    },
+    {
+      "id": "v3-phrase-1459",
+      "kind": "note",
+      "lane": 3,
+      "beat": 327.0
+    },
+    {
+      "id": "v3-phrase-1460",
+      "kind": "note",
+      "lane": 1,
+      "beat": 327.5
+    },
+    {
+      "id": "v3-phrase-1461",
+      "kind": "note",
+      "lane": 2,
+      "beat": 327.5
+    },
+    {
+      "id": "v3-phrase-1462",
+      "kind": "note",
+      "lane": 0,
+      "beat": 328.0
+    },
+    {
+      "id": "v3-phrase-1463",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 328.0,
+      "endBeat": 329.5
+    },
+    {
+      "id": "v3-phrase-1464",
+      "kind": "hold",
+      "lane": 1,
+      "beat": 328.25,
+      "endBeat": 329.25
+    },
+    {
+      "id": "v3-phrase-1465",
+      "kind": "note",
+      "lane": 2,
+      "beat": 328.5
+    },
+    {
+      "id": "v3-phrase-1466",
+      "kind": "note",
+      "lane": 0,
+      "beat": 329.0
+    },
+    {
+      "id": "v3-phrase-1467",
+      "kind": "note",
+      "lane": 1,
+      "beat": 329.5
+    },
+    {
+      "id": "v3-phrase-1468",
+      "kind": "note",
+      "lane": 2,
+      "beat": 329.5
+    },
+    {
+      "id": "v3-phrase-1469",
+      "kind": "note",
+      "lane": 0,
+      "beat": 330.0
+    },
+    {
+      "id": "v3-phrase-1470",
+      "kind": "note",
+      "lane": 2,
+      "beat": 330.0
+    },
+    {
+      "id": "v3-phrase-1471",
+      "kind": "note",
+      "lane": 1,
+      "beat": 330.5
+    },
+    {
+      "id": "v3-phrase-1472",
+      "kind": "note",
+      "lane": 3,
+      "beat": 330.5
+    },
+    {
+      "id": "v3-phrase-1473",
+      "kind": "note",
+      "lane": 0,
+      "beat": 331.0
+    },
+    {
+      "id": "v3-phrase-1474",
+      "kind": "note",
+      "lane": 2,
+      "beat": 331.5
+    },
+    {
+      "id": "v3-phrase-1475",
+      "kind": "note",
+      "lane": 0,
+      "beat": 331.75
+    },
+    {
+      "id": "v3-phrase-1476",
+      "kind": "note",
+      "lane": 1,
+      "beat": 332.0
+    },
+    {
+      "id": "v3-phrase-1477",
+      "kind": "hold",
+      "lane": 3,
+      "beat": 332.0,
+      "endBeat": 336.0
+    },
+    {
+      "id": "v3-phrase-1478",
+      "kind": "note",
+      "lane": 2,
+      "beat": 332.5
+    },
+    {
+      "id": "v3-phrase-1479",
+      "kind": "note",
+      "lane": 1,
+      "beat": 332.75
+    },
+    {
+      "id": "v3-phrase-1480",
+      "kind": "note",
+      "lane": 0,
+      "beat": 333.25
+    },
+    {
+      "id": "v3-phrase-1481",
+      "kind": "note",
+      "lane": 2,
+      "beat": 333.5
+    },
+    {
+      "id": "v3-phrase-1482",
+      "kind": "note",
+      "lane": 0,
+      "beat": 334.0
+    },
+    {
+      "id": "v3-phrase-1483",
+      "kind": "hold",
+      "lane": 2,
+      "beat": 334.25,
+      "endBeat": 336.0
+    }
+  ]
+}

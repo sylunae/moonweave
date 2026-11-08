@@ -1,0 +1,70 @@
+{
+  "format": "moonweave-ai-context",
+  "version": 1,
+  "target": {
+    "chartId": "2b7db529-afbf-4444-99d0-492d43a71944",
+    "revision": "sha256:64724d0df7d78156351567caf1f7b7754d28ad5b0b025c3a1796ff1bbd06a9d2"
+  },
+  "title": "AI制谱测试3",
+  "artist": "",
+  "song": {
+    "audioName": "13. Field of Hopes and Dreams (DELTARUNE Chapter 1 Soundtrack) - Toby Fox [9oDZ2vN9XF0].mp3",
+    "duration": 165302.875,
+    "bpm": 125,
+    "offset": 0,
+    "bpmChanges": []
+  },
+  "conventions": {
+    "timeUnit": "ms",
+    "beatUnit": "quarter-note",
+    "beatZeroAtMs": 0,
+    "lanesLeftToRight": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "range": "[start,end); hold endpoints must be inside; crossing holds are read-only",
+    "audioIdentity": "filename-and-duration; use the identical original WAV",
+    "bpmChangeTimeUnit": "ms, even when output unit is beat"
+  },
+  "cursor": {
+    "time": 0,
+    "beat": 0,
+    "bpm": 125,
+    "subdivision": 4,
+    "isPlaying": false
+  },
+  "range": {
+    "start": 0,
+    "end": 165302.875,
+    "startBeat": 0,
+    "endBeat": 344.38098958333336
+  },
+  "notes": [],
+  "notesTruncated": false,
+  "totalNearbyNotes": 0,
+  "outputTemplate": {
+    "format": "moonweave-ai-chart",
+    "version": 1,
+    "requestId": "a62bb0c9-2d3a-4d90-96ad-2b314bb4ba99",
+    "mode": "segment",
+    "unit": "ms",
+    "target": {
+      "chartId": "2b7db529-afbf-4444-99d0-492d43a71944",
+      "revision": "sha256:64724d0df7d78156351567caf1f7b7754d28ad5b0b025c3a1796ff1bbd06a9d2"
+    },
+    "song": {
+      "audioName": "13. Field of Hopes and Dreams (DELTARUNE Chapter 1 Soundtrack) - Toby Fox [9oDZ2vN9XF0].mp3",
+      "duration": 165302.875,
+      "bpm": 125,
+      "offset": 0,
+      "bpmChanges": []
+    },
+    "range": {
+      "start": 0,
+      "end": 165302.875
+    },
+    "notes": []
+  }
+}

@@ -1,0 +1,6056 @@
+{
+  "version": 1,
+  "title": "周而复始的春色 Vernal Rêverie",
+  "artist": "",
+  "audioPath": "",
+  "audioName": "",
+  "backgroundPath": "",
+  "backgroundName": "",
+  "backgroundType": "",
+  "backgroundVideoStartTime": 0,
+  "coverPath": "",
+  "coverName": "",
+  "bpm": 100.0,
+  "bpmChanges": [
+    {
+      "time": 56100.0,
+      "bpm": 89.9999550000225
+    },
+    {
+      "time": 56766.667,
+      "bpm": 60.0
+    },
+    {
+      "time": 57766.667,
+      "bpm": 100.0
+    },
+    {
+      "time": 128266.667,
+      "bpm": 97.49993906253809
+    },
+    {
+      "time": 130112.822,
+      "bpm": 94.99999208333399
+    },
+    {
+      "time": 131060.1905,
+      "bpm": 89.9999550000225
+    },
+    {
+      "time": 132060.191,
+      "bpm": 100.0
+    },
+    {
+      "time": 159660.191,
+      "bpm": 94.99999208333399
+    },
+    {
+      "time": 160291.77,
+      "bpm": 89.9999550000225
+    },
+    {
+      "time": 162291.771,
+      "bpm": 100.0
+    },
+    {
+      "time": 165591.771,
+      "bpm": 45.000011250002814
+    },
+    {
+      "time": 166255.659723,
+      "bpm": 89.9999550000225
+    },
+    {
+      "time": 166923.715612,
+      "bpm": 94.99999208333399
+    },
+    {
+      "time": 168818.452612,
+      "bpm": 89.9999550000225
+    },
+    {
+      "time": 170818.453612,
+      "bpm": 85.00004250002125
+    },
+    {
+      "time": 172936.099612,
+      "bpm": 80.0
+    },
+    {
+      "time": 173686.099612,
+      "bpm": 60.0
+    },
+    {
+      "time": 174019.432946,
+      "bpm": 40.00002666668444
+    }
+  ],
+  "effects": [],
+  "offset": 0,
+  "duration": 184869.426379,
+  "notes": [
+    {
+      "id": "vr1-000000-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 0.0
+    },
+    {
+      "id": "vr1-000000-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 0.0
+    },
+    {
+      "id": "vr1-000240-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 300.0
+    },
+    {
+      "id": "vr1-000240-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 300.0
+    },
+    {
+      "id": "vr1-000480-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 600.0
+    },
+    {
+      "id": "vr1-000480-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 600.0
+    },
+    {
+      "id": "vr1-000720-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 900.0
+    },
+    {
+      "id": "vr1-000720-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 900.0
+    },
+    {
+      "id": "vr1-000960-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 1200.0
+    },
+    {
+      "id": "vr1-001200-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 1500.0
+    },
+    {
+      "id": "vr1-001440-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 1800.0
+    },
+    {
+      "id": "vr1-001440-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 1800.0
+    },
+    {
+      "id": "vr1-001680-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 2100.0
+    },
+    {
+      "id": "vr1-001680-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 2100.0
+    },
+    {
+      "id": "vr1-001920-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 2400.0
+    },
+    {
+      "id": "vr1-001920-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 2400.0
+    },
+    {
+      "id": "vr1-002160-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 2700.0
+    },
+    {
+      "id": "vr1-002160-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 2700.0
+    },
+    {
+      "id": "vr1-002400-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 3000.0
+    },
+    {
+      "id": "vr1-002640-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 3300.0
+    },
+    {
+      "id": "vr1-002880-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 3600.0
+    },
+    {
+      "id": "vr1-002880-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 3600.0
+    },
+    {
+      "id": "vr1-003120-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 3900.0
+    },
+    {
+      "id": "vr1-003120-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 3900.0
+    },
+    {
+      "id": "vr1-003360-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 4200.0
+    },
+    {
+      "id": "vr1-003360-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 4200.0
+    },
+    {
+      "id": "vr1-003600-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 4500.0
+    },
+    {
+      "id": "vr1-003600-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 4500.0
+    },
+    {
+      "id": "vr1-003840-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 4800.0
+    },
+    {
+      "id": "vr1-004080-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 5100.0
+    },
+    {
+      "id": "vr1-004320-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 5400.0
+    },
+    {
+      "id": "vr1-004320-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 5400.0,
+      "endTime": 5968.75
+    },
+    {
+      "id": "vr1-004560-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 5700.0
+    },
+    {
+      "id": "vr1-004800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 6000.0
+    },
+    {
+      "id": "vr1-004800-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 6000.0
+    },
+    {
+      "id": "vr1-004880-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 6100.0
+    },
+    {
+      "id": "vr1-004960-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 6200.0
+    },
+    {
+      "id": "vr1-005040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 6300.0
+    },
+    {
+      "id": "vr1-005040-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 6300.0
+    },
+    {
+      "id": "vr1-005520-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 6900.0
+    },
+    {
+      "id": "vr1-005520-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 6900.0
+    },
+    {
+      "id": "vr1-005760-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 7200.0
+    },
+    {
+      "id": "vr1-005760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 7200.0
+    },
+    {
+      "id": "vr1-006000-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 7500.0
+    },
+    {
+      "id": "vr1-006000-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 7500.0
+    },
+    {
+      "id": "vr1-006240-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 7800.0
+    },
+    {
+      "id": "vr1-006240-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 7800.0
+    },
+    {
+      "id": "vr1-006480-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 8100.0
+    },
+    {
+      "id": "vr1-006480-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 8100.0
+    },
+    {
+      "id": "vr1-006720-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 8400.0
+    },
+    {
+      "id": "vr1-006960-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 8700.0
+    },
+    {
+      "id": "vr1-007200-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 9000.0
+    },
+    {
+      "id": "vr1-007200-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 9000.0
+    },
+    {
+      "id": "vr1-007440-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 9300.0
+    },
+    {
+      "id": "vr1-007440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 9300.0
+    },
+    {
+      "id": "vr1-007680-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 9600.0
+    },
+    {
+      "id": "vr1-007680-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 9600.0
+    },
+    {
+      "id": "vr1-007920-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 9900.0
+    },
+    {
+      "id": "vr1-007920-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 9900.0
+    },
+    {
+      "id": "vr1-008160-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 10200.0
+    },
+    {
+      "id": "vr1-008400-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 10500.0
+    },
+    {
+      "id": "vr1-008640-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 10800.0
+    },
+    {
+      "id": "vr1-008640-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 10800.0
+    },
+    {
+      "id": "vr1-008880-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 11100.0
+    },
+    {
+      "id": "vr1-008880-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 11100.0
+    },
+    {
+      "id": "vr1-009120-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 11400.0
+    },
+    {
+      "id": "vr1-009120-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 11400.0
+    },
+    {
+      "id": "vr1-009360-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 11700.0
+    },
+    {
+      "id": "vr1-009360-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 11700.0
+    },
+    {
+      "id": "vr1-009600-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 12000.0
+    },
+    {
+      "id": "vr1-009840-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 12300.0
+    },
+    {
+      "id": "vr1-010080-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 12600.0
+    },
+    {
+      "id": "vr1-010080-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 12600.0,
+      "endTime": 13168.75
+    },
+    {
+      "id": "vr1-010320-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 12900.0
+    },
+    {
+      "id": "vr1-010560-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 13200.0
+    },
+    {
+      "id": "vr1-010560-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 13200.0
+    },
+    {
+      "id": "vr1-010640-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 13300.0
+    },
+    {
+      "id": "vr1-010720-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 13400.0
+    },
+    {
+      "id": "vr1-010800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 13500.0
+    },
+    {
+      "id": "vr1-010800-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 13500.0
+    },
+    {
+      "id": "vr1-011280-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 14100.0
+    },
+    {
+      "id": "vr1-011280-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 14100.0
+    },
+    {
+      "id": "vr1-011520-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 14400.0
+    },
+    {
+      "id": "vr1-011520-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 14400.0,
+      "endTime": 16108.75
+    },
+    {
+      "id": "vr1-011760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 14700.0
+    },
+    {
+      "id": "vr1-012000-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 15000.0
+    },
+    {
+      "id": "vr1-012240-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 15300.0
+    },
+    {
+      "id": "vr1-012960-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 16200.0,
+      "endTime": 17338.75
+    },
+    {
+      "id": "vr1-013920-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 17400.0
+    },
+    {
+      "id": "vr1-014160-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 17700.0
+    },
+    {
+      "id": "vr1-014400-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 18000.0
+    },
+    {
+      "id": "vr1-014400-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 18000.0,
+      "endTime": 19708.75
+    },
+    {
+      "id": "vr1-014640-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 18300.0
+    },
+    {
+      "id": "vr1-014880-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 18600.0
+    },
+    {
+      "id": "vr1-015120-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 18900.0
+    },
+    {
+      "id": "vr1-015840-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 19800.0,
+      "endTime": 20938.75
+    },
+    {
+      "id": "vr1-017040-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 21300.0
+    },
+    {
+      "id": "vr1-017280-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 21600.0
+    },
+    {
+      "id": "vr1-017280-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 21600.0,
+      "endTime": 23308.75
+    },
+    {
+      "id": "vr1-017520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 21900.0
+    },
+    {
+      "id": "vr1-017760-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 22200.0
+    },
+    {
+      "id": "vr1-018000-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 22500.0
+    },
+    {
+      "id": "vr1-018720-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 23400.0,
+      "endTime": 24253.75
+    },
+    {
+      "id": "vr1-019440-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 24300.0
+    },
+    {
+      "id": "vr1-019440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 24300.0
+    },
+    {
+      "id": "vr1-019680-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 24600.0
+    },
+    {
+      "id": "vr1-019680-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 24600.0
+    },
+    {
+      "id": "vr1-019920-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 24900.0
+    },
+    {
+      "id": "vr1-019920-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 24900.0
+    },
+    {
+      "id": "vr1-020160-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 25200.0
+    },
+    {
+      "id": "vr1-020160-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 25200.0,
+      "endTime": 26908.75
+    },
+    {
+      "id": "vr1-020160-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 25200.0
+    },
+    {
+      "id": "vr1-020400-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 25500.0
+    },
+    {
+      "id": "vr1-020640-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 25800.0
+    },
+    {
+      "id": "vr1-020880-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 26100.0
+    },
+    {
+      "id": "vr1-021600-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 27000.0,
+      "endTime": 28423.75
+    },
+    {
+      "id": "vr1-022800-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 28500.0
+    },
+    {
+      "id": "vr1-023040-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 28800.0
+    },
+    {
+      "id": "vr1-023040-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 28800.0,
+      "endTime": 30508.75
+    },
+    {
+      "id": "vr1-023280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 29100.0
+    },
+    {
+      "id": "vr1-023520-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 29400.0
+    },
+    {
+      "id": "vr1-023760-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 29700.0
+    },
+    {
+      "id": "vr1-024480-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 30600.0,
+      "endTime": 31738.75
+    },
+    {
+      "id": "vr1-025440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 31800.0
+    },
+    {
+      "id": "vr1-025680-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 32100.0
+    },
+    {
+      "id": "vr1-025920-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 32400.0
+    },
+    {
+      "id": "vr1-025920-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 32400.0,
+      "endTime": 34108.75
+    },
+    {
+      "id": "vr1-026160-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 32700.0
+    },
+    {
+      "id": "vr1-026400-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 33000.0
+    },
+    {
+      "id": "vr1-026640-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 33300.0
+    },
+    {
+      "id": "vr1-027360-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 34200.0,
+      "endTime": 35053.75
+    },
+    {
+      "id": "vr1-028080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 35100.0
+    },
+    {
+      "id": "vr1-028320-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 35400.0
+    },
+    {
+      "id": "vr1-028560-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 35700.0
+    },
+    {
+      "id": "vr1-028800-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 36000.0
+    },
+    {
+      "id": "vr1-028800-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 36000.0,
+      "endTime": 36853.75
+    },
+    {
+      "id": "vr1-029040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 36300.0
+    },
+    {
+      "id": "vr1-029280-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 36600.0
+    },
+    {
+      "id": "vr1-029520-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 36900.0,
+      "endTime": 37468.75
+    },
+    {
+      "id": "vr1-029520-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 36900.0
+    },
+    {
+      "id": "vr1-030000-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 37500.0
+    },
+    {
+      "id": "vr1-030240-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 37800.0,
+      "endTime": 38653.75
+    },
+    {
+      "id": "vr1-030960-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 38700.0
+    },
+    {
+      "id": "vr1-031200-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 39000.0
+    },
+    {
+      "id": "vr1-031440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 39300.0
+    },
+    {
+      "id": "vr1-031680-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 39600.0
+    },
+    {
+      "id": "vr1-031680-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 39600.0,
+      "endTime": 40453.75
+    },
+    {
+      "id": "vr1-031920-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 39900.0
+    },
+    {
+      "id": "vr1-032160-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 40200.0
+    },
+    {
+      "id": "vr1-032400-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 40500.0,
+      "endTime": 41068.75
+    },
+    {
+      "id": "vr1-032400-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 40500.0
+    },
+    {
+      "id": "vr1-032880-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 41100.0
+    },
+    {
+      "id": "vr1-033120-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 41400.0,
+      "endTime": 42253.75
+    },
+    {
+      "id": "vr1-033120-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 41400.0,
+      "endTime": 42253.75
+    },
+    {
+      "id": "vr1-033840-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 42300.0
+    },
+    {
+      "id": "vr1-033840-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 42300.0
+    },
+    {
+      "id": "vr1-034080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 42600.0
+    },
+    {
+      "id": "vr1-034080-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 42600.0
+    },
+    {
+      "id": "vr1-034080-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 42600.0
+    },
+    {
+      "id": "vr1-034320-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 42900.0
+    },
+    {
+      "id": "vr1-034320-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 42900.0
+    },
+    {
+      "id": "vr1-034320-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 42900.0
+    },
+    {
+      "id": "vr1-034560-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 43200.0
+    },
+    {
+      "id": "vr1-034560-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 43200.0
+    },
+    {
+      "id": "vr1-034560-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 43200.0,
+      "endTime": 44053.75
+    },
+    {
+      "id": "vr1-034800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 43500.0
+    },
+    {
+      "id": "vr1-034800-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 43500.0
+    },
+    {
+      "id": "vr1-035040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 43800.0
+    },
+    {
+      "id": "vr1-035040-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 43800.0
+    },
+    {
+      "id": "vr1-035280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 44100.0
+    },
+    {
+      "id": "vr1-035280-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 44100.0
+    },
+    {
+      "id": "vr1-035280-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 44100.0,
+      "endTime": 44668.75
+    },
+    {
+      "id": "vr1-035520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 44400.0
+    },
+    {
+      "id": "vr1-035520-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 44400.0
+    },
+    {
+      "id": "vr1-035760-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 44700.0
+    },
+    {
+      "id": "vr1-035760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 44700.0
+    },
+    {
+      "id": "vr1-035760-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 44700.0
+    },
+    {
+      "id": "vr1-035760-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 44700.0
+    },
+    {
+      "id": "vr1-036000-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 45000.0
+    },
+    {
+      "id": "vr1-036000-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 45000.0,
+      "endTime": 45853.75
+    },
+    {
+      "id": "vr1-036240-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 45300.0
+    },
+    {
+      "id": "vr1-036240-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 45300.0
+    },
+    {
+      "id": "vr1-036480-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 45600.0
+    },
+    {
+      "id": "vr1-036480-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 45600.0
+    },
+    {
+      "id": "vr1-036720-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 45900.0
+    },
+    {
+      "id": "vr1-036720-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 45900.0
+    },
+    {
+      "id": "vr1-036720-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 45900.0
+    },
+    {
+      "id": "vr1-036960-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 46200.0
+    },
+    {
+      "id": "vr1-036960-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 46200.0
+    },
+    {
+      "id": "vr1-036960-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 46200.0
+    },
+    {
+      "id": "vr1-036960-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 46200.0
+    },
+    {
+      "id": "vr1-037200-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 46500.0
+    },
+    {
+      "id": "vr1-037200-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 46500.0
+    },
+    {
+      "id": "vr1-037200-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 46500.0
+    },
+    {
+      "id": "vr1-037200-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 46500.0
+    },
+    {
+      "id": "vr1-037440-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 46800.0,
+      "endTime": 47653.75
+    },
+    {
+      "id": "vr1-037440-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 46800.0
+    },
+    {
+      "id": "vr1-037440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 46800.0
+    },
+    {
+      "id": "vr1-037680-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 47100.0
+    },
+    {
+      "id": "vr1-037680-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 47100.0
+    },
+    {
+      "id": "vr1-037920-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 47400.0
+    },
+    {
+      "id": "vr1-037920-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 47400.0
+    },
+    {
+      "id": "vr1-038160-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 47700.0
+    },
+    {
+      "id": "vr1-038160-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 47700.0
+    },
+    {
+      "id": "vr1-038160-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 47700.0
+    },
+    {
+      "id": "vr1-038400-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 48000.0
+    },
+    {
+      "id": "vr1-038400-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 48000.0
+    },
+    {
+      "id": "vr1-038400-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 48000.0
+    },
+    {
+      "id": "vr1-038640-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 48300.0
+    },
+    {
+      "id": "vr1-038640-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 48300.0
+    },
+    {
+      "id": "vr1-038640-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 48300.0
+    },
+    {
+      "id": "vr1-038640-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 48300.0
+    },
+    {
+      "id": "vr1-038880-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 48600.0
+    },
+    {
+      "id": "vr1-038880-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 48600.0
+    },
+    {
+      "id": "vr1-038880-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 48600.0,
+      "endTime": 49453.75
+    },
+    {
+      "id": "vr1-039120-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 48900.0
+    },
+    {
+      "id": "vr1-039120-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 48900.0
+    },
+    {
+      "id": "vr1-039360-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 49200.0
+    },
+    {
+      "id": "vr1-039360-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 49200.0
+    },
+    {
+      "id": "vr1-039600-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 49500.0
+    },
+    {
+      "id": "vr1-039600-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 49500.0
+    },
+    {
+      "id": "vr1-039600-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 49500.0
+    },
+    {
+      "id": "vr1-039840-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 49800.0
+    },
+    {
+      "id": "vr1-039840-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 49800.0
+    },
+    {
+      "id": "vr1-039840-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 49800.0
+    },
+    {
+      "id": "vr1-040080-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 50100.0
+    },
+    {
+      "id": "vr1-040080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 50100.0
+    },
+    {
+      "id": "vr1-040080-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 50100.0
+    },
+    {
+      "id": "vr1-040080-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 50100.0
+    },
+    {
+      "id": "vr1-040320-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 50400.0
+    },
+    {
+      "id": "vr1-040320-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 50400.0
+    },
+    {
+      "id": "vr1-040320-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 50400.0,
+      "endTime": 51253.75
+    },
+    {
+      "id": "vr1-040560-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 50700.0
+    },
+    {
+      "id": "vr1-040560-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 50700.0
+    },
+    {
+      "id": "vr1-040800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 51000.0
+    },
+    {
+      "id": "vr1-040800-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 51000.0
+    },
+    {
+      "id": "vr1-041040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 51300.0
+    },
+    {
+      "id": "vr1-041040-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 51300.0,
+      "endTime": 51868.75
+    },
+    {
+      "id": "vr1-041280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 51600.0
+    },
+    {
+      "id": "vr1-041280-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 51600.0
+    },
+    {
+      "id": "vr1-041520-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 51900.0
+    },
+    {
+      "id": "vr1-041520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 51900.0
+    },
+    {
+      "id": "vr1-041520-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 51900.0
+    },
+    {
+      "id": "vr1-041520-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 51900.0
+    },
+    {
+      "id": "vr1-041760-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 52200.0
+    },
+    {
+      "id": "vr1-041760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 52200.0
+    },
+    {
+      "id": "vr1-041760-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 52200.0,
+      "endTime": 53053.75
+    },
+    {
+      "id": "vr1-042000-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 52500.0
+    },
+    {
+      "id": "vr1-042000-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 52500.0
+    },
+    {
+      "id": "vr1-042240-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 52800.0
+    },
+    {
+      "id": "vr1-042240-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 52800.0
+    },
+    {
+      "id": "vr1-042480-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 53100.0
+    },
+    {
+      "id": "vr1-042480-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 53100.0
+    },
+    {
+      "id": "vr1-042480-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 53100.0
+    },
+    {
+      "id": "vr1-042720-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 53400.0
+    },
+    {
+      "id": "vr1-042720-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 53400.0,
+      "endTime": 53968.75
+    },
+    {
+      "id": "vr1-042720-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 53400.0
+    },
+    {
+      "id": "vr1-042720-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 53400.0
+    },
+    {
+      "id": "vr1-042960-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 53700.0
+    },
+    {
+      "id": "vr1-042960-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 53700.0
+    },
+    {
+      "id": "vr1-043200-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 54000.0,
+      "endTime": 54853.75
+    },
+    {
+      "id": "vr1-043200-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 54000.0
+    },
+    {
+      "id": "vr1-043200-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 54000.0
+    },
+    {
+      "id": "vr1-043440-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 54300.0
+    },
+    {
+      "id": "vr1-043440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 54300.0
+    },
+    {
+      "id": "vr1-043680-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 54600.0
+    },
+    {
+      "id": "vr1-043680-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 54600.0
+    },
+    {
+      "id": "vr1-043920-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 54900.0
+    },
+    {
+      "id": "vr1-044160-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 55200.0
+    },
+    {
+      "id": "vr1-044160-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 55200.0
+    },
+    {
+      "id": "vr1-044160-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 55200.0
+    },
+    {
+      "id": "vr1-044160-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 55200.0
+    },
+    {
+      "id": "vr1-044400-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 55500.0
+    },
+    {
+      "id": "vr1-044400-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 55500.0
+    },
+    {
+      "id": "vr1-044400-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 55500.0
+    },
+    {
+      "id": "vr1-044400-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 55500.0
+    },
+    {
+      "id": "vr1-044640-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 55800.0,
+      "endTime": 57164.583667
+    },
+    {
+      "id": "vr1-044640-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 55800.0
+    },
+    {
+      "id": "vr1-044640-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 55800.0
+    },
+    {
+      "id": "vr1-044880-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 56100.0
+    },
+    {
+      "id": "vr1-044880-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 56100.0
+    },
+    {
+      "id": "vr1-045120-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 56433.3335
+    },
+    {
+      "id": "vr1-045120-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 56433.3335
+    },
+    {
+      "id": "vr1-045360-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 56766.667,
+      "endTime": 58020.417
+    },
+    {
+      "id": "vr1-045360-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 56766.667
+    },
+    {
+      "id": "vr1-045840-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 57766.667
+    },
+    {
+      "id": "vr1-045840-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 57766.667
+    },
+    {
+      "id": "vr1-046080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 58066.667
+    },
+    {
+      "id": "vr1-046080-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 58066.667,
+      "endTime": 58920.417
+    },
+    {
+      "id": "vr1-046320-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 58366.667
+    },
+    {
+      "id": "vr1-046560-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 58666.667
+    },
+    {
+      "id": "vr1-046800-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 58966.667
+    },
+    {
+      "id": "vr1-046800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 58966.667
+    },
+    {
+      "id": "vr1-046800-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 58966.667
+    },
+    {
+      "id": "vr1-047040-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 59266.667
+    },
+    {
+      "id": "vr1-047040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 59266.667
+    },
+    {
+      "id": "vr1-047040-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 59266.667
+    },
+    {
+      "id": "vr1-047280-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 59566.667
+    },
+    {
+      "id": "vr1-047280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 59566.667
+    },
+    {
+      "id": "vr1-047280-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 59566.667
+    },
+    {
+      "id": "vr1-047520-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 59866.667
+    },
+    {
+      "id": "vr1-047520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 59866.667
+    },
+    {
+      "id": "vr1-047520-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 59866.667,
+      "endTime": 60720.417
+    },
+    {
+      "id": "vr1-047760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 60166.667
+    },
+    {
+      "id": "vr1-048000-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 60466.667
+    },
+    {
+      "id": "vr1-048240-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 60766.667
+    },
+    {
+      "id": "vr1-048240-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 60766.667,
+      "endTime": 61335.417
+    },
+    {
+      "id": "vr1-048240-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 60766.667
+    },
+    {
+      "id": "vr1-048480-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 61066.667
+    },
+    {
+      "id": "vr1-048720-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 61366.667
+    },
+    {
+      "id": "vr1-048720-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 61366.667
+    },
+    {
+      "id": "vr1-048720-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 61366.667
+    },
+    {
+      "id": "vr1-048960-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 61666.667
+    },
+    {
+      "id": "vr1-048960-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 61666.667,
+      "endTime": 62520.417
+    },
+    {
+      "id": "vr1-048960-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 61666.667
+    },
+    {
+      "id": "vr1-049200-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 61966.667
+    },
+    {
+      "id": "vr1-049440-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 62266.667
+    },
+    {
+      "id": "vr1-049680-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 62566.667
+    },
+    {
+      "id": "vr1-049680-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 62566.667,
+      "endTime": 63135.417
+    },
+    {
+      "id": "vr1-049680-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 62566.667
+    },
+    {
+      "id": "vr1-049920-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 62866.667
+    },
+    {
+      "id": "vr1-050160-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 63166.667
+    },
+    {
+      "id": "vr1-050160-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 63166.667
+    },
+    {
+      "id": "vr1-050160-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 63166.667
+    },
+    {
+      "id": "vr1-050400-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 63466.667,
+      "endTime": 64035.417
+    },
+    {
+      "id": "vr1-050400-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 63466.667
+    },
+    {
+      "id": "vr1-050640-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 63766.667
+    },
+    {
+      "id": "vr1-050880-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 64066.667
+    },
+    {
+      "id": "vr1-051120-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 64366.667
+    },
+    {
+      "id": "vr1-051360-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 64666.667
+    },
+    {
+      "id": "vr1-051600-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 64966.667
+    },
+    {
+      "id": "vr1-051840-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 65266.667
+    },
+    {
+      "id": "vr1-051840-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 65266.667
+    },
+    {
+      "id": "vr1-051840-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 65266.667,
+      "endTime": 67065.417
+    },
+    {
+      "id": "vr1-052080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 65566.667
+    },
+    {
+      "id": "vr1-052200-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 65716.667
+    },
+    {
+      "id": "vr1-052320-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 65866.667
+    },
+    {
+      "id": "vr1-052560-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 66166.667
+    },
+    {
+      "id": "vr1-052800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 66466.667
+    },
+    {
+      "id": "vr1-053040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 66766.667
+    },
+    {
+      "id": "vr1-053280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 67066.667
+    },
+    {
+      "id": "vr1-053280-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 67066.667
+    },
+    {
+      "id": "vr1-053280-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 67066.667,
+      "endTime": 68775.417
+    },
+    {
+      "id": "vr1-053520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 67366.667
+    },
+    {
+      "id": "vr1-053760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 67666.667
+    },
+    {
+      "id": "vr1-054000-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 67966.667
+    },
+    {
+      "id": "vr1-054240-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 68266.667
+    },
+    {
+      "id": "vr1-054480-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 68566.667
+    },
+    {
+      "id": "vr1-054720-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 68866.667
+    },
+    {
+      "id": "vr1-054960-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 69166.667
+    },
+    {
+      "id": "vr1-055200-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 69466.667
+    },
+    {
+      "id": "vr1-055440-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 69766.667
+    },
+    {
+      "id": "vr1-055680-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 70066.667
+    },
+    {
+      "id": "vr1-055920-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 70366.667
+    },
+    {
+      "id": "vr1-056160-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 70666.667,
+      "endTime": 71805.417
+    },
+    {
+      "id": "vr1-056160-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 70666.667
+    },
+    {
+      "id": "vr1-057360-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 72166.667
+    },
+    {
+      "id": "vr1-057360-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 72166.667
+    },
+    {
+      "id": "vr1-057600-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 72466.667
+    },
+    {
+      "id": "vr1-057600-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 72466.667
+    },
+    {
+      "id": "vr1-057600-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 72466.667
+    },
+    {
+      "id": "vr1-057840-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 72766.667
+    },
+    {
+      "id": "vr1-057960-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 72916.667
+    },
+    {
+      "id": "vr1-058080-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 73066.667
+    },
+    {
+      "id": "vr1-058320-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 73366.667
+    },
+    {
+      "id": "vr1-058320-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 73366.667,
+      "endTime": 73935.417
+    },
+    {
+      "id": "vr1-058320-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 73366.667
+    },
+    {
+      "id": "vr1-058800-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 73966.667
+    },
+    {
+      "id": "vr1-058800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 73966.667
+    },
+    {
+      "id": "vr1-058800-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 73966.667
+    },
+    {
+      "id": "vr1-059040-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 74266.667
+    },
+    {
+      "id": "vr1-059040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 74266.667
+    },
+    {
+      "id": "vr1-059280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 74566.667
+    },
+    {
+      "id": "vr1-059400-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 74716.667
+    },
+    {
+      "id": "vr1-059520-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 74866.667
+    },
+    {
+      "id": "vr1-059520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 74866.667
+    },
+    {
+      "id": "vr1-059520-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 74866.667
+    },
+    {
+      "id": "vr1-059760-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 75166.667,
+      "endTime": 75735.417
+    },
+    {
+      "id": "vr1-059760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 75166.667
+    },
+    {
+      "id": "vr1-059760-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 75166.667
+    },
+    {
+      "id": "vr1-060240-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 75766.667
+    },
+    {
+      "id": "vr1-060240-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 75766.667
+    },
+    {
+      "id": "vr1-060240-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 75766.667
+    },
+    {
+      "id": "vr1-060480-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 76066.667
+    },
+    {
+      "id": "vr1-060480-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 76066.667
+    },
+    {
+      "id": "vr1-060480-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 76066.667
+    },
+    {
+      "id": "vr1-060720-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 76366.667
+    },
+    {
+      "id": "vr1-060720-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 76366.667
+    },
+    {
+      "id": "vr1-060840-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 76516.667
+    },
+    {
+      "id": "vr1-060960-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 76666.667
+    },
+    {
+      "id": "vr1-060960-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 76666.667
+    },
+    {
+      "id": "vr1-060960-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 76666.667
+    },
+    {
+      "id": "vr1-061200-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 76966.667
+    },
+    {
+      "id": "vr1-061200-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 76966.667
+    },
+    {
+      "id": "vr1-061200-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 76966.667
+    },
+    {
+      "id": "vr1-061440-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 77266.667
+    },
+    {
+      "id": "vr1-061440-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 77266.667
+    },
+    {
+      "id": "vr1-061440-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 77266.667
+    },
+    {
+      "id": "vr1-061560-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 77416.667
+    },
+    {
+      "id": "vr1-061680-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 77566.667
+    },
+    {
+      "id": "vr1-061680-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 77566.667
+    },
+    {
+      "id": "vr1-061680-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 77566.667
+    },
+    {
+      "id": "vr1-061920-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 77866.667
+    },
+    {
+      "id": "vr1-061920-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 77866.667
+    },
+    {
+      "id": "vr1-061920-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 77866.667
+    },
+    {
+      "id": "vr1-062160-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 78166.667
+    },
+    {
+      "id": "vr1-062280-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 78316.667
+    },
+    {
+      "id": "vr1-062400-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 78466.667
+    },
+    {
+      "id": "vr1-062640-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 78766.667
+    },
+    {
+      "id": "vr1-062880-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 79066.667
+    },
+    {
+      "id": "vr1-063120-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 79366.667
+    },
+    {
+      "id": "vr1-063120-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 79366.667
+    },
+    {
+      "id": "vr1-063120-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 79366.667
+    },
+    {
+      "id": "vr1-063360-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 79666.667
+    },
+    {
+      "id": "vr1-063360-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 79666.667
+    },
+    {
+      "id": "vr1-063600-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 79966.667
+    },
+    {
+      "id": "vr1-063720-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 80116.667
+    },
+    {
+      "id": "vr1-063840-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 80266.667
+    },
+    {
+      "id": "vr1-064080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 80566.667
+    },
+    {
+      "id": "vr1-064080-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 80566.667
+    },
+    {
+      "id": "vr1-064080-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 80566.667
+    },
+    {
+      "id": "vr1-064320-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 80866.667
+    },
+    {
+      "id": "vr1-064560-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 81166.667
+    },
+    {
+      "id": "vr1-064560-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 81166.667
+    },
+    {
+      "id": "vr1-064800-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 81466.667
+    },
+    {
+      "id": "vr1-064800-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 81466.667
+    },
+    {
+      "id": "vr1-065040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 81766.667
+    },
+    {
+      "id": "vr1-065160-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 81916.667
+    },
+    {
+      "id": "vr1-065280-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 82066.667
+    },
+    {
+      "id": "vr1-065280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 82066.667
+    },
+    {
+      "id": "vr1-065280-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 82066.667
+    },
+    {
+      "id": "vr1-065520-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 82366.667,
+      "endTime": 82935.417
+    },
+    {
+      "id": "vr1-065520-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 82366.667
+    },
+    {
+      "id": "vr1-066000-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 82966.667
+    },
+    {
+      "id": "vr1-066000-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 82966.667
+    },
+    {
+      "id": "vr1-066240-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 83266.667
+    },
+    {
+      "id": "vr1-066240-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 83266.667
+    },
+    {
+      "id": "vr1-066480-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 83566.667
+    },
+    {
+      "id": "vr1-066480-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 83566.667
+    },
+    {
+      "id": "vr1-066600-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 83716.667
+    },
+    {
+      "id": "vr1-066600-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 83716.667
+    },
+    {
+      "id": "vr1-066720-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 83866.667
+    },
+    {
+      "id": "vr1-066720-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 83866.667
+    },
+    {
+      "id": "vr1-066960-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 84166.667
+    },
+    {
+      "id": "vr1-066960-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 84166.667
+    },
+    {
+      "id": "vr1-067200-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 84466.667
+    },
+    {
+      "id": "vr1-067200-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 84466.667
+    },
+    {
+      "id": "vr1-067440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 84766.667
+    },
+    {
+      "id": "vr1-067440-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 84766.667
+    },
+    {
+      "id": "vr1-067680-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 85066.667
+    },
+    {
+      "id": "vr1-067680-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 85066.667
+    },
+    {
+      "id": "vr1-067680-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 85066.667,
+      "endTime": 85635.417
+    },
+    {
+      "id": "vr1-067920-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 85366.667
+    },
+    {
+      "id": "vr1-068040-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 85516.667
+    },
+    {
+      "id": "vr1-068160-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 85666.667
+    },
+    {
+      "id": "vr1-068400-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 85966.667
+    },
+    {
+      "id": "vr1-068640-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 86266.667
+    },
+    {
+      "id": "vr1-068880-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 86566.667
+    },
+    {
+      "id": "vr1-068880-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 86566.667
+    },
+    {
+      "id": "vr1-069120-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 86866.667
+    },
+    {
+      "id": "vr1-069120-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 86866.667
+    },
+    {
+      "id": "vr1-069120-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 86866.667,
+      "endTime": 87435.417
+    },
+    {
+      "id": "vr1-069360-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 87166.667
+    },
+    {
+      "id": "vr1-069480-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 87316.667
+    },
+    {
+      "id": "vr1-069600-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 87466.667
+    },
+    {
+      "id": "vr1-069840-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 87766.667
+    },
+    {
+      "id": "vr1-069840-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 87766.667
+    },
+    {
+      "id": "vr1-069840-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 87766.667
+    },
+    {
+      "id": "vr1-070080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 88066.667
+    },
+    {
+      "id": "vr1-070320-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 88366.667
+    },
+    {
+      "id": "vr1-070320-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 88366.667
+    },
+    {
+      "id": "vr1-070320-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 88366.667
+    },
+    {
+      "id": "vr1-070560-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 88666.667
+    },
+    {
+      "id": "vr1-070560-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 88666.667
+    },
+    {
+      "id": "vr1-070560-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 88666.667
+    },
+    {
+      "id": "vr1-070800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 88966.667
+    },
+    {
+      "id": "vr1-070920-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 89116.667
+    },
+    {
+      "id": "vr1-071040-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 89266.667
+    },
+    {
+      "id": "vr1-071040-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 89266.667
+    },
+    {
+      "id": "vr1-071280-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 89566.667,
+      "endTime": 90135.417
+    },
+    {
+      "id": "vr1-071280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 89566.667
+    },
+    {
+      "id": "vr1-071280-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 89566.667
+    },
+    {
+      "id": "vr1-071760-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 90166.667
+    },
+    {
+      "id": "vr1-071760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 90166.667
+    },
+    {
+      "id": "vr1-071760-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 90166.667
+    },
+    {
+      "id": "vr1-072000-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 90466.667
+    },
+    {
+      "id": "vr1-072000-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 90466.667
+    },
+    {
+      "id": "vr1-072000-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 90466.667
+    },
+    {
+      "id": "vr1-072240-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 90766.667
+    },
+    {
+      "id": "vr1-072240-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 90766.667
+    },
+    {
+      "id": "vr1-072240-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 90766.667
+    },
+    {
+      "id": "vr1-072360-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 90916.667
+    },
+    {
+      "id": "vr1-072480-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 91066.667
+    },
+    {
+      "id": "vr1-072480-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 91066.667
+    },
+    {
+      "id": "vr1-072480-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 91066.667
+    },
+    {
+      "id": "vr1-072720-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 91366.667
+    },
+    {
+      "id": "vr1-072720-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 91366.667
+    },
+    {
+      "id": "vr1-072720-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 91366.667
+    },
+    {
+      "id": "vr1-072960-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 91666.667
+    },
+    {
+      "id": "vr1-072960-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 91666.667
+    },
+    {
+      "id": "vr1-072960-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 91666.667
+    },
+    {
+      "id": "vr1-073080-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 91816.667
+    },
+    {
+      "id": "vr1-073200-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 91966.667
+    },
+    {
+      "id": "vr1-073200-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 91966.667
+    },
+    {
+      "id": "vr1-073200-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 91966.667
+    },
+    {
+      "id": "vr1-073440-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 92266.667,
+      "endTime": 92835.417
+    },
+    {
+      "id": "vr1-073440-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 92266.667
+    },
+    {
+      "id": "vr1-073440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 92266.667
+    },
+    {
+      "id": "vr1-073680-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 92566.667
+    },
+    {
+      "id": "vr1-073800-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 92716.667
+    },
+    {
+      "id": "vr1-073920-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 92866.667
+    },
+    {
+      "id": "vr1-074160-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 93166.667
+    },
+    {
+      "id": "vr1-074400-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 93466.667
+    },
+    {
+      "id": "vr1-074640-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 93766.667
+    },
+    {
+      "id": "vr1-074640-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 93766.667
+    },
+    {
+      "id": "vr1-074640-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 93766.667
+    },
+    {
+      "id": "vr1-074880-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 94066.667
+    },
+    {
+      "id": "vr1-074880-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 94066.667
+    },
+    {
+      "id": "vr1-074880-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 94066.667,
+      "endTime": 94635.417
+    },
+    {
+      "id": "vr1-075120-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 94366.667
+    },
+    {
+      "id": "vr1-075360-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 94666.667
+    },
+    {
+      "id": "vr1-075600-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 94966.667
+    },
+    {
+      "id": "vr1-075600-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 94966.667
+    },
+    {
+      "id": "vr1-075600-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 94966.667
+    },
+    {
+      "id": "vr1-075840-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 95266.667
+    },
+    {
+      "id": "vr1-076080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 95566.667
+    },
+    {
+      "id": "vr1-076080-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 95566.667
+    },
+    {
+      "id": "vr1-076080-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 95566.667
+    },
+    {
+      "id": "vr1-076320-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 95866.667
+    },
+    {
+      "id": "vr1-076320-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 95866.667
+    },
+    {
+      "id": "vr1-076320-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 95866.667,
+      "endTime": 96435.417
+    },
+    {
+      "id": "vr1-076560-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 96166.667
+    },
+    {
+      "id": "vr1-076800-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 96466.667
+    },
+    {
+      "id": "vr1-076800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 96466.667
+    },
+    {
+      "id": "vr1-076800-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 96466.667
+    },
+    {
+      "id": "vr1-077040-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 96766.667,
+      "endTime": 97620.417
+    },
+    {
+      "id": "vr1-077040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 96766.667
+    },
+    {
+      "id": "vr1-077520-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 97366.667
+    },
+    {
+      "id": "vr1-077760-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 97666.667
+    },
+    {
+      "id": "vr1-077760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 97666.667
+    },
+    {
+      "id": "vr1-077760-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 97666.667
+    },
+    {
+      "id": "vr1-078000-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 97966.667
+    },
+    {
+      "id": "vr1-078240-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 98266.667
+    },
+    {
+      "id": "vr1-078240-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 98266.667
+    },
+    {
+      "id": "vr1-078240-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 98266.667
+    },
+    {
+      "id": "vr1-078480-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 98566.667
+    },
+    {
+      "id": "vr1-078480-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 98566.667
+    },
+    {
+      "id": "vr1-078480-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 98566.667
+    },
+    {
+      "id": "vr1-078720-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 98866.667
+    },
+    {
+      "id": "vr1-078720-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 98866.667
+    },
+    {
+      "id": "vr1-078720-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 98866.667
+    },
+    {
+      "id": "vr1-078960-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 99166.667
+    },
+    {
+      "id": "vr1-078960-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 99166.667
+    },
+    {
+      "id": "vr1-078960-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 99166.667
+    },
+    {
+      "id": "vr1-078960-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 99166.667
+    },
+    {
+      "id": "vr1-079200-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 99466.667,
+      "endTime": 101175.417
+    },
+    {
+      "id": "vr1-079200-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 99466.667,
+      "endTime": 100605.417
+    },
+    {
+      "id": "vr1-079200-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 99466.667
+    },
+    {
+      "id": "vr1-079200-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 99466.667
+    },
+    {
+      "id": "vr1-080160-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 100666.667
+    },
+    {
+      "id": "vr1-080160-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 100666.667
+    },
+    {
+      "id": "vr1-080400-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 100966.667
+    },
+    {
+      "id": "vr1-080400-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 100966.667
+    },
+    {
+      "id": "vr1-080640-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 101266.667
+    },
+    {
+      "id": "vr1-080640-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 101266.667
+    },
+    {
+      "id": "vr1-080640-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 101266.667,
+      "endTime": 102120.417
+    },
+    {
+      "id": "vr1-080880-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 101566.667
+    },
+    {
+      "id": "vr1-081000-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 101716.667
+    },
+    {
+      "id": "vr1-081120-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 101866.667
+    },
+    {
+      "id": "vr1-081360-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 102166.667
+    },
+    {
+      "id": "vr1-081360-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 102166.667
+    },
+    {
+      "id": "vr1-081360-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 102166.667,
+      "endTime": 102735.417
+    },
+    {
+      "id": "vr1-081600-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 102466.667
+    },
+    {
+      "id": "vr1-081720-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 102616.667
+    },
+    {
+      "id": "vr1-081840-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 102766.667
+    },
+    {
+      "id": "vr1-081840-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 102766.667
+    },
+    {
+      "id": "vr1-081840-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 102766.667
+    },
+    {
+      "id": "vr1-082080-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 103066.667
+    },
+    {
+      "id": "vr1-082080-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 103066.667,
+      "endTime": 104775.417
+    },
+    {
+      "id": "vr1-082320-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 103366.667
+    },
+    {
+      "id": "vr1-082440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 103516.667
+    },
+    {
+      "id": "vr1-082560-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 103666.667
+    },
+    {
+      "id": "vr1-082680-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 103816.667
+    },
+    {
+      "id": "vr1-082800-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 103966.667
+    },
+    {
+      "id": "vr1-082800-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 103966.667,
+      "endTime": 104820.417
+    },
+    {
+      "id": "vr1-083040-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 104266.667
+    },
+    {
+      "id": "vr1-083280-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 104566.667
+    },
+    {
+      "id": "vr1-083520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 104866.667
+    },
+    {
+      "id": "vr1-083520-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 104866.667,
+      "endTime": 105465.417
+    },
+    {
+      "id": "vr1-083760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 105166.667
+    },
+    {
+      "id": "vr1-084000-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 105466.667
+    },
+    {
+      "id": "vr1-084240-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 105766.667,
+      "endTime": 106365.417
+    },
+    {
+      "id": "vr1-084240-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 105766.667
+    },
+    {
+      "id": "vr1-084720-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 106366.667
+    },
+    {
+      "id": "vr1-084960-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 106666.667
+    },
+    {
+      "id": "vr1-084960-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 106666.667,
+      "endTime": 107565.417
+    },
+    {
+      "id": "vr1-085200-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 106966.667
+    },
+    {
+      "id": "vr1-085440-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 107266.667
+    },
+    {
+      "id": "vr1-085680-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 107566.667
+    },
+    {
+      "id": "vr1-085680-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 107566.667
+    },
+    {
+      "id": "vr1-085920-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 107866.667
+    },
+    {
+      "id": "vr1-086160-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 108166.667
+    },
+    {
+      "id": "vr1-086400-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 108466.667
+    },
+    {
+      "id": "vr1-086400-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 108466.667,
+      "endTime": 109365.417
+    },
+    {
+      "id": "vr1-086640-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 108766.667
+    },
+    {
+      "id": "vr1-086880-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 109066.667
+    },
+    {
+      "id": "vr1-087120-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 109366.667,
+      "endTime": 109965.417
+    },
+    {
+      "id": "vr1-087120-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 109366.667
+    },
+    {
+      "id": "vr1-087600-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 109966.667
+    },
+    {
+      "id": "vr1-087840-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 110266.667
+    },
+    {
+      "id": "vr1-087840-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 110266.667,
+      "endTime": 110865.417
+    },
+    {
+      "id": "vr1-088080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 110566.667
+    },
+    {
+      "id": "vr1-088320-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 110866.667
+    },
+    {
+      "id": "vr1-088560-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 111166.667,
+      "endTime": 111765.417
+    },
+    {
+      "id": "vr1-088560-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 111166.667
+    },
+    {
+      "id": "vr1-089040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 111766.667
+    },
+    {
+      "id": "vr1-089040-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 111766.667
+    },
+    {
+      "id": "vr1-089280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 112066.667
+    },
+    {
+      "id": "vr1-089280-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 112066.667,
+      "endTime": 112965.417
+    },
+    {
+      "id": "vr1-089520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 112366.667
+    },
+    {
+      "id": "vr1-089760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 112666.667
+    },
+    {
+      "id": "vr1-090000-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 112966.667,
+      "endTime": 113565.417
+    },
+    {
+      "id": "vr1-090000-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 112966.667
+    },
+    {
+      "id": "vr1-090480-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 113566.667
+    },
+    {
+      "id": "vr1-090720-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 113866.667
+    },
+    {
+      "id": "vr1-090720-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 113866.667,
+      "endTime": 114765.417
+    },
+    {
+      "id": "vr1-090960-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 114166.667
+    },
+    {
+      "id": "vr1-091200-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 114466.667
+    },
+    {
+      "id": "vr1-091440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 114766.667
+    },
+    {
+      "id": "vr1-091440-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 114766.667
+    },
+    {
+      "id": "vr1-091680-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 115066.667,
+      "endTime": 115665.417
+    },
+    {
+      "id": "vr1-092160-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 115666.667
+    },
+    {
+      "id": "vr1-092160-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 115666.667,
+      "endTime": 116265.417
+    },
+    {
+      "id": "vr1-092400-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 115966.667
+    },
+    {
+      "id": "vr1-092640-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 116266.667
+    },
+    {
+      "id": "vr1-092880-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 116566.667,
+      "endTime": 117165.417
+    },
+    {
+      "id": "vr1-092880-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 116566.667
+    },
+    {
+      "id": "vr1-093360-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 117166.667
+    },
+    {
+      "id": "vr1-093600-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 117466.667,
+      "endTime": 118665.417
+    },
+    {
+      "id": "vr1-093600-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 117466.667
+    },
+    {
+      "id": "vr1-093840-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 117766.667
+    },
+    {
+      "id": "vr1-094080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 118066.667
+    },
+    {
+      "id": "vr1-094320-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 118366.667
+    },
+    {
+      "id": "vr1-094800-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 118966.667
+    },
+    {
+      "id": "vr1-095040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 119266.667
+    },
+    {
+      "id": "vr1-095040-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 119266.667,
+      "endTime": 120165.417
+    },
+    {
+      "id": "vr1-095280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 119566.667
+    },
+    {
+      "id": "vr1-095520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 119866.667
+    },
+    {
+      "id": "vr1-095760-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 120166.667,
+      "endTime": 121065.417
+    },
+    {
+      "id": "vr1-095760-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 120166.667
+    },
+    {
+      "id": "vr1-096000-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 120466.667
+    },
+    {
+      "id": "vr1-096000-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 120466.667
+    },
+    {
+      "id": "vr1-096240-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 120766.667
+    },
+    {
+      "id": "vr1-096240-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 120766.667
+    },
+    {
+      "id": "vr1-096480-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 121066.667
+    },
+    {
+      "id": "vr1-096480-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 121066.667,
+      "endTime": 121965.417
+    },
+    {
+      "id": "vr1-096720-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 121366.667
+    },
+    {
+      "id": "vr1-096960-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 121666.667
+    },
+    {
+      "id": "vr1-097200-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 121966.667,
+      "endTime": 122565.417
+    },
+    {
+      "id": "vr1-097200-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 121966.667
+    },
+    {
+      "id": "vr1-097440-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 122266.667
+    },
+    {
+      "id": "vr1-097680-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 122566.667
+    },
+    {
+      "id": "vr1-097680-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 122566.667
+    },
+    {
+      "id": "vr1-097920-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 122866.667
+    },
+    {
+      "id": "vr1-097920-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 122866.667,
+      "endTime": 123765.417
+    },
+    {
+      "id": "vr1-098160-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 123166.667
+    },
+    {
+      "id": "vr1-098400-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 123466.667
+    },
+    {
+      "id": "vr1-098640-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 123766.667,
+      "endTime": 124365.417
+    },
+    {
+      "id": "vr1-098640-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 123766.667
+    },
+    {
+      "id": "vr1-098880-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 124066.667
+    },
+    {
+      "id": "vr1-099120-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 124366.667
+    },
+    {
+      "id": "vr1-099120-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 124366.667
+    },
+    {
+      "id": "vr1-099360-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 124666.667,
+      "endTime": 126465.417
+    },
+    {
+      "id": "vr1-099360-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 124666.667
+    },
+    {
+      "id": "vr1-099600-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 124966.667
+    },
+    {
+      "id": "vr1-099840-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 125266.667
+    },
+    {
+      "id": "vr1-100080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 125566.667
+    },
+    {
+      "id": "vr1-100320-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 125866.667
+    },
+    {
+      "id": "vr1-100560-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 126166.667
+    },
+    {
+      "id": "vr1-100800-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 126466.667,
+      "endTime": 128265.417
+    },
+    {
+      "id": "vr1-100800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 126466.667
+    },
+    {
+      "id": "vr1-100800-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 126466.667,
+      "endTime": 128265.417
+    },
+    {
+      "id": "vr1-100800-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 126466.667
+    },
+    {
+      "id": "vr1-101040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 126766.667
+    },
+    {
+      "id": "vr1-101160-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 126916.667
+    },
+    {
+      "id": "vr1-101280-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 127066.667
+    },
+    {
+      "id": "vr1-101520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 127366.667
+    },
+    {
+      "id": "vr1-101760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 127666.667
+    },
+    {
+      "id": "vr1-102000-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 127966.667
+    },
+    {
+      "id": "vr1-102240-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 128266.667,
+      "endTime": 130111.539948
+    },
+    {
+      "id": "vr1-102240-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 128266.667,
+      "endTime": 130111.539948
+    },
+    {
+      "id": "vr1-102240-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 128266.667
+    },
+    {
+      "id": "vr1-102480-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 128574.3595
+    },
+    {
+      "id": "vr1-102720-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 128882.052
+    },
+    {
+      "id": "vr1-102960-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 129189.7445
+    },
+    {
+      "id": "vr1-103200-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 129497.437
+    },
+    {
+      "id": "vr1-103440-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 129805.1295
+    },
+    {
+      "id": "vr1-103680-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 130112.822
+    },
+    {
+      "id": "vr1-103680-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 130112.822,
+      "endTime": 132058.80211
+    },
+    {
+      "id": "vr1-103920-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 130428.6115
+    },
+    {
+      "id": "vr1-104160-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 130744.401
+    },
+    {
+      "id": "vr1-104400-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 131060.1905
+    },
+    {
+      "id": "vr1-104640-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 131393.524
+    },
+    {
+      "id": "vr1-104880-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 131726.8575
+    },
+    {
+      "id": "vr1-105120-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 132060.191,
+      "endTime": 133258.941
+    },
+    {
+      "id": "vr1-105120-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 132060.191
+    },
+    {
+      "id": "vr1-105120-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 132060.191,
+      "endTime": 133258.941
+    },
+    {
+      "id": "vr1-106320-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 133560.191
+    },
+    {
+      "id": "vr1-106320-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 133560.191
+    },
+    {
+      "id": "vr1-106320-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 133560.191
+    },
+    {
+      "id": "vr1-106560-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 133860.191
+    },
+    {
+      "id": "vr1-106560-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 133860.191
+    },
+    {
+      "id": "vr1-106560-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 133860.191,
+      "endTime": 134758.941
+    },
+    {
+      "id": "vr1-106800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 134160.191
+    },
+    {
+      "id": "vr1-106920-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 134310.191
+    },
+    {
+      "id": "vr1-107040-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 134460.191
+    },
+    {
+      "id": "vr1-107280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 134760.191
+    },
+    {
+      "id": "vr1-107280-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 134760.191,
+      "endTime": 135358.941
+    },
+    {
+      "id": "vr1-107280-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 134760.191
+    },
+    {
+      "id": "vr1-107760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 135360.191
+    },
+    {
+      "id": "vr1-107760-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 135360.191
+    },
+    {
+      "id": "vr1-107760-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 135360.191
+    },
+    {
+      "id": "vr1-108000-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 135660.191
+    },
+    {
+      "id": "vr1-108000-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 135660.191,
+      "endTime": 136258.941
+    },
+    {
+      "id": "vr1-108240-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 135960.191
+    },
+    {
+      "id": "vr1-108360-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 136110.191
+    },
+    {
+      "id": "vr1-108480-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 136260.191
+    },
+    {
+      "id": "vr1-108480-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 136260.191
+    },
+    {
+      "id": "vr1-108480-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 136260.191
+    },
+    {
+      "id": "vr1-108720-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 136560.191
+    },
+    {
+      "id": "vr1-108720-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 136560.191,
+      "endTime": 137158.941
+    },
+    {
+      "id": "vr1-108720-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 136560.191
+    },
+    {
+      "id": "vr1-109200-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 137160.191
+    },
+    {
+      "id": "vr1-109200-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 137160.191
+    },
+    {
+      "id": "vr1-109200-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 137160.191
+    },
+    {
+      "id": "vr1-109440-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 137460.191
+    },
+    {
+      "id": "vr1-109440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 137460.191
+    },
+    {
+      "id": "vr1-109440-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 137460.191
+    },
+    {
+      "id": "vr1-109680-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 137760.191
+    },
+    {
+      "id": "vr1-109680-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 137760.191
+    },
+    {
+      "id": "vr1-109800-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 137910.191
+    },
+    {
+      "id": "vr1-109920-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 138060.191
+    },
+    {
+      "id": "vr1-109920-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 138060.191
+    },
+    {
+      "id": "vr1-109920-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 138060.191
+    },
+    {
+      "id": "vr1-110160-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 138360.191
+    },
+    {
+      "id": "vr1-110160-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 138360.191
+    },
+    {
+      "id": "vr1-110160-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 138360.191,
+      "endTime": 138958.941
+    },
+    {
+      "id": "vr1-110400-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 138660.191
+    },
+    {
+      "id": "vr1-110520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 138810.191
+    },
+    {
+      "id": "vr1-110640-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 138960.191
+    },
+    {
+      "id": "vr1-110640-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 138960.191
+    },
+    {
+      "id": "vr1-110640-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 138960.191
+    },
+    {
+      "id": "vr1-110880-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 139260.191
+    },
+    {
+      "id": "vr1-110880-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 139260.191
+    },
+    {
+      "id": "vr1-110880-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 139260.191,
+      "endTime": 139858.941
+    },
+    {
+      "id": "vr1-111120-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 139560.191
+    },
+    {
+      "id": "vr1-111240-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 139710.191
+    },
+    {
+      "id": "vr1-111360-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 139860.191
+    },
+    {
+      "id": "vr1-111360-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 139860.191
+    },
+    {
+      "id": "vr1-111360-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 139860.191
+    },
+    {
+      "id": "vr1-111600-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 140160.191
+    },
+    {
+      "id": "vr1-111600-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 140160.191
+    },
+    {
+      "id": "vr1-111600-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 140160.191
+    },
+    {
+      "id": "vr1-111840-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 140460.191
+    },
+    {
+      "id": "vr1-112080-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 140760.191
+    },
+    {
+      "id": "vr1-112080-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 140760.191
+    },
+    {
+      "id": "vr1-112200-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 140910.191
+    },
+    {
+      "id": "vr1-112320-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 141060.191
+    },
+    {
+      "id": "vr1-112320-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 141060.191,
+      "endTime": 141958.941
+    },
+    {
+      "id": "vr1-112560-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 141360.191
+    },
+    {
+      "id": "vr1-112680-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 141510.191
+    },
+    {
+      "id": "vr1-112800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 141660.191
+    },
+    {
+      "id": "vr1-112800-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 141660.191
+    },
+    {
+      "id": "vr1-113040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 141960.191
+    },
+    {
+      "id": "vr1-113040-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 141960.191,
+      "endTime": 142558.941
+    },
+    {
+      "id": "vr1-113040-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 141960.191
+    },
+    {
+      "id": "vr1-113280-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 142260.191
+    },
+    {
+      "id": "vr1-113520-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 142560.191
+    },
+    {
+      "id": "vr1-113520-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 142560.191
+    },
+    {
+      "id": "vr1-113760-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 142860.191
+    },
+    {
+      "id": "vr1-113760-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 142860.191,
+      "endTime": 143458.941
+    },
+    {
+      "id": "vr1-114000-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 143160.191
+    },
+    {
+      "id": "vr1-114120-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 143310.191
+    },
+    {
+      "id": "vr1-114240-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 143460.191
+    },
+    {
+      "id": "vr1-114240-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 143460.191
+    },
+    {
+      "id": "vr1-114240-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 143460.191
+    },
+    {
+      "id": "vr1-114480-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 143760.191,
+      "endTime": 144358.941
+    },
+    {
+      "id": "vr1-114480-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 143760.191
+    },
+    {
+      "id": "vr1-114960-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 144360.191
+    },
+    {
+      "id": "vr1-114960-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 144360.191
+    },
+    {
+      "id": "vr1-114960-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 144360.191
+    },
+    {
+      "id": "vr1-115040-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 144460.191
+    },
+    {
+      "id": "vr1-115120-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 144560.191
+    },
+    {
+      "id": "vr1-115200-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 144660.191
+    },
+    {
+      "id": "vr1-115200-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 144660.191,
+      "endTime": 145258.941
+    },
+    {
+      "id": "vr1-115200-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 144660.191
+    },
+    {
+      "id": "vr1-115440-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 144960.191
+    },
+    {
+      "id": "vr1-115440-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 144960.191
+    },
+    {
+      "id": "vr1-115560-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 145110.191
+    },
+    {
+      "id": "vr1-115560-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 145110.191
+    },
+    {
+      "id": "vr1-115680-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 145260.191
+    },
+    {
+      "id": "vr1-115680-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 145260.191
+    },
+    {
+      "id": "vr1-115680-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 145260.191
+    },
+    {
+      "id": "vr1-115920-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 145560.191
+    },
+    {
+      "id": "vr1-115920-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 145560.191
+    },
+    {
+      "id": "vr1-115920-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 145560.191
+    },
+    {
+      "id": "vr1-116160-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 145860.191
+    },
+    {
+      "id": "vr1-116160-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 145860.191
+    },
+    {
+      "id": "vr1-116160-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 145860.191
+    },
+    {
+      "id": "vr1-116400-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 146160.191
+    },
+    {
+      "id": "vr1-116400-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 146160.191
+    },
+    {
+      "id": "vr1-116400-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 146160.191
+    },
+    {
+      "id": "vr1-116640-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 146460.191,
+      "endTime": 147658.941
+    },
+    {
+      "id": "vr1-116640-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 146460.191
+    },
+    {
+      "id": "vr1-116640-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 146460.191
+    },
+    {
+      "id": "vr1-116880-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 146760.191
+    },
+    {
+      "id": "vr1-117000-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 146910.191
+    },
+    {
+      "id": "vr1-117120-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 147060.191
+    },
+    {
+      "id": "vr1-117360-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 147360.191
+    },
+    {
+      "id": "vr1-117360-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 147360.191
+    },
+    {
+      "id": "vr1-117600-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 147660.191
+    },
+    {
+      "id": "vr1-117600-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 147660.191
+    },
+    {
+      "id": "vr1-117840-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 147960.191
+    },
+    {
+      "id": "vr1-117840-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 147960.191
+    },
+    {
+      "id": "vr1-118080-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 148260.191
+    },
+    {
+      "id": "vr1-118080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 148260.191
+    },
+    {
+      "id": "vr1-118080-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 148260.191,
+      "endTime": 149158.941
+    },
+    {
+      "id": "vr1-118320-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 148560.191
+    },
+    {
+      "id": "vr1-118440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 148710.191
+    },
+    {
+      "id": "vr1-118560-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 148860.191
+    },
+    {
+      "id": "vr1-118800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 149160.191
+    },
+    {
+      "id": "vr1-118800-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 149160.191,
+      "endTime": 149758.941
+    },
+    {
+      "id": "vr1-118800-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 149160.191
+    },
+    {
+      "id": "vr1-119040-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 149460.191
+    },
+    {
+      "id": "vr1-119280-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 149760.191
+    },
+    {
+      "id": "vr1-119280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 149760.191
+    },
+    {
+      "id": "vr1-119280-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 149760.191
+    },
+    {
+      "id": "vr1-119520-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 150060.191,
+      "endTime": 150658.941
+    },
+    {
+      "id": "vr1-119520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 150060.191
+    },
+    {
+      "id": "vr1-119520-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 150060.191
+    },
+    {
+      "id": "vr1-119760-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 150360.191
+    },
+    {
+      "id": "vr1-119880-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 150510.191
+    },
+    {
+      "id": "vr1-120000-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 150660.191
+    },
+    {
+      "id": "vr1-120000-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 150660.191
+    },
+    {
+      "id": "vr1-120240-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 150960.191,
+      "endTime": 151558.941
+    },
+    {
+      "id": "vr1-120240-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 150960.191
+    },
+    {
+      "id": "vr1-120240-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 150960.191
+    },
+    {
+      "id": "vr1-120720-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 151560.191
+    },
+    {
+      "id": "vr1-120720-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 151560.191
+    },
+    {
+      "id": "vr1-120720-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 151560.191
+    },
+    {
+      "id": "vr1-120960-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 151860.191
+    },
+    {
+      "id": "vr1-120960-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 151860.191,
+      "endTime": 152458.941
+    },
+    {
+      "id": "vr1-120960-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 151860.191
+    },
+    {
+      "id": "vr1-121200-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 152160.191
+    },
+    {
+      "id": "vr1-121200-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 152160.191
+    },
+    {
+      "id": "vr1-121320-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 152310.191
+    },
+    {
+      "id": "vr1-121440-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 152460.191
+    },
+    {
+      "id": "vr1-121440-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 152460.191
+    },
+    {
+      "id": "vr1-121440-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 152460.191
+    },
+    {
+      "id": "vr1-121680-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 152760.191
+    },
+    {
+      "id": "vr1-121680-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 152760.191
+    },
+    {
+      "id": "vr1-121680-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 152760.191
+    },
+    {
+      "id": "vr1-121920-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 153060.191
+    },
+    {
+      "id": "vr1-121920-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 153060.191
+    },
+    {
+      "id": "vr1-121920-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 153060.191
+    },
+    {
+      "id": "vr1-122040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 153210.191
+    },
+    {
+      "id": "vr1-122160-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 153360.191
+    },
+    {
+      "id": "vr1-122160-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 153360.191
+    },
+    {
+      "id": "vr1-122160-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 153360.191
+    },
+    {
+      "id": "vr1-122400-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 153660.191,
+      "endTime": 154858.941
+    },
+    {
+      "id": "vr1-122400-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 153660.191
+    },
+    {
+      "id": "vr1-122400-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 153660.191
+    },
+    {
+      "id": "vr1-122640-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 153960.191
+    },
+    {
+      "id": "vr1-122760-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 154110.191
+    },
+    {
+      "id": "vr1-122880-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 154260.191
+    },
+    {
+      "id": "vr1-123120-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 154560.191
+    },
+    {
+      "id": "vr1-123360-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 154860.191
+    },
+    {
+      "id": "vr1-123600-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 155160.191
+    },
+    {
+      "id": "vr1-123600-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 155160.191
+    },
+    {
+      "id": "vr1-123600-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 155160.191
+    },
+    {
+      "id": "vr1-123840-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 155460.191
+    },
+    {
+      "id": "vr1-123840-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 155460.191
+    },
+    {
+      "id": "vr1-123840-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 155460.191,
+      "endTime": 156358.941
+    },
+    {
+      "id": "vr1-124080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 155760.191
+    },
+    {
+      "id": "vr1-124320-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 156060.191
+    },
+    {
+      "id": "vr1-124560-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 156360.191
+    },
+    {
+      "id": "vr1-124560-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 156360.191
+    },
+    {
+      "id": "vr1-124560-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 156360.191,
+      "endTime": 156958.941
+    },
+    {
+      "id": "vr1-124800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 156660.191
+    },
+    {
+      "id": "vr1-125040-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 156960.191
+    },
+    {
+      "id": "vr1-125040-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 156960.191
+    },
+    {
+      "id": "vr1-125040-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 156960.191
+    },
+    {
+      "id": "vr1-125280-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 157260.191
+    },
+    {
+      "id": "vr1-125280-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 157260.191
+    },
+    {
+      "id": "vr1-125280-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 157260.191,
+      "endTime": 157858.941
+    },
+    {
+      "id": "vr1-125520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 157560.191
+    },
+    {
+      "id": "vr1-125760-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 157860.191
+    },
+    {
+      "id": "vr1-125760-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 157860.191
+    },
+    {
+      "id": "vr1-125760-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 157860.191
+    },
+    {
+      "id": "vr1-126000-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 158160.191,
+      "endTime": 158758.941
+    },
+    {
+      "id": "vr1-126000-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 158160.191
+    },
+    {
+      "id": "vr1-126480-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 158760.191
+    },
+    {
+      "id": "vr1-126480-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 158760.191
+    },
+    {
+      "id": "vr1-126720-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 159060.191
+    },
+    {
+      "id": "vr1-126720-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 159060.191,
+      "endTime": 159658.941
+    },
+    {
+      "id": "vr1-126720-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 159060.191
+    },
+    {
+      "id": "vr1-126960-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 159360.191
+    },
+    {
+      "id": "vr1-127200-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 159660.191
+    },
+    {
+      "id": "vr1-127200-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 159660.191
+    },
+    {
+      "id": "vr1-127200-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 159660.191
+    },
+    {
+      "id": "vr1-127440-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 159975.9805
+    },
+    {
+      "id": "vr1-127440-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 159975.9805,
+      "endTime": 160957.04811
+    },
+    {
+      "id": "vr1-127680-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 160291.77
+    },
+    {
+      "id": "vr1-127680-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 160291.77
+    },
+    {
+      "id": "vr1-127920-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 160625.1035
+    },
+    {
+      "id": "vr1-127920-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 160625.1035
+    },
+    {
+      "id": "vr1-127920-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 160625.1035
+    },
+    {
+      "id": "vr1-128160-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 160958.437,
+      "endTime": 162800.521
+    },
+    {
+      "id": "vr1-128160-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 160958.437,
+      "endTime": 161957.04861
+    },
+    {
+      "id": "vr1-128160-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 160958.437
+    },
+    {
+      "id": "vr1-128160-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 160958.437
+    },
+    {
+      "id": "vr1-129120-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 162291.771
+    },
+    {
+      "id": "vr1-129120-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 162291.771
+    },
+    {
+      "id": "vr1-129360-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 162591.771
+    },
+    {
+      "id": "vr1-129360-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 162591.771
+    },
+    {
+      "id": "vr1-129600-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 162891.771
+    },
+    {
+      "id": "vr1-129600-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 162891.771,
+      "endTime": 163790.521
+    },
+    {
+      "id": "vr1-129600-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 162891.771,
+      "endTime": 163790.521
+    },
+    {
+      "id": "vr1-129840-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 163191.771
+    },
+    {
+      "id": "vr1-129960-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 163341.771
+    },
+    {
+      "id": "vr1-130080-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 163491.771
+    },
+    {
+      "id": "vr1-130320-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 163791.771
+    },
+    {
+      "id": "vr1-130320-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 163791.771
+    },
+    {
+      "id": "vr1-130320-3",
+      "kind": "hold",
+      "lane": 3,
+      "time": 163791.771,
+      "endTime": 164390.521
+    },
+    {
+      "id": "vr1-130560-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 164091.771
+    },
+    {
+      "id": "vr1-130680-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 164241.771
+    },
+    {
+      "id": "vr1-130800-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 164391.771
+    },
+    {
+      "id": "vr1-130800-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 164391.771
+    },
+    {
+      "id": "vr1-130800-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 164391.771
+    },
+    {
+      "id": "vr1-131040-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 164691.771
+    },
+    {
+      "id": "vr1-131040-1",
+      "kind": "hold",
+      "lane": 1,
+      "time": 164691.771,
+      "endTime": 165590.521
+    },
+    {
+      "id": "vr1-131040-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 164691.771,
+      "endTime": 166822.326673
+    },
+    {
+      "id": "vr1-131280-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 164991.771
+    },
+    {
+      "id": "vr1-131400-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 165141.771
+    },
+    {
+      "id": "vr1-131520-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 165291.771
+    },
+    {
+      "id": "vr1-131640-0",
+      "kind": "note",
+      "lane": 0,
+      "time": 165441.771
+    },
+    {
+      "id": "vr1-131760-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 165591.771,
+      "endTime": 167475.031448
+    },
+    {
+      "id": "vr1-132480-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 166923.715612
+    },
+    {
+      "id": "vr1-132720-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 167239.505112
+    },
+    {
+      "id": "vr1-132960-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 167555.294612
+    },
+    {
+      "id": "vr1-133200-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 167871.084112
+    },
+    {
+      "id": "vr1-133440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 168186.873612
+    },
+    {
+      "id": "vr1-133680-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 168502.663112
+    },
+    {
+      "id": "vr1-133920-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 168818.452612
+    },
+    {
+      "id": "vr1-134160-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 169151.786112
+    },
+    {
+      "id": "vr1-134400-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 169485.119612
+    },
+    {
+      "id": "vr1-134640-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 169818.453112
+    },
+    {
+      "id": "vr1-134880-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 170151.786612
+    },
+    {
+      "id": "vr1-135120-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 170485.120112
+    },
+    {
+      "id": "vr1-135360-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 170818.453612
+    },
+    {
+      "id": "vr1-135600-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 171171.394612
+    },
+    {
+      "id": "vr1-135840-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 171524.335612
+    },
+    {
+      "id": "vr1-136080-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 171877.276612
+    },
+    {
+      "id": "vr1-136320-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 172230.217612
+    },
+    {
+      "id": "vr1-136560-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 172583.158612
+    },
+    {
+      "id": "vr1-136800-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 172936.099612,
+      "endTime": 173647.037112
+    },
+    {
+      "id": "vr1-137280-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 173686.099612
+    },
+    {
+      "id": "vr1-137360-3",
+      "kind": "note",
+      "lane": 3,
+      "time": 173852.766279
+    },
+    {
+      "id": "vr1-137440-2",
+      "kind": "note",
+      "lane": 2,
+      "time": 174019.432946
+    },
+    {
+      "id": "vr1-137520-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 174269.432779
+    },
+    {
+      "id": "vr1-138000-0",
+      "kind": "hold",
+      "lane": 0,
+      "time": 175769.431779,
+      "endTime": 177191.305831
+    },
+    {
+      "id": "vr1-138720-1",
+      "kind": "note",
+      "lane": 1,
+      "time": 178019.430279
+    },
+    {
+      "id": "vr1-138720-2",
+      "kind": "hold",
+      "lane": 2,
+      "time": 178019.430279,
+      "endTime": 183866.301381
+    }
+  ],
+  "aiImportHistory": [],
+  "settings": {
+    "editorZoom": 230
+  }
+}

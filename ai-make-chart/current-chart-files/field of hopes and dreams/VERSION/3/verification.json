@@ -1,0 +1,1185 @@
+{
+  "contextPath": "C:\\MyProjects\\moonweave\\ai-make-chart\\current-chart-files\\moonweave-ai-context.json",
+  "target": {
+    "chartId": "eda60840-ce62-422f-b564-4f703611f90d",
+    "revision": "sha256:157ae053ddb299f37cb4f29071c63c7a961d73e08e3dce8657a6da128b0764a0"
+  },
+  "song": {
+    "audioName": "13. Field of Hopes and Dreams (DELTARUNE Chapter 1 Soundtrack) - Toby Fox [9oDZ2vN9XF0].mp3",
+    "duration": 165302.875,
+    "bpm": 125,
+    "offset": 180,
+    "bpmChanges": []
+  },
+  "before": {
+    "notes": 1529,
+    "holds": 166,
+    "laneCounts": [
+      401,
+      384,
+      371,
+      373
+    ],
+    "sameLaneConflicts": [],
+    "holdRecoveryViolations": [
+      [
+        "variation-a-0058",
+        "variation-a-0064"
+      ],
+      [
+        "reprise-b-0047",
+        "reprise-b-0054"
+      ],
+      [
+        "variation-b-0001",
+        "variation-b-0010"
+      ],
+      [
+        "variation-b-0023",
+        "variation-b-0032"
+      ],
+      [
+        "variation-b-0055",
+        "variation-b-0065"
+      ],
+      [
+        "variation-b-0065",
+        "variation-b-0075"
+      ],
+      [
+        "variation-b-0166",
+        "outro-0001"
+      ],
+      [
+        "outro-0033",
+        "outro-0038"
+      ],
+      [
+        "outro-0040",
+        "outro-0046"
+      ],
+      [
+        "reprise-a-0153",
+        "reprise-b-0002"
+      ],
+      [
+        "variation-b-0056",
+        "variation-b-0063"
+      ],
+      [
+        "variation-b-0100",
+        "variation-b-0104"
+      ],
+      [
+        "outro-0049",
+        "outro-0052"
+      ],
+      [
+        "reprise-b-0155",
+        "variation-b-0003"
+      ],
+      [
+        "variation-b-0089",
+        "variation-b-0105"
+      ],
+      [
+        "outro-0042",
+        "outro-0047"
+      ],
+      [
+        "variation-a-0004",
+        "variation-a-0012"
+      ],
+      [
+        "variation-a-0026",
+        "variation-a-0034"
+      ],
+      [
+        "variation-a-0101",
+        "variation-a-0106"
+      ],
+      [
+        "reprise-a-0048",
+        "reprise-a-0056"
+      ],
+      [
+        "variation-b-0059",
+        "variation-b-0064"
+      ],
+      [
+        "variation-b-0101",
+        "variation-b-0108"
+      ],
+      [
+        "variation-b-0154",
+        "variation-b-0163"
+      ],
+      [
+        "variation-b-0163",
+        "variation-b-0168"
+      ],
+      [
+        "outro-0017",
+        "outro-0025"
+      ]
+    ],
+    "sameFingerIntervalsUnderHalfBeat": [
+      [
+        44.75,
+        45,
+        0
+      ],
+      [
+        48.75,
+        49,
+        0
+      ],
+      [
+        49,
+        49.25,
+        0
+      ],
+      [
+        54.625,
+        55,
+        0
+      ],
+      [
+        56.75,
+        57,
+        0
+      ],
+      [
+        60.75,
+        61,
+        0
+      ],
+      [
+        70.625,
+        71,
+        0
+      ],
+      [
+        78.625,
+        79,
+        0
+      ],
+      [
+        94.625,
+        95,
+        0
+      ],
+      [
+        96.75,
+        97,
+        0
+      ],
+      [
+        100.75,
+        101,
+        0
+      ],
+      [
+        120.75,
+        121,
+        0
+      ],
+      [
+        160,
+        160.25,
+        0
+      ],
+      [
+        160.75,
+        161,
+        0
+      ],
+      [
+        161,
+        161.25,
+        0
+      ],
+      [
+        176,
+        176.25,
+        0
+      ],
+      [
+        176.75,
+        177,
+        0
+      ],
+      [
+        177,
+        177.25,
+        0
+      ],
+      [
+        212.75,
+        213,
+        0
+      ],
+      [
+        220.75,
+        221,
+        0
+      ],
+      [
+        244.75,
+        245,
+        0
+      ],
+      [
+        261.75,
+        262,
+        0
+      ],
+      [
+        269.75,
+        270,
+        0
+      ],
+      [
+        274.625,
+        275,
+        0
+      ],
+      [
+        278.625,
+        279,
+        0
+      ],
+      [
+        46.5,
+        46.75,
+        1
+      ],
+      [
+        51,
+        51.25,
+        1
+      ],
+      [
+        52.75,
+        53,
+        1
+      ],
+      [
+        70.5,
+        70.75,
+        1
+      ],
+      [
+        81,
+        81.375,
+        1
+      ],
+      [
+        86.5,
+        86.75,
+        1
+      ],
+      [
+        94.5,
+        94.75,
+        1
+      ],
+      [
+        107,
+        107.375,
+        1
+      ],
+      [
+        108.75,
+        109,
+        1
+      ],
+      [
+        187.75,
+        188,
+        1
+      ],
+      [
+        212.5,
+        212.875,
+        1
+      ],
+      [
+        246.625,
+        247,
+        1
+      ],
+      [
+        262.625,
+        263,
+        1
+      ],
+      [
+        270.625,
+        271,
+        1
+      ],
+      [
+        274.5,
+        274.75,
+        1
+      ],
+      [
+        278.5,
+        278.75,
+        1
+      ],
+      [
+        291,
+        291.375,
+        1
+      ],
+      [
+        310.5,
+        310.75,
+        1
+      ],
+      [
+        38.5,
+        38.75,
+        2
+      ],
+      [
+        49,
+        49.375,
+        2
+      ],
+      [
+        54.5,
+        54.75,
+        2
+      ],
+      [
+        62.5,
+        62.75,
+        2
+      ],
+      [
+        78.5,
+        78.75,
+        2
+      ],
+      [
+        83,
+        83.25,
+        2
+      ],
+      [
+        84.75,
+        85,
+        2
+      ],
+      [
+        98.5,
+        98.75,
+        2
+      ],
+      [
+        102.5,
+        102.75,
+        2
+      ],
+      [
+        175.75,
+        176,
+        2
+      ],
+      [
+        214.625,
+        215,
+        2
+      ],
+      [
+        230.625,
+        231,
+        2
+      ],
+      [
+        238.625,
+        239,
+        2
+      ],
+      [
+        244.5,
+        244.875,
+        2
+      ],
+      [
+        283,
+        283.375,
+        2
+      ],
+      [
+        309.125,
+        309.5,
+        2
+      ],
+      [
+        331.75,
+        332,
+        2
+      ],
+      [
+        38.625,
+        39,
+        3
+      ],
+      [
+        46.625,
+        47,
+        3
+      ],
+      [
+        62.625,
+        63,
+        3
+      ],
+      [
+        76.75,
+        77,
+        3
+      ],
+      [
+        80.75,
+        81,
+        3
+      ],
+      [
+        81,
+        81.25,
+        3
+      ],
+      [
+        86.625,
+        87,
+        3
+      ],
+      [
+        88.75,
+        89,
+        3
+      ],
+      [
+        92.75,
+        93,
+        3
+      ],
+      [
+        98.625,
+        99,
+        3
+      ],
+      [
+        102.625,
+        103,
+        3
+      ],
+      [
+        212.75,
+        213,
+        3
+      ],
+      [
+        229.75,
+        230,
+        3
+      ],
+      [
+        237.75,
+        238,
+        3
+      ],
+      [
+        244.75,
+        245,
+        3
+      ],
+      [
+        252.75,
+        253,
+        3
+      ],
+      [
+        272.75,
+        273,
+        3
+      ],
+      [
+        276.75,
+        277,
+        3
+      ],
+      [
+        282,
+        282.25,
+        3
+      ],
+      [
+        284.75,
+        285,
+        3
+      ],
+      [
+        288.75,
+        289,
+        3
+      ],
+      [
+        296.75,
+        297,
+        3
+      ]
+    ],
+    "sameHandRunsAtQuarterBeatFourOrMore": [
+      {
+        "hand": 0,
+        "start": 46.5,
+        "end": 47.5,
+        "attacks": 5
+      },
+      {
+        "hand": 0,
+        "start": 48.75,
+        "end": 49.5,
+        "attacks": 4
+      },
+      {
+        "hand": 0,
+        "start": 70.5,
+        "end": 71,
+        "attacks": 4
+      },
+      {
+        "hand": 0,
+        "start": 94.5,
+        "end": 95,
+        "attacks": 4
+      },
+      {
+        "hand": 0,
+        "start": 160,
+        "end": 161.5,
+        "attacks": 7
+      },
+      {
+        "hand": 0,
+        "start": 176,
+        "end": 177.5,
+        "attacks": 7
+      },
+      {
+        "hand": 0,
+        "start": 212.5,
+        "end": 213,
+        "attacks": 4
+      },
+      {
+        "hand": 0,
+        "start": 274.5,
+        "end": 275,
+        "attacks": 4
+      },
+      {
+        "hand": 0,
+        "start": 278.5,
+        "end": 279,
+        "attacks": 4
+      },
+      {
+        "hand": 1,
+        "start": 38.5,
+        "end": 39,
+        "attacks": 4
+      },
+      {
+        "hand": 1,
+        "start": 62.5,
+        "end": 63,
+        "attacks": 4
+      },
+      {
+        "hand": 1,
+        "start": 78.5,
+        "end": 79.5,
+        "attacks": 5
+      },
+      {
+        "hand": 1,
+        "start": 80.75,
+        "end": 81.5,
+        "attacks": 4
+      },
+      {
+        "hand": 1,
+        "start": 98.5,
+        "end": 99,
+        "attacks": 4
+      },
+      {
+        "hand": 1,
+        "start": 102.5,
+        "end": 103,
+        "attacks": 4
+      },
+      {
+        "hand": 1,
+        "start": 244.5,
+        "end": 245,
+        "attacks": 4
+      }
+    ]
+  },
+  "after": {
+    "notes": 1483,
+    "holds": 140,
+    "laneCounts": [
+      340,
+      405,
+      410,
+      328
+    ],
+    "sameLaneConflicts": [],
+    "holdRecoveryViolations": [],
+    "sameFingerIntervalsUnderHalfBeat": [
+      [
+        38.625,
+        39,
+        0
+      ],
+      [
+        46.625,
+        47,
+        0
+      ],
+      [
+        49.25,
+        49.5,
+        0
+      ],
+      [
+        81,
+        81.375,
+        0
+      ],
+      [
+        86.625,
+        87,
+        0
+      ],
+      [
+        94.625,
+        95,
+        0
+      ],
+      [
+        96.75,
+        97,
+        0
+      ],
+      [
+        98.625,
+        99,
+        0
+      ],
+      [
+        100.75,
+        101,
+        0
+      ],
+      [
+        102.625,
+        103,
+        0
+      ],
+      [
+        120.75,
+        121,
+        0
+      ],
+      [
+        135.75,
+        136,
+        0
+      ],
+      [
+        184.75,
+        185,
+        0
+      ],
+      [
+        212.75,
+        213,
+        0
+      ],
+      [
+        220.75,
+        221,
+        0
+      ],
+      [
+        230.625,
+        231,
+        0
+      ],
+      [
+        238.625,
+        239,
+        0
+      ],
+      [
+        284.75,
+        285,
+        0
+      ],
+      [
+        309.125,
+        309.5,
+        0
+      ],
+      [
+        54.5,
+        54.75,
+        1
+      ],
+      [
+        54.75,
+        55,
+        1
+      ],
+      [
+        62.5,
+        62.75,
+        1
+      ],
+      [
+        62.75,
+        63,
+        1
+      ],
+      [
+        70.5,
+        70.75,
+        1
+      ],
+      [
+        70.75,
+        71,
+        1
+      ],
+      [
+        78.5,
+        78.75,
+        1
+      ],
+      [
+        78.75,
+        79,
+        1
+      ],
+      [
+        212.75,
+        213,
+        1
+      ],
+      [
+        244.5,
+        244.875,
+        1
+      ],
+      [
+        246.625,
+        247,
+        1
+      ],
+      [
+        261.75,
+        262,
+        1
+      ],
+      [
+        269.75,
+        270,
+        1
+      ],
+      [
+        274.5,
+        274.75,
+        1
+      ],
+      [
+        278.5,
+        278.75,
+        1
+      ],
+      [
+        288.75,
+        289,
+        1
+      ],
+      [
+        38.5,
+        38.75,
+        2
+      ],
+      [
+        38.75,
+        39,
+        2
+      ],
+      [
+        46.5,
+        46.75,
+        2
+      ],
+      [
+        46.75,
+        47,
+        2
+      ],
+      [
+        86.5,
+        86.75,
+        2
+      ],
+      [
+        86.75,
+        87,
+        2
+      ],
+      [
+        94.5,
+        94.75,
+        2
+      ],
+      [
+        94.75,
+        95,
+        2
+      ],
+      [
+        98.5,
+        98.75,
+        2
+      ],
+      [
+        102.5,
+        102.75,
+        2
+      ],
+      [
+        212.5,
+        212.875,
+        2
+      ],
+      [
+        214.625,
+        215,
+        2
+      ],
+      [
+        229.75,
+        230,
+        2
+      ],
+      [
+        237.75,
+        238,
+        2
+      ],
+      [
+        244.75,
+        245,
+        2
+      ],
+      [
+        282,
+        282.25,
+        2
+      ],
+      [
+        49,
+        49.375,
+        3
+      ],
+      [
+        54.625,
+        55,
+        3
+      ],
+      [
+        62.625,
+        63,
+        3
+      ],
+      [
+        70.625,
+        71,
+        3
+      ],
+      [
+        78.625,
+        79,
+        3
+      ],
+      [
+        81.25,
+        81.5,
+        3
+      ],
+      [
+        107,
+        107.375,
+        3
+      ],
+      [
+        108.75,
+        109,
+        3
+      ],
+      [
+        143.75,
+        144,
+        3
+      ],
+      [
+        244.75,
+        245,
+        3
+      ],
+      [
+        252.75,
+        253,
+        3
+      ],
+      [
+        262.625,
+        263,
+        3
+      ],
+      [
+        270.625,
+        271,
+        3
+      ],
+      [
+        272.75,
+        273,
+        3
+      ],
+      [
+        274.625,
+        275,
+        3
+      ],
+      [
+        276.75,
+        277,
+        3
+      ],
+      [
+        278.625,
+        279,
+        3
+      ],
+      [
+        296.75,
+        297,
+        3
+      ]
+    ],
+    "sameHandRunsAtQuarterBeatFourOrMore": []
+  },
+  "allOriginalAttackTimesPreserved": true,
+  "releaseRecoveryBeats": 0.25,
+  "omittedAccompanimentDoublings": [
+    {
+      "beat": 98,
+      "doublings": 1
+    },
+    {
+      "beat": 102,
+      "doublings": 1
+    },
+    {
+      "beat": 107.5,
+      "doublings": 1
+    },
+    {
+      "beat": 115,
+      "doublings": 1
+    },
+    {
+      "beat": 219,
+      "doublings": 1
+    },
+    {
+      "beat": 251,
+      "doublings": 1
+    },
+    {
+      "beat": 272,
+      "doublings": 1
+    },
+    {
+      "beat": 278,
+      "doublings": 1
+    },
+    {
+      "beat": 283.5,
+      "doublings": 1
+    },
+    {
+      "beat": 284,
+      "doublings": 1
+    },
+    {
+      "beat": 286,
+      "doublings": 1
+    },
+    {
+      "beat": 291,
+      "doublings": 1
+    },
+    {
+      "beat": 302,
+      "doublings": 1
+    },
+    {
+      "beat": 310,
+      "doublings": 1
+    },
+    {
+      "beat": 313.5,
+      "doublings": 1
+    },
+    {
+      "beat": 315.5,
+      "doublings": 1
+    }
+  ],
+  "correspondence": [
+    {
+      "first": 0,
+      "second": 8,
+      "beats": 8,
+      "mirror": false,
+      "sharedHeads": 27,
+      "firstHeads": 27,
+      "secondHeads": 27,
+      "overlap": 1
+    },
+    {
+      "first": 16,
+      "second": 24,
+      "beats": 8,
+      "mirror": false,
+      "sharedHeads": 20,
+      "firstHeads": 20,
+      "secondHeads": 20,
+      "overlap": 1
+    },
+    {
+      "first": 32,
+      "second": 40,
+      "beats": 6,
+      "mirror": false,
+      "sharedHeads": 27,
+      "firstHeads": 27,
+      "secondHeads": 27,
+      "overlap": 1
+    },
+    {
+      "first": 32,
+      "second": 48,
+      "beats": 6,
+      "mirror": true,
+      "sharedHeads": 27,
+      "firstHeads": 27,
+      "secondHeads": 30,
+      "overlap": 0.9
+    },
+    {
+      "first": 32,
+      "second": 56,
+      "beats": 6,
+      "mirror": true,
+      "sharedHeads": 27,
+      "firstHeads": 27,
+      "secondHeads": 27,
+      "overlap": 1
+    },
+    {
+      "first": 32,
+      "second": 64,
+      "beats": 32,
+      "mirror": true,
+      "sharedHeads": 164,
+      "firstHeads": 164,
+      "secondHeads": 164,
+      "overlap": 1
+    },
+    {
+      "first": 160,
+      "second": 176,
+      "beats": 6,
+      "mirror": true,
+      "sharedHeads": 29,
+      "firstHeads": 29,
+      "secondHeads": 29,
+      "overlap": 1
+    },
+    {
+      "first": 208,
+      "second": 240,
+      "beats": 32,
+      "mirror": true,
+      "sharedHeads": 155,
+      "firstHeads": 155,
+      "secondHeads": 155,
+      "overlap": 1
+    },
+    {
+      "first": 96,
+      "second": 272,
+      "beats": 24,
+      "mirror": true,
+      "sharedHeads": 111,
+      "firstHeads": 127,
+      "secondHeads": 124,
+      "overlap": 0.874
+    }
+  ],
+  "applicationImporter": {
+    "validated": true,
+    "storedChartMatchesContext": true,
+    "summary": {
+      "added": 1483,
+      "updated": 0,
+      "deleted": 1529,
+      "holds": 140
+    },
+    "timingPreserved": true
+  },
+  "midiOnsetCheck": {
+    "allHeadsOnMidiOnsets": true,
+    "originalSustainEndpointsPreservedForRetainedHolds": true,
+    "maximumSimultaneousKeysIncludingHolds": 4
+  },
+  "engineeringChecks": {
+    "typecheck": "passed",
+    "test": {
+      "files": 27,
+      "tests": 152,
+      "status": "passed"
+    },
+    "build:web": "passed",
+    "build:desktop": "passed",
+    "visualTesting": "not requested; not performed",
+    "listeningPlaytest": "not performed"
+  }
+}

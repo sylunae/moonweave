@@ -131,7 +131,7 @@ export default function PlaytestPage() {
       const note = noteById.get(id)
       if (note && pressedRef.current.has(note.lane) && !droppedHoldsRef.current.has(id)) lanes.add(note.lane)
     }
-    setActiveHoldLanes(lanes)
+    setActiveHoldLanes((previous) => previous.size === lanes.size && [...lanes].every((lane) => previous.has(lane)) ? previous : lanes)
   }, [noteById])
 
   const syncBackgroundVideoTime = useCallback((chartTime: number) => {
@@ -323,7 +323,11 @@ export default function PlaytestPage() {
       const tap: ChartNote = { id: crypto.randomUUID(), lane, time: now, kind: 'note' }
       recordedRef.current.push(tap)
     }
-    const reconnecting = notes.find((note) => note.kind === 'hold' && note.lane === lane && holdStartsRef.current.has(note.id) && !judgedRef.current.has(note.id) && now < (note.endTime ?? note.time) && droppedHoldsRef.current.has(note.id))
+    let reconnecting: ChartNote | undefined
+    for (const id of holdStartsRef.current.keys()) {
+      const note = noteById.get(id)
+      if (note && note.lane === lane && !judgedRef.current.has(id) && now < (note.endTime ?? note.time) && droppedHoldsRef.current.has(id)) { reconnecting = note; break }
+    }
     if (reconnecting) { droppedHoldsRef.current.delete(reconnecting.id); rendererRef.current?.setHoldActive(reconnecting.id, true); updateActiveHoldLanes(); return }
     const laneNotes = notesByLane[lane]
     let low = 0; let high = laneNotes.length
@@ -343,7 +347,7 @@ export default function PlaytestPage() {
       rendererRef.current?.setHoldActive(candidate.id, true); updateActiveHoldLanes()
     } else { judgedRef.current.set(candidate.id, result); rendererRef.current?.hideNote(candidate.id) }
     registerJudgment(lane, result)
-  }, [audioRef, duration, getRenderTime, improvising, notes, notesByLane, registerJudgment, updateActiveHoldLanes, windows])
+  }, [audioRef, duration, getRenderTime, improvising, noteById, notesByLane, registerJudgment, updateActiveHoldLanes, windows])
 
   const pressLane = useCallback((lane: number) => {
     if (pressedRef.current.has(lane)) return
@@ -351,11 +355,16 @@ export default function PlaytestPage() {
   }, [hitLane, updateActiveHoldLanes])
 
   const releaseLane = useCallback((lane: number) => {
+    if (!pressedRef.current.has(lane)) return
     const next = new Set(pressedRef.current); next.delete(lane); pressedRef.current = next; setPressed(next); rendererRef.current?.setLanePressed(lane, false)
-    const active = notes.find((note) => note.kind === 'hold' && note.lane === lane && holdStartsRef.current.has(note.id) && !judgedRef.current.has(note.id) && timeRef.current < (note.endTime ?? note.time))
+    let active: ChartNote | undefined
+    for (const id of holdStartsRef.current.keys()) {
+      const note = noteById.get(id)
+      if (note && note.lane === lane && !judgedRef.current.has(id) && timeRef.current < (note.endTime ?? note.time)) { active = note; break }
+    }
     if (active) { droppedHoldsRef.current.add(active.id); rendererRef.current?.setHoldActive(active.id, false) }
     updateActiveHoldLanes()
-  }, [notes, updateActiveHoldLanes])
+  }, [noteById, updateActiveHoldLanes])
 
   const pressTouchLane = useCallback((event: React.PointerEvent<HTMLButtonElement>, lane: number) => {
     event.preventDefault()

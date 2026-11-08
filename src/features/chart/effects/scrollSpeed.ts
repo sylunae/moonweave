@@ -1,3 +1,5 @@
+import { bezierCoordinate, curvePoints, curvePresets, validBezier, type BezierPoints, type CurveName } from './curves'
+
 export interface ScrollSpeedEffect {
   id: string
   type: 'scrollSpeed'
@@ -5,6 +7,8 @@ export interface ScrollSpeedEffect {
   multiplier: number
   transition: 'instant' | 'linear'
   endTime?: number
+  curve?: CurveName
+  bezier?: BezierPoints
 }
 
 export type ChartEffect = ScrollSpeedEffect
@@ -21,8 +25,11 @@ export function normalizeEffects(input: unknown): ChartEffect[] {
       || !Number.isFinite(e.multiplier) || e.multiplier! < 0 || e.multiplier! > 10
       || (e.transition !== 'instant' && e.transition !== 'linear')
       || (e.transition === 'linear' && (!Number.isFinite(e.endTime) || e.endTime! <= e.time!))) continue
+    if (e.transition === 'linear' && e.curve !== undefined
+      && (!(e.curve === 'custom' || Object.hasOwn(curvePresets, e.curve)) || (e.curve === 'custom' && !validBezier(e.bezier)))) continue
     candidates.push({ id: e.id, type: e.type, time: e.time!, multiplier: e.multiplier!, transition: e.transition,
-      ...(e.transition === 'linear' ? { endTime: e.endTime! } : {}) })
+      ...(e.transition === 'linear' ? { endTime: e.endTime!, ...(e.curve ? { curve: e.curve } : {}),
+        ...(e.curve === 'custom' ? { bezier: [...e.bezier!] as BezierPoints } : {}) } : {}) })
   }
   candidates.sort((a, b) => a.time - b.time)
   const result: ChartEffect[] = []
@@ -59,7 +66,20 @@ export class ScrollSpeedMap {
     }
     for (const event of normalizeEffects(effects)) {
       if (event.time > time) append(event.time)
-      if (event.transition === 'linear') append(event.endTime!, (event.multiplier - speed) / (event.endTime! - event.time))
+      if (event.transition === 'linear') {
+        const start = event.time, duration = event.endTime! - start, from = speed
+        // Sample once when the map is built; playback retains binary search and cheap linear integration.
+        const steps = !event.curve || event.curve === 'linear' ? 1 : 128
+        const points = curvePoints(event.curve, event.bezier)
+        for (let i = 1; i <= steps; i++) {
+          // Sampling the Bezier parameter also resolves steep curves near either endpoint.
+          const t = i / steps
+          const end = start + duration * (steps === 1 ? t : bezierCoordinate(t, points[0], points[2]))
+          const target = from + (event.multiplier - from) * (steps === 1 ? 1 : bezierCoordinate(t, points[1], points[3]))
+          if (end <= time) continue
+          append(end, (target - speed) / (end - time))
+        }
+      }
       speed = event.multiplier
     }
     this.segments.push({ time, endTime: Infinity, position, speed, slope: 0 })

@@ -1,0 +1,108 @@
+{
+  "format": "moonweave-pattern-example",
+  "version": 1,
+  "id": "01-drum-and-pulse",
+  "name": "重鼓加节拍",
+  "source": {
+    "type": "user",
+    "reviewStatus": "用户提供的配置"
+  },
+  "configuration": {
+    "keyCount": 4,
+    "sequence": [
+      "2",
+      "3",
+      "14",
+      "3",
+      "2"
+    ],
+    "sequenceMeaning": "数组从前到后表示落点先后；每个字符串的数字表示同刻按下的轨道，1–4 从左到右。",
+    "laneMapping": {
+      "1": 0,
+      "2": 1,
+      "3": 2,
+      "4": 3
+    },
+    "timing": {
+      "bpm": 120,
+      "stepMs": 500,
+      "assumption": "演示假设：相邻落点间隔一拍（500ms），起点为 0ms。用户只指定了轨道顺序，没有指定节奏、速度或音频；实际制谱必须按音乐重新定时。"
+    },
+    "holds": []
+  },
+  "explanation": {
+    "summary": "在连续节拍中用第 3 个落点的 14 双押表达重鼓，其余落点保留单键。",
+    "reasoning": [
+      "外侧双押形成一次明确的力度变化。",
+      "保留前后单键，让重鼓与普通节拍有层次。"
+    ],
+    "usageAndLimits": [
+      "适合实际音乐在第 3 个落点有重鼓的短句。",
+      "不要把所有鼓点都机械替换为双押。"
+    ],
+    "difficulty": "未定级；实际难度需结合速度、节奏间隔、持续长度与前后配置判断。"
+  },
+  "relatedExamples": {
+    "strongerVariant": "02-drum-strong-accent.json"
+  },
+  "chart": {
+    "version": 1,
+    "title": "重鼓加节拍",
+    "artist": "",
+    "audioPath": "",
+    "audioName": "",
+    "backgroundPath": "",
+    "backgroundName": "",
+    "backgroundType": "",
+    "backgroundVideoStartTime": 0,
+    "coverPath": "",
+    "coverName": "",
+    "bpm": 120,
+    "bpmChanges": [],
+    "effects": [],
+    "offset": 0,
+    "duration": 3000,
+    "notes": [
+      {
+        "id": "01-drum-and-pulse-001",
+        "kind": "note",
+        "lane": 1,
+        "time": 0
+      },
+      {
+        "id": "01-drum-and-pulse-002",
+        "kind": "note",
+        "lane": 2,
+        "time": 500
+      },
+      {
+        "id": "01-drum-and-pulse-003",
+        "kind": "note",
+        "lane": 0,
+        "time": 1000
+      },
+      {
+        "id": "01-drum-and-pulse-004",
+        "kind": "note",
+        "lane": 3,
+        "time": 1000
+      },
+      {
+        "id": "01-drum-and-pulse-005",
+        "kind": "note",
+        "lane": 2,
+        "time": 1500
+      },
+      {
+        "id": "01-drum-and-pulse-006",
+        "kind": "note",
+        "lane": 1,
+        "time": 2000
+      }
+    ],
+    "aiImportHistory": [],
+    "settings": {
+      "editorZoom": 230
+    }
+  }
+}

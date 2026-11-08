@@ -1,7 +1,7 @@
 import type { Chart } from './types'
 
-export type EditSnapshot = Pick<Chart, 'notes' | 'bpm' | 'bpmChanges' | 'effects' | 'offset'>
-export const editSnapshot = ({ notes, bpm, bpmChanges, effects, offset }: Chart): EditSnapshot => ({ notes, bpm, bpmChanges, effects, offset })
+export type EditSnapshot = Pick<Chart, 'notes' | 'bpm' | 'bpmChanges' | 'effects' | 'offset' | 'aiImportHistory'>
+export const editSnapshot = ({ notes, bpm, bpmChanges, effects, offset, aiImportHistory }: Chart): EditSnapshot => ({ notes, bpm, bpmChanges, effects, offset, aiImportHistory })
 export const restoreEdit = (chart: Chart, snapshot: EditSnapshot): Chart => ({ ...chart, ...snapshot })
 
 export function shiftChartOffset(chart: Chart, offset: number): Chart {

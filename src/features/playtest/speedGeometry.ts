@@ -33,5 +33,5 @@ export function createSpeedGeometry(notes: ChartNote[], effects: ChartEffect[]) 
     }
   }
   const index = createEditorNoteIndex(pieces)
-  return { map, pieces, visible: (from: number, to: number) => visibleEditorNotes(index, from, to) as VisualNote[] }
+  return { map, pieces, visible: (from: number, to: number, output?: VisualNote[]) => visibleEditorNotes(index, from, to, output) as VisualNote[] }
 }

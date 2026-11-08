@@ -19,6 +19,7 @@ export class PlaybackClock {
   private lastOutputMs = 0
   private playbackRate = 1
   private running = false
+  private awaitingProgress = false
 
   reset(mediaMs: number, performanceMs = performance.now()) {
     this.anchorMediaMs = mediaMs
@@ -26,12 +27,14 @@ export class PlaybackClock {
     this.lastMediaSampleMs = mediaMs
     this.lastOutputMs = mediaMs
     this.running = false
+    this.awaitingProgress = false
   }
 
-  start(mediaMs: number, performanceMs = performance.now(), playbackRate = 1) {
+  start(mediaMs: number, performanceMs = performance.now(), playbackRate = 1, options: { waitForProgress?: boolean } = {}) {
     this.reset(mediaMs, performanceMs)
     this.playbackRate = playbackRate
     this.running = true
+    this.awaitingProgress = options.waitForProgress ?? false
   }
 
   stop(mediaMs: number, performanceMs = performance.now()) {
@@ -51,6 +54,17 @@ export class PlaybackClock {
     if (!this.running || !Number.isFinite(mediaMs)) {
       this.lastOutputMs = mediaMs
       return mediaMs
+    }
+
+    // Completing a seek / play() does not mean the decoder has started advancing.
+    // Do not turn that variable startup delay into a different visual offset.
+    if (this.awaitingProgress) {
+      if (Math.abs(mediaMs - this.lastMediaSampleMs) <= SAMPLE_EPSILON_MS) return mediaMs
+      this.awaitingProgress = false
+      this.anchorMediaMs = mediaMs
+      this.anchorPerformanceMs = performanceMs
+      this.lastMediaSampleMs = mediaMs
+      this.lastOutputMs = mediaMs
     }
 
     let predicted = this.anchorMediaMs + (performanceMs - this.anchorPerformanceMs) * this.playbackRate

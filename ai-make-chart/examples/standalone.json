@@ -1,0 +1,22 @@
+{
+  "format": "moonweave-ai-chart",
+  "version": 1,
+  "requestId": "example-intro-v1",
+  "mode": "replace",
+  "unit": "beat",
+  "song": {
+    "audioName": "song.wav",
+    "duration": 10000,
+    "bpm": 120,
+    "offset": 1000,
+    "bpmChanges": []
+  },
+  "notes": [
+    { "id": "intro-001", "kind": "note", "lane": 0, "beat": 0 },
+    { "id": "intro-002", "kind": "note", "lane": 1, "beat": 1 },
+    { "id": "intro-003", "kind": "hold", "lane": 2, "beat": 2, "endBeat": 4 },
+    { "id": "intro-004", "kind": "note", "lane": 0, "beat": 3 },
+    { "id": "intro-005", "kind": "note", "lane": 3, "beat": 4 },
+    { "id": "intro-006", "kind": "note", "lane": 1, "beat": 5 }
+  ]
+}

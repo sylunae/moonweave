@@ -39,6 +39,8 @@ export interface Chart {
   offset: number
   duration: number
   notes: ChartNote[]
+  /** Recent AI batch IDs; restored together with notes when undoing. */
+  aiImportHistory: string[]
   settings: ChartSettings
 }
 
@@ -60,6 +62,7 @@ export const DEFAULT_CHART: Chart = {
   offset: 0,
   duration: 120000,
   notes: [],
+  aiImportHistory: [],
   settings: { editorZoom: 230 },
 }
 
@@ -103,6 +106,7 @@ export function normalizeChart(input: unknown): Chart {
     offset: Number.isFinite(value.offset) ? value.offset! : 0,
     duration: Number.isFinite(value.duration) && value.duration! > 0 ? value.duration! : DEFAULT_CHART.duration,
     notes,
+    aiImportHistory: Array.isArray(value.aiImportHistory) ? value.aiImportHistory.filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 128).slice(-200) : [],
     settings: {
       editorZoom: Number.isFinite(settings.editorZoom) ? Math.max(90, Math.min(1320, settings.editorZoom!)) : DEFAULT_CHART.settings.editorZoom,
     },

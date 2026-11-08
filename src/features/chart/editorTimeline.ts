@@ -42,8 +42,8 @@ export function createEditorNoteIndex(notes: ChartNote[]): EditorNoteIndex {
 }
 
 /** Returns only notes whose visible geometry intersects the editor viewport. */
-export function visibleEditorNotes(index: EditorNoteIndex, from: number, to: number) {
-  const visible: ChartNote[] = []
+export function visibleEditorNotes(index: EditorNoteIndex, from: number, to: number, visible: ChartNote[] = []) {
+  visible.length = 0
   const pointStart = lowerBound(index.points, from, (note) => note.time)
   for (let cursor = pointStart; cursor < index.points.length; cursor += 1) {
     const note = index.points[cursor]

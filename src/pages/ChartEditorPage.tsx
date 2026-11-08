@@ -1,11 +1,11 @@
 import { EffectsModule, useEffectsEditor } from '@/features/chart/effects/EffectsModule'
 import { shiftChartOffset } from '@/features/chart/editHistory'
-import { editorEffects, improvisationCopy } from '@/config/app'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { aiChartCopy, editorEffects, improvisationCopy } from '@/config/app'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   BookOpen, ClipboardPaste, Copy, FlipHorizontal2, Gamepad2, Gauge, ImagePlus,
   LogOut, Music2, Pause, Play, Plus, Redo2, ScanSearch, SlidersHorizontal, Trash2,
-  Undo2, Upload, X, Sparkles,
+  Undo2, Upload, X, Sparkles, FileJson,
 } from 'lucide-react'
 import { navigate } from '@/app/navigation'
 import { useI18n } from '@/app/i18n'
@@ -22,6 +22,7 @@ import { adjacentBeatLine, bpmAtTime, retimeInitialBpm, snapToBeatLine } from '@
 import type { ChartNote, ToolMode } from '@/features/chart/types'
 
 const SUBDIVISIONS = [2, 3, 4, 6, 8, 12, 16, 24, 32] as const
+const AiChartDialog = lazy(() => import('@/features/chart/ai/AiChartDialog'))
 const PLAYBACK_RATES = [0.5, 0.75, 1] as const
 const BPM_MIN = 20
 const BPM_MAX = 400
@@ -64,6 +65,7 @@ export default function ChartEditorPage() {
     return togglePlay(playbackRate, subdivision)
   }, [playbackRate, subdivision, togglePlay])
   const [tool, setTool] = useState<ToolMode>('note')
+  const [aiOpen, setAiOpen] = useState(false)
   const effectsEditor = useEffectsEditor(tool, (tool) => { setTool(tool); setHoldStart(null); setRegion(null); setSelectedIds(new Set()) })
   const [holdStart, setHoldStart] = useState<{ lane: number; time: number } | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -191,6 +193,7 @@ export default function ChartEditorPage() {
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement
+      if (target.closest('[role="dialog"]')) return
       const editing = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target.isContentEditable
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
         event.preventDefault()
@@ -251,6 +254,7 @@ export default function ChartEditorPage() {
       </aside>
 
       <aside className="editor-utility-dock intro" aria-label={text('编辑器工具栏', 'Editor toolbar')}>
+        <Tooltip><TooltipTrigger asChild><button onClick={() => { editorRef.current?.flushSeek(); setAiOpen(true) }} aria-label={text(aiChartCopy.title.zh, aiChartCopy.title.en)}><span className="editor-dock-label">{text(aiChartCopy.title.zh, aiChartCopy.title.en)}</span><FileJson /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text(aiChartCopy.title.zh, aiChartCopy.title.en)}</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('info')} aria-label={text('谱面信息', 'Chart info')}><span className="editor-dock-label">{text('谱面信息', 'Chart info')}</span><BookOpen /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('谱面信息', 'Chart info')}</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('tempo')} aria-label={text('BPM 变化', 'BPM changes')}><span className="editor-dock-label">{text('BPM 变化', 'BPM changes')}</span><Gauge /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('BPM 变化', 'BPM changes')}</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger asChild><button onClick={() => effectsEditor.setOpen(true)} aria-label={text(editorEffects.title.zh, editorEffects.title.en)}><span className="editor-dock-label">{text(editorEffects.title.zh, editorEffects.title.en)}</span><Sparkles /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text(editorEffects.title.zh, editorEffects.title.en)}</TooltipContent></Tooltip>
@@ -262,6 +266,7 @@ export default function ChartEditorPage() {
     </div>
 
     <EffectsModule editor={effectsEditor} />
+    {aiOpen && <Suspense fallback={null}><AiChartDialog key={activeChartId} onClose={() => setAiOpen(false)} onApplied={() => { setSelectedIds(new Set()); setHoldStart(null); setRegion(null); setTool('note') }} subdivision={subdivision} initialRange={region?.end != null ? { start: region.start, end: region.end } : null} /></Suspense>}
 
     <Sheet open={openSheet === 'info'} onOpenChange={(open) => setOpenSheet(open ? 'info' : null)}>
       <SheetContent className="editor-sheet">

@@ -1,0 +1,70 @@
+{
+  "format": "moonweave-ai-context",
+  "version": 1,
+  "target": {
+    "chartId": "8e7949a9-709c-4871-abf9-a8181824a46f",
+    "revision": "sha256:426681c9bca9550f0b311a98e1ea6dee5f9fa9397948abe07fa85d96c124cbdb"
+  },
+  "title": "vr ai test 1",
+  "artist": "",
+  "song": {
+    "audioName": "【MV】Vernal Rêverie 周而复始的春色 - 大学音乐课外活动作业 [UYIeOTV3z4E].mp3",
+    "duration": 189637.375,
+    "bpm": 120,
+    "offset": 0,
+    "bpmChanges": []
+  },
+  "conventions": {
+    "timeUnit": "ms",
+    "beatUnit": "quarter-note",
+    "beatZeroAtMs": 0,
+    "lanesLeftToRight": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "range": "[start,end); hold endpoints must be inside; crossing holds are read-only",
+    "audioIdentity": "filename-and-duration; use the identical original WAV",
+    "bpmChangeTimeUnit": "ms, even when output unit is beat"
+  },
+  "cursor": {
+    "time": 0,
+    "beat": 0,
+    "bpm": 120,
+    "subdivision": 4,
+    "isPlaying": false
+  },
+  "range": {
+    "start": 0,
+    "end": 189637.375,
+    "startBeat": 0,
+    "endBeat": 379.27475
+  },
+  "notes": [],
+  "notesTruncated": false,
+  "totalNearbyNotes": 0,
+  "outputTemplate": {
+    "format": "moonweave-ai-chart",
+    "version": 1,
+    "requestId": "4ae67849-8b6e-425b-b0b8-d14cac363945",
+    "mode": "segment",
+    "unit": "ms",
+    "target": {
+      "chartId": "8e7949a9-709c-4871-abf9-a8181824a46f",
+      "revision": "sha256:426681c9bca9550f0b311a98e1ea6dee5f9fa9397948abe07fa85d96c124cbdb"
+    },
+    "song": {
+      "audioName": "【MV】Vernal Rêverie 周而复始的春色 - 大学音乐课外活动作业 [UYIeOTV3z4E].mp3",
+      "duration": 189637.375,
+      "bpm": 120,
+      "offset": 0,
+      "bpmChanges": []
+    },
+    "range": {
+      "start": 0,
+      "end": 189637.375
+    },
+    "notes": []
+  }
+}

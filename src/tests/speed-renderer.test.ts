@@ -3,6 +3,64 @@ import { expect, it, vi } from 'vitest'
 import { PlaytestRenderer } from '@/features/playtest/PlaytestRenderer'
 import type { ChartNote } from '@/features/chart/types'
 
+it('reuses unchanged instances, batches particle uploads, and avoids frame-by-frame layout reads', () => {
+  const methods = new Map<PropertyKey, ReturnType<typeof vi.fn>>()
+  const gl = new Proxy({}, { get: (_target, key) => {
+    if (typeof key === 'string' && /^[A-Z_0-9]+$/.test(key)) return 1
+    if (!methods.has(key)) methods.set(key, vi.fn(() => ({})))
+    return methods.get(key)
+  } })
+  let frame: FrameRequestCallback = () => {}
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frame = callback; return 1 })
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
+  const canvas = document.createElement('canvas')
+  vi.spyOn(canvas, 'getContext').mockReturnValue(gl as WebGL2RenderingContext)
+  const height = vi.spyOn(canvas, 'clientHeight', 'get').mockReturnValue(800)
+  let renderer: PlaytestRenderer | undefined
+  try {
+    renderer = new PlaytestRenderer({ canvas, notes: [{ id: 'hold', kind: 'hold', lane: 0, time: 1000.123, endTime: 2000.456 }],
+      bpm: 120, bpmChanges: [], effects: [], offset: 0, duration: 5000, laneTilt: 0, scrollSpeed: 7,
+      autoplay: false, getTime: () => 1100, getPlaying: () => true, onStats: vi.fn(),
+    })
+    frame(10)
+    const upload = methods.get('bufferSubData')!
+    upload.mockClear(); height.mockClear()
+    frame(20)
+    // Beat lines still move each frame; note instances do not need another upload.
+    expect(upload.mock.calls.filter((call) => call[2].length === 6)).toHaveLength(0)
+    expect(height).not.toHaveBeenCalled()
+    renderer.setHoldActive('hold', true)
+    frame(30)
+    expect(upload.mock.calls.find((call) => call[2].length === 6)?.[2][5]).toBe(1)
+    upload.mockClear()
+    renderer.triggerHit(0, 1100); renderer.triggerHit(1, 1100)
+    expect(upload).not.toHaveBeenCalled()
+    frame(40)
+    const particleUploads = () => upload.mock.calls.filter((call) => call[2].length === 2048 * 8)
+    expect(particleUploads()).toHaveLength(1)
+    expect(particleUploads()[0].slice(3)).toEqual([0, 48 * 8])
+    upload.mockClear()
+    renderer.triggerHit(2, 1100)
+    frame(50)
+    expect(particleUploads()[0][1]).toBe(48 * 8 * 4)
+    expect(particleUploads()[0].slice(3)).toEqual([48 * 8, 24 * 8])
+    // Wrapping the ring must upload both its tail and its overwritten beginning.
+    upload.mockClear()
+    for (let i = 0; i < 85; i++) renderer.triggerHit(i % 4, 1100)
+    frame(60)
+    expect(particleUploads()).toHaveLength(1)
+    expect(particleUploads()[0].slice(3)).toEqual([0, 2048 * 8])
+    renderer.reset(1100)
+    upload.mockClear()
+    renderer.triggerHit(0, 1100)
+    frame(70)
+    expect(particleUploads()[0].slice(3)).toEqual([0, 24 * 8])
+  } finally {
+    renderer?.destroy(); vi.restoreAllMocks(); vi.unstubAllGlobals()
+  }
+})
+
 it('renders stacked stop notes and clears the final hidden note from GPU instances', () => {
   // Exercise the renderer frame loop without opening a window or requiring a GPU.
   const draw = vi.fn()

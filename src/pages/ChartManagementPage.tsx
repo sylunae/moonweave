@@ -120,7 +120,7 @@ export default function ChartManagementPage() {
         <Button onClick={() => void createAndOpen()}><Plus />{text('新建谱面', 'New chart')}</Button>
       </div> : <div className="chart-library-viewport">
         {focusedChart?.coverUrl && <div className="chart-library-backdrop" aria-hidden="true"><img key={focusedChart.coverUrl} src={focusedChart.coverUrl} alt="" /></div>}
-        <div ref={listRef} className="chart-library-list" tabIndex={0} role="listbox" aria-label={text('谱面列表', 'Chart list')} aria-activedescendant={focusedId ? `chart-library-${focusedId}` : undefined} onScroll={handleScroll} onKeyDown={handleListKeyDown}>
+        <div ref={listRef} className="chart-library-list" data-scroll-region tabIndex={0} role="listbox" aria-label={text('谱面列表', 'Chart list')} aria-activedescendant={focusedId ? `chart-library-${focusedId}` : undefined} onScroll={handleScroll} onKeyDown={handleListKeyDown}>
           {charts.map((item, index) => {
             const focused = item.id === focusedId
             return <article

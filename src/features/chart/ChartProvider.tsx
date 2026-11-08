@@ -10,6 +10,7 @@ import { snapToBeatLine } from './tempoMap'
 import { BpmDetectionDialog } from './BpmDetectionDialog'
 import { bpmDetectionCopy } from '@/config/app'
 import type { BpmFailureReason } from './detectBpm'
+import { applyAiPlan, type AiPlan } from './ai/aiChart'
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 const text = (zh: string, en: string) => document.documentElement.lang.startsWith('zh') ? zh : en
@@ -45,6 +46,7 @@ interface ChartContextValue {
   setPlaybackRate(rate: number): void
   commitNotes(notes: ChartNote[]): void
   commitEdit(update: (chart: Chart) => Chart): void
+  applyAiImport(plan: AiPlan): Promise<boolean>
   undo(): void
   redo(): void
   chooseAudio(): Promise<void>
@@ -108,6 +110,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const chartRef = useRef(chart)
   const activeIdRef = useRef(activeChartId)
   const writeQueueRef = useRef(Promise.resolve(true))
+  const queuedSnapshotRef = useRef<{ id: string; snapshot: Chart } | null>(null)
   const deletedIdsRef = useRef(new Set<string>())
   chartRef.current = chart
   activeIdRef.current = activeChartId
@@ -153,6 +156,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   }, [])
   const persistSnapshot = useCallback((id: string, snapshot: Chart, assets: { audio?: Blob; background?: Blob | null; cover?: Blob | null; coverUrl?: string } = {}) => {
     if (!id) return Promise.resolve(false)
+    queuedSnapshotRef.current = { id, snapshot }
     setStorageStatus('saving')
     const operation = async () => {
       if (deletedIdsRef.current.has(id)) return false
@@ -227,8 +231,13 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!libraryReady || !activeChartId) return
+    // Explicit imports/flushes already queued this exact snapshot, including failed writes.
+    // Do not hide their result behind a duplicate debounce; manual save can retry failures.
+    if (queuedSnapshotRef.current?.id === activeChartId && queuedSnapshotRef.current.snapshot === chart) return
     setStorageStatus('saving')
-    const timer = window.setTimeout(() => { void persistSnapshot(activeChartId, chart) }, 550)
+    const timer = window.setTimeout(() => {
+      if (queuedSnapshotRef.current?.id !== activeChartId || queuedSnapshotRef.current.snapshot !== chart) void persistSnapshot(activeChartId, chart)
+    }, 550)
     return () => window.clearTimeout(timer)
   }, [activeChartId, chart, libraryReady, persistSnapshot])
 
@@ -458,8 +467,8 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     const audio = audioRef.current
     if (!audio) return
     audio.currentTime = value / 1000
-    if (audio.paused || audio.seeking || mediaWaitingRef.current) playbackClockRef.current.reset(value)
-    else playbackClockRef.current.start(value, performance.now(), audio.playbackRate)
+    if (audio.paused || audio.seeking || audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA || mediaWaitingRef.current) playbackClockRef.current.reset(value)
+    else playbackClockRef.current.start(value, performance.now(), audio.playbackRate, { waitForProgress: true })
   }, [])
   const commitEdit = useCallback((update: (chart: Chart) => Chart) => {
     const previous = chartRef.current
@@ -473,6 +482,12 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const commitNotes = useCallback((notes: ChartNote[]) => {
     commitEdit((previous) => ({ ...previous, notes: [...notes].sort((a, b) => a.time - b.time) }))
   }, [commitEdit])
+  const applyAiImport = useCallback(async (plan: AiPlan) => {
+    applyAiPlan(chartRef.current, activeIdRef.current, plan)
+    stopPlayback()
+    commitEdit((previous) => applyAiPlan(previous, activeIdRef.current, plan))
+    return flushActiveChart()
+  }, [commitEdit, flushActiveChart, stopPlayback])
   const undo = useCallback(() => {
     const previous = historyRef.current.at(-1)
     if (!previous) return
@@ -495,7 +510,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const tick = useCallback(() => {
     const audio = audioRef.current
     if (!audio || audio.paused || audio.ended) return
-    const time = audio.seeking || mediaWaitingRef.current
+    const time = audio.seeking || audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA || mediaWaitingRef.current
       ? audio.currentTime * 1000
       : playbackClockRef.current.getTime(audio.currentTime * 1000)
     setCurrentTimeState(clamp(time, 0, chartRef.current.duration))
@@ -534,8 +549,8 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
         await audio.play()
         if (epoch !== playbackEpochRef.current || audio.paused) return
         cancelAnimationFrame(animationRef.current)
-        if (audio.seeking || mediaWaitingRef.current) playbackClockRef.current.stop(audio.currentTime * 1000)
-        else playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
+        if (audio.seeking || audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA || mediaWaitingRef.current) playbackClockRef.current.stop(audio.currentTime * 1000)
+        else playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate, { waitForProgress: true })
         setIsPlaying(true)
         animationRef.current = requestAnimationFrame(tick)
       } catch {
@@ -558,8 +573,8 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<ChartContextValue>(() => ({
     improvising, setImprovising, chart, setChart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, audioRef, currentTime, isPlaying,
     historyLength: history.length, futureLength: future.length, toast,
-    setCurrentTime, setPlaybackRate, commitNotes, commitEdit, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast,
-  }), [improvising, chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, setPlaybackRate, commitNotes, commitEdit, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
+    setCurrentTime, setPlaybackRate, commitNotes, commitEdit, applyAiImport, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast,
+  }), [improvising, chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, setPlaybackRate, commitNotes, commitEdit, applyAiImport, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
   return <ChartContext.Provider value={value}>
     <audio ref={audioRef} src={audioUrl || undefined} preload="auto" onLoadedMetadata={(event) => {
       const duration = event.currentTarget.duration * 1000
@@ -576,20 +591,32 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
         })
       }, 0)
     }} onSeeking={(event) => {
-      playbackClockRef.current.stop(event.currentTarget.currentTime * 1000)
+      // Media events are queued. An older seeking event must not stop a clock
+      // that has already resumed after the latest seek.
+      const audio = event.currentTarget
+      if (audio.seeking) playbackClockRef.current.stop(audio.currentTime * 1000)
     }} onSeeked={(event) => {
       const audio = event.currentTarget
+      if (audio.seeking) return
+      // seeked can precede playing (not enough buffered data), or follow it.
+      // Reconcile the current readiness instead of retaining an old waiting flag.
+      mediaWaitingRef.current = audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA
       if (!audio.seeking && !audio.paused && !audio.ended && !mediaWaitingRef.current) {
-        playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
+        playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate, { waitForProgress: true })
+      } else {
+        playbackClockRef.current.stop(audio.currentTime * 1000)
       }
     }} onWaiting={(event) => {
+      const audio = event.currentTarget
+      if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) return
       mediaWaitingRef.current = true
-      playbackClockRef.current.stop(event.currentTarget.currentTime * 1000)
+      playbackClockRef.current.stop(audio.currentTime * 1000)
     }} onPlaying={(event) => {
       const audio = event.currentTarget
-      if (mediaWaitingRef.current && !audio.paused && !audio.seeking) {
-        mediaWaitingRef.current = false
-        playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
+      if (audio.paused || audio.ended || audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) return
+      mediaWaitingRef.current = false
+      if (!audio.seeking) {
+        playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate, { waitForProgress: true })
       }
     }} onPlay={() => setIsPlaying(true)} onPause={(event) => {
       // pause is queued by the browser and may arrive after playback resumed.
