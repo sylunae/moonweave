@@ -151,6 +151,8 @@ export function isRouteId(value: string): value is RouteId {
   return value === 'manage' || value === 'editor' || value === 'playtest'
 }
 
+export const autoPlayCopy = { zh: '自动演奏', en: 'Auto Play' } as const
+
 export const redZoneCopy = {
   mode: { zh: '红区模式', en: 'Red zones' },
   hit: { zh: '踩中红区', en: 'Red zone' },

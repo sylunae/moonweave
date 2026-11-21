@@ -1,8 +1,8 @@
-import { redZoneCopy, improvisationCopy as copy } from '@/config/app'
+import { autoPlayCopy, redZoneCopy, improvisationCopy as copy } from '@/config/app'
 import { mergeRecording, recordingConflicts } from '@/features/chart/improvisation'
 import { correctImprovisedNotes } from '@/features/chart/improvisationCorrection'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Gauge, Pause, Play, RotateCcw, Sparkles } from 'lucide-react'
+import { ArrowLeft, Bot, Gauge, Pause, Play, RotateCcw, Sparkles } from 'lucide-react'
 import { navigate } from '@/app/navigation'
 import { useI18n } from '@/app/i18n'
 import { usePreferences } from '@/app/preferences'
@@ -89,6 +89,8 @@ export default function PlaytestPage() {
   const prerollEpochRef = useRef(0)
   const needsPrerollRef = useRef(true)
 
+  const [autoSelected, setAutoSelected] = useState(false)
+  const autoPlay = autoSelected && !formalSession && !improvising
   const [playing, setPlaying] = useState(false)
   const [displayTime, setDisplayTime] = useState(currentTime)
   const [stats, setStats] = useState(INITIAL_STATS)
@@ -206,6 +208,14 @@ export default function PlaytestPage() {
     playingRef.current = false; setPlaying(false)
   }, [audioRef, fakeHeads, fakeNotes, holdTicksById, notesByTime, redTracker, syncBackgroundVideoTime])
 
+  const judgeHead = useCallback((note: ChartNote, result: Judgment) => {
+    if (note.kind === 'hold') {
+      holdStartsRef.current.set(note.id, result); holdTicksRef.current.set(note.id, 0); droppedHoldsRef.current.delete(note.id)
+      rendererRef.current?.setHoldActive(note.id, true); updateActiveHoldLanes()
+    } else { judgedRef.current.set(note.id, result); rendererRef.current?.hideNote(note.id) }
+    registerJudgment(note.lane, result)
+  }, [registerJudgment, updateActiveHoldLanes])
+
   const processFrame = useCallback((now: number) => {
     timeRef.current = now
     while (fakeCursorRef.current < fakeNotes.length && fakeNotes[fakeCursorRef.current].time <= now) {
@@ -216,14 +226,26 @@ export default function PlaytestPage() {
       } else judgedRef.current.set(note.id, 'Perfect')
       // Keep fake notes visible as they pass the line.
     }
+    if (autoPlay) {
+      while (missCursorRef.current < notesByTime.length && notesByTime[missCursorRef.current].time <= now) {
+        const note = notesByTime[missCursorRef.current++]
+        if (!fakeHeads.has(note.id)) judgeHead(note, 'Perfect')
+      }
+    }
+    let autoHoldMask = 0
     for (const [id, startedAs] of holdStartsRef.current) {
       const note = noteById.get(id)
       if (!note || judgedRef.current.has(id)) continue
       const endTime = note.endTime ?? note.time
+      if (autoPlay && now < endTime) {
+        const active = !redZones.contains(note.lane, now)
+        rendererRef.current?.setHoldActive(id, active)
+        if (active) autoHoldMask |= 1 << note.lane
+      }
       const ticks = holdTicksById.get(id) ?? []
       let nextTickIndex = holdTicksRef.current.get(id) ?? 0
       while (nextTickIndex < ticks.length && ticks[nextTickIndex] <= now) {
-        registerJudgment(note.lane, pressedRef.current.has(note.lane) && !droppedHoldsRef.current.has(id) ? 'Perfect' : 'Miss')
+        registerJudgment(note.lane, (autoPlay || (pressedRef.current.has(note.lane) && !droppedHoldsRef.current.has(id))) ? 'Perfect' : 'Miss')
         nextTickIndex += 1
       }
       holdTicksRef.current.set(id, nextTickIndex)
@@ -233,6 +255,18 @@ export default function PlaytestPage() {
         rendererRef.current?.setHoldActive(id, false); rendererRef.current?.hideNote(id)
         updateActiveHoldLanes()
       }
+    }
+    if (autoPlay) {
+      for (let lane = 0; lane < 4; lane++) {
+        const active = Boolean(autoHoldMask & (1 << lane))
+        if (pressedRef.current.has(lane) === active) continue
+        if (active) pressedRef.current.add(lane)
+        else pressedRef.current.delete(lane)
+        rendererRef.current?.setLanePressed(lane, active)
+        setPressed(new Set(pressedRef.current))
+        updateActiveHoldLanes()
+      }
+      return
     }
     while (missCursorRef.current < notesByTime.length && now - notesByTime[missCursorRef.current].time > windows[2]) {
       const note = notesByTime[missCursorRef.current++]
@@ -248,7 +282,7 @@ export default function PlaytestPage() {
       }
     }
     checkRedZones(now)
-  }, [checkRedZones, fakeHeads, fakeNotes, holdTicksById, noteById, notesByTime, registerJudgment, updateActiveHoldLanes, windows])
+  }, [autoPlay, judgeHead, redZones, checkRedZones, fakeHeads, fakeNotes, holdTicksById, noteById, notesByTime, registerJudgment, updateActiveHoldLanes, windows])
 
   useEffect(() => {
     if (!playing) return
@@ -398,24 +432,20 @@ export default function PlaytestPage() {
     }
     if (!candidate) return
     const result: Judgment = closest <= windows[0] ? 'Perfect' : closest <= windows[1] ? 'Good' : 'Miss'
-    if (candidate.kind === 'hold') {
-      holdStartsRef.current.set(candidate.id, result); holdTicksRef.current.set(candidate.id, 0); droppedHoldsRef.current.delete(candidate.id)
-      rendererRef.current?.setHoldActive(candidate.id, true); updateActiveHoldLanes()
-    } else { judgedRef.current.set(candidate.id, result); rendererRef.current?.hideNote(candidate.id) }
-    registerJudgment(lane, result)
-  }, [audioRef, duration, getRenderTime, improvising, noteById, notesByLane, redDanger, registerJudgment, updateActiveHoldLanes, windows])
+    judgeHead(candidate, result)
+  }, [audioRef, duration, getRenderTime, improvising, noteById, notesByLane, redDanger, judgeHead, updateActiveHoldLanes, windows])
 
   const pressLane = useCallback((lane: number) => {
-    if (pressedRef.current.has(lane)) return
+    if (autoPlay || pressedRef.current.has(lane)) return
     const judging = playingRef.current && !exitOpenRef.current && prerollTimeRef.current === null && !audioRef.current?.paused
     const now = getRenderTime()
     if (judging) processFrame(now) // Advance with the old key state before this transition.
     pressedRef.current = new Set(pressedRef.current).add(lane); setPressed(new Set(pressedRef.current)); rendererRef.current?.setLanePressed(lane, true); hitLane(lane); updateActiveHoldLanes()
     if (judging) checkRedZones(now)
-  }, [audioRef, checkRedZones, getRenderTime, hitLane, processFrame, updateActiveHoldLanes])
+  }, [autoPlay, audioRef, checkRedZones, getRenderTime, hitLane, processFrame, updateActiveHoldLanes])
 
   const releaseLane = useCallback((lane: number) => {
-    if (!pressedRef.current.has(lane)) return
+    if (autoPlay || !pressedRef.current.has(lane)) return
     if (playingRef.current && !exitOpenRef.current && prerollTimeRef.current === null && !audioRef.current?.paused) processFrame(getRenderTime())
     redContactRef.current &= ~(1 << lane)
     const next = new Set(pressedRef.current); next.delete(lane); pressedRef.current = next; setPressed(next); rendererRef.current?.setLanePressed(lane, false)
@@ -426,7 +456,7 @@ export default function PlaytestPage() {
     }
     if (active) { droppedHoldsRef.current.add(active.id); rendererRef.current?.setHoldActive(active.id, false) }
     updateActiveHoldLanes()
-  }, [audioRef, getRenderTime, noteById, processFrame, updateActiveHoldLanes])
+  }, [autoPlay, audioRef, getRenderTime, noteById, processFrame, updateActiveHoldLanes])
 
   const pressTouchLane = useCallback((event: React.PointerEvent<HTMLButtonElement>, lane: number) => {
     event.preventDefault()
@@ -518,7 +548,9 @@ export default function PlaytestPage() {
     <header className="playtest-header">
       <Button variant="outline" onClick={leave}><ArrowLeft />{formalSession ? text('退出游玩', 'Leave play') : text('返回编辑器', 'Back to editor')}</Button>
       <div className="playtest-title"><span className="eyebrow">MOONWEAVE · {improvising ? text(copy.title.zh, copy.title.en) : formalSession ? 'OFFICIAL PLAY' : 'PLAYTEST'}</span><strong>{chart.title}</strong><small>{chart.artist || chart.audioName}</small></div>
-      <div className="playtest-header-actions"><Button variant="outline" size="icon" title={text('重新开始', 'Restart')} disabled={improvising} onClick={restart}><RotateCcw /></Button><Button variant="outline" size="icon" title={playing ? text('暂停', 'Pause') : text('播放', 'Play')} onClick={() => void togglePlayback()}>{playing ? <Pause /> : <Play />}</Button></div>
+      <div className="playtest-header-actions">
+        {!formalSession && !improvising && <Button variant="outline" size="icon" aria-label={text(autoPlayCopy.zh, autoPlayCopy.en)} title={text(autoPlayCopy.zh, autoPlayCopy.en)} aria-pressed={autoPlay} disabled={playing || !needsPrerollRef.current} onClick={() => { resetRun(runStartTimeRef.current); setAutoSelected(!autoPlay) }}><Bot /></Button>}
+        <Button variant="outline" size="icon" title={text('重新开始', 'Restart')} disabled={improvising} onClick={restart}><RotateCcw /></Button><Button variant="outline" size="icon" title={playing ? text('暂停', 'Pause') : text('播放', 'Play')} onClick={() => void togglePlayback()}>{playing ? <Pause /> : <Play />}</Button></div>
     </header>
     <aside className="playtest-score"><span>SCORE</span><strong>{score.toString().padStart(8, '0')}</strong><span>ACCURACY</span><strong>{accuracy.toFixed(2)}%</strong></aside>
     <aside className="playtest-performance"><div><Gauge /><span><b>{stats.fps || '—'} FPS · P95 {stats.frameTimeP95.toFixed(1)} MS</b><small>MAX {stats.frameTimeMax.toFixed(1)} MS · {Math.round(stats.renderScale * 100)}% SCALE</small></span></div><div><Sparkles /><span><b>{stats.notes} NOTES · {stats.particles} FX</b><small>{stats.longFramePercent.toFixed(1)}% LONG · {stats.clockStalls} CLOCK STALLS</small></span></div></aside>
