@@ -8,6 +8,7 @@ import { createChartPackage, readChartPackage } from './chartPackage'
 import { DEFAULT_CHART, normalizeChart, type Chart, type ChartNote } from './types'
 import { snapToBeatLine } from './tempoMap'
 import { BpmDetectionDialog } from './BpmDetectionDialog'
+import { cacheEditorAudio } from './editorAudio'
 import { bpmDetectionCopy } from '@/config/app'
 import type { BpmFailureReason } from './detectBpm'
 import { applyAiPlan, type AiPlan } from './ai/aiChart'
@@ -61,7 +62,7 @@ interface ChartContextValue {
   selectChart(id: string): Promise<boolean>
   deleteChart(id: string): Promise<boolean>
   revealLibrary(): Promise<void>
-  togglePlay(playbackRate: number, subdivision: number): Promise<void>
+  togglePlay(playbackRate: number, subdivision: number, signal?: AbortSignal): Promise<void>
   showToast(message: string): void
 }
 
@@ -99,6 +100,12 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const audioImportSequence = useRef(0)
   const audioRef = useRef<HTMLAudioElement>(null)
   const objectUrlRef = useRef('')
+  const preparedAudioRef = useRef<ReturnType<typeof cacheEditorAudio> | null>(null)
+  const releasePreparedAudio = useCallback(() => {
+    const prepared = preparedAudioRef.current
+    preparedAudioRef.current = null
+    prepared?.dispose()
+  }, [])
   const backgroundObjectUrlRef = useRef('')
   const webCoverUrlsRef = useRef(new Map<string, string>())
   const animationRef = useRef(0)
@@ -132,10 +139,16 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     setIsPlaying(false)
   }, [])
   const replaceAudioUrl = useCallback((url: string, revoke = false) => {
+    const audio = audioRef.current
+    if (audio && preparedAudioRef.current?.url === audio.src) {
+      if (url) audio.src = url
+      else audio.removeAttribute('src')
+    }
+    releasePreparedAudio()
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
     objectUrlRef.current = revoke ? url : ''
     setAudioUrl(url)
-  }, [])
+  }, [releasePreparedAudio])
   const replaceBackgroundUrl = useCallback((url: string, revoke = false) => {
     if (backgroundObjectUrlRef.current) URL.revokeObjectURL(backgroundObjectUrlRef.current)
     backgroundObjectUrlRef.current = revoke ? url : ''
@@ -526,10 +539,10 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
       playbackClockRef.current.setRate(audio.currentTime * 1000, performance.now(), rate)
     }
   }, [setPreferences])
-  const togglePlay = useCallback((playbackRate: number, subdivision: number) => {
+  const togglePlay = useCallback((playbackRate: number, subdivision: number, signal?: AbortSignal) => {
     const epoch = playbackEpochRef.current
     const toggle = async () => {
-      if (epoch !== playbackEpochRef.current) return
+      if (epoch !== playbackEpochRef.current || signal?.aborted) return
       const audio = audioRef.current
       if (!audioUrl || !audio) { showToast(text('请先在编辑器右侧的谱面信息中选择歌曲音频', 'Select song audio from Chart Info on the right side of the editor first')); return }
       if (!audio.paused && !audio.ended) {
@@ -544,8 +557,18 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      audio.playbackRate = playbackRate
       try {
+        if (/\.mp3$/i.test(chartRef.current.audioName) && chartRef.current.duration <= 600_000) {
+          const prepared = preparedAudioRef.current ??= cacheEditorAudio(audioUrl)
+          const url = await prepared.ready
+          if (prepared !== preparedAudioRef.current || epoch !== playbackEpochRef.current || signal?.aborted) return
+          if (url && audio.src !== url) {
+            const position = audio.ended ? 0 : audio.currentTime
+            audio.src = url
+            audio.currentTime = position
+          }
+        }
+        audio.playbackRate = playbackRate
         await audio.play()
         if (epoch !== playbackEpochRef.current || audio.paused) return
         cancelAnimationFrame(animationRef.current)
@@ -564,6 +587,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   }, [audioUrl, showToast, tick])
 
   useEffect(() => () => {
+    releasePreparedAudio()
     cancelAnimationFrame(animationRef.current); window.clearTimeout(toastTimerRef.current)
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
     if (backgroundObjectUrlRef.current) URL.revokeObjectURL(backgroundObjectUrlRef.current)
@@ -577,6 +601,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   }), [improvising, chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, setPlaybackRate, commitNotes, commitEdit, applyAiImport, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
   return <ChartContext.Provider value={value}>
     <audio ref={audioRef} src={audioUrl || undefined} preload="auto" onLoadedMetadata={(event) => {
+      if (event.currentTarget.currentSrc === preparedAudioRef.current?.url) return
       const duration = event.currentTarget.duration * 1000
       if (Number.isFinite(duration)) setChart((current) => ({ ...current, duration }))
     }} onError={(event) => {

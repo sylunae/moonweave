@@ -34,7 +34,7 @@ const sortNotes = (notes: ChartNote[]) => [...notes].sort((a, b) => a.time - b.t
 export function aiChartBase(chart: Chart) {
   return JSON.stringify({ title: chart.title, artist: chart.artist, audioName: chart.audioName, audioPath: chart.audioPath,
     duration: chart.duration, bpm: chart.bpm, offset: chart.offset, bpmChanges: chart.bpmChanges,
-    notes: sortNotes(chart.notes).map((n) => [n.id, n.kind, n.lane, n.time, n.endTime ?? null]),
+    notes: sortNotes(chart.notes).map((n) => [n.id, n.kind, n.lane, n.time, n.endTime ?? null, ...(n.red ? [true] : [])]),
     effects: chart.effects, aiImportHistory: chart.aiImportHistory })
 }
 export async function aiChartRevision(chart: Chart) {
@@ -43,7 +43,7 @@ export async function aiChartRevision(chart: Chart) {
 }
 /** Portable baseline for continuing from a full AI result, without editor metadata. */
 export async function aiNotesRevision(notes: ChartNote[]) {
-  const rows = notes.map((n) => JSON.stringify([n.id, n.kind, n.lane, n.time, n.endTime ?? null])).sort()
+  const rows = notes.map((n) => JSON.stringify([n.id, n.kind, n.lane, n.time, n.endTime ?? null, ...(n.red ? [true] : [])])).sort()
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`[${rows.join(',')}]`))
   return `sha256:${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')}`
 }
@@ -72,11 +72,11 @@ function readSong(value: unknown, chart: Chart) {
   }
   return { bpm: value.bpm, offset: value.offset, bpmChanges }
 }
-const noteSame = (a: ChartNote, b: ChartNote) => a.id === b.id && a.kind === b.kind && a.lane === b.lane && a.time === b.time && a.endTime === b.endTime
+const noteSame = (a: ChartNote, b: ChartNote) => a.id === b.id && a.kind === b.kind && a.lane === b.lane && a.time === b.time && a.endTime === b.endTime && Boolean(a.red) === Boolean(b.red)
 function validateResult(notes: ChartNote[], duration: number) {
   const issues: AiIssue[] = []
   const ids = new Set<string>()
-  const lanes: ChartNote[][] = [[], [], [], []]
+  const lanes: ChartNote[][] = Array.from({ length: 8 }, () => [])
   const add = (code: AiIssueCode, path: string) => { if (issues.length < MAX_ISSUES) issues.push({ code, path }) }
   for (const [index, note] of notes.entries()) {
     const path = `notes[${index}] (${note.id})`
@@ -88,7 +88,8 @@ function validateResult(notes: ChartNote[], duration: number) {
     if (note.kind !== 'note' && note.kind !== 'hold') add('schema', `${path}.kind`)
     if (note.kind === 'hold' && (!finite(note.endTime) || note.endTime <= note.time || note.endTime > duration)) add('hold', path)
     if (note.kind === 'note' && note.endTime !== undefined) add('hold', path)
-    lanes[note.lane].push(note)
+    if (note.red !== undefined && typeof note.red !== 'boolean') add('schema', `${path}.red`)
+    lanes[note.lane + (note.red ? 4 : 0)].push(note)
   }
   for (const lane of lanes) {
     lane.sort((a, b) => a.time - b.time)
@@ -143,11 +144,13 @@ export async function prepareAiImport(chart: Chart, chartId: string, input: unkn
     if (!record(value)) return fail('schema', path)
     const startKey = input.unit === 'beat' ? 'beat' : 'time'
     const endKey = input.unit === 'beat' ? 'endBeat' : 'endTime'
-    keys(value, ['id', 'kind', 'lane', startKey, endKey], path)
+    keys(value, ['id', 'kind', 'lane', 'red', startKey, endKey], path)
     if (!validId(value.id)) return fail('id', `${path}.id`)
     if (!finite(value.lane) || !Number.isInteger(value.lane) || value.lane < 0 || value.lane > 3) return fail('number', `${path}.lane`)
     if (value.kind !== 'note' && value.kind !== 'hold') return fail('schema', `${path}.kind`)
     const note: ChartNote = { id: value.id, kind: value.kind, lane: value.lane, time: toTime(value[startKey], `${path}.${startKey}`) }
+    if (value.red !== undefined && typeof value.red !== 'boolean') fail('schema', `${path}.red`)
+    if (value.red === true) note.red = true
     if (value.kind === 'hold') {
       if (value[endKey] === undefined) fail('hold', `${path}.${endKey}`)
       note.endTime = toTime(value[endKey], `${path}.${endKey}`)

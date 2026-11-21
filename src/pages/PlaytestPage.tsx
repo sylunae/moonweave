@@ -1,4 +1,4 @@
-import { improvisationCopy as copy } from '@/config/app'
+import { redZoneCopy, improvisationCopy as copy } from '@/config/app'
 import { mergeRecording, recordingConflicts } from '@/features/chart/improvisation'
 import { correctImprovisedNotes } from '@/features/chart/improvisationCorrection'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -12,14 +12,16 @@ import { useChart } from '@/features/chart/ChartProvider'
 import { usePlatform } from '@/features/platform/PlatformProvider'
 import type { ChartNote } from '@/features/chart/types'
 import { holdTickTimes } from '@/features/chart/tempoMap'
+import { createRedZoneIndex, RED_HOLD_GRACE_MS, RedZoneTracker } from '@/features/playtest/redZones'
 import { PlaybackClock } from '@/features/playtest/PlaybackClock'
 import { PlaytestRenderer, type PlaytestStats } from '@/features/playtest/PlaytestRenderer'
-import { getPlaytestLaneCenterPercent, getPlaytestTrackHalfWidth } from '@/features/playtest/playtestGeometry'
+import { getPlaytestLaneCenterPercent, getPlaytestTrackInsetPercent, JUDGMENT_LINE_Y } from '@/features/playtest/playtestGeometry'
 import { accuracyFromUnits, judgmentUnits, scoreFromUnits, type Judgment } from '@/features/playtest/scoring'
 
 const INITIAL_STATS: PlaytestStats = { fps: 0, backend: 'WebGL2', renderScale: 1, notes: 0, particles: 0, drawCalls: 0, frameTimeP95: 0, frameTimeMax: 0, longFramePercent: 0, clockStalls: 0 }
 const PREROLL_MS = 1000
-const effectTexture = (lane: number, result: Judgment = 'Perfect') => `${import.meta.env.BASE_URL}assets/particle/${result === 'Miss' ? 'challenge_white' : lane === 0 || lane === 3 ? 'note_mirai_light' : 'note_light'}.png`
+type FeedbackResult = Judgment | 'Red'
+const effectTexture = (lane: number, result: FeedbackResult = 'Perfect') => `${import.meta.env.BASE_URL}assets/particle/${result === 'Miss' || result === 'Red' ? 'challenge_white' : lane === 0 || lane === 3 ? 'note_mirai_light' : 'note_light'}.png`
 
 export default function PlaytestPage() {
   const { text } = useI18n()
@@ -40,6 +42,7 @@ export default function PlaytestPage() {
   const backgroundUrl = formalSession?.backgroundUrl ?? editor.backgroundUrl
   const audioRef = formalSession ? formalAudioRef : editor.audioRef
   const currentTime = formalSession ? 0 : editor.currentTime
+  const runStartTimeRef = useRef(Math.max(0, Math.min(currentTime, chart.duration)))
   const showToast = editor.showToast
   const { preferences } = usePreferences()
   const playbackRate = preferences.playbackRate
@@ -47,14 +50,20 @@ export default function PlaytestPage() {
   const backgroundVideoRef = useRef<HTMLVideoElement>(null)
   const rendererRef = useRef<PlaytestRenderer | null>(null)
   const notes = chart.notes
-  const notesByTime = useMemo(() => [...notes].sort((a, b) => a.time - b.time), [notes])
-  const notesByLane = useMemo(() => [0, 1, 2, 3].map((lane) => notes.filter((note) => note.lane === lane).sort((a, b) => a.time - b.time)), [notes])
+  const redZones = useMemo(() => createRedZoneIndex(notes), [notes])
+  const redDanger = useMemo(() => createRedZoneIndex(notes, -RED_HOLD_GRACE_MS), [notes])
+  const holdProtection = useMemo(() => createRedZoneIndex(notes, RED_HOLD_GRACE_MS), [notes])
+  const redTracker = useMemo(() => new RedZoneTracker(redDanger), [redDanger])
+  const notesByTime = useMemo(() => notes.filter((note) => !note.red).sort((a, b) => a.time - b.time), [notes])
+  const fakeHeads = useMemo(() => new Set(notesByTime.filter((note) => redZones.contains(note.lane, note.time)).map((note) => note.id)), [notesByTime, redZones])
+  const fakeNotes = useMemo(() => notesByTime.filter((note) => fakeHeads.has(note.id)), [fakeHeads, notesByTime])
+  const notesByLane = useMemo(() => [0, 1, 2, 3].map((lane) => notes.filter((note) => !note.red && !fakeHeads.has(note.id) && note.lane === lane).sort((a, b) => a.time - b.time)), [fakeHeads, notes])
   const noteById = useMemo(() => new Map(notes.map((note) => [note.id, note])), [notes])
   const hasCustomBackground = Boolean(backgroundUrl && chart.backgroundType)
   const hasVideoBackground = Boolean(backgroundUrl && chart.backgroundType === 'video')
   const duration = chart.duration
-  const holdTicksById = useMemo(() => new Map(notes.filter((note) => note.kind === 'hold' && note.endTime).map((note) => [note.id, holdTickTimes(chart, note.time, note.endTime!)])), [chart, notes])
-  const totalTicks = useMemo(() => notes.reduce((sum, note) => sum + 1 + (holdTicksById.get(note.id)?.length ?? 0), 0), [holdTicksById, notes])
+  const holdTicksById = useMemo(() => new Map(notesByTime.filter((note) => note.kind === 'hold' && note.endTime).map((note) => [note.id, holdTickTimes(chart, note.time, note.endTime!).filter((time) => !holdProtection.contains(note.lane, time))])), [chart, notesByTime, holdProtection])
+  const totalTicks = useMemo(() => notesByTime.reduce((sum, note) => sum + (fakeHeads.has(note.id) ? 0 : 1) + (holdTicksById.get(note.id)?.length ?? 0), 0), [fakeHeads, holdTicksById, notesByTime])
   const windows = useMemo(() => preferences.timingWindow === 'strict' ? [55, 105, 145] : preferences.timingWindow === 'relaxed' ? [95, 180, 240] : [75, 140, 190], [preferences.timingWindow])
 
   const playingRef = useRef(false)
@@ -65,6 +74,8 @@ export default function PlaytestPage() {
   const holdTicksRef = useRef(new Map<string, number>())
   const droppedHoldsRef = useRef(new Set<string>())
   const missCursorRef = useRef(0)
+  const fakeCursorRef = useRef(0)
+  const redContactRef = useRef(0)
   const scoringRef = useRef({ judgedTicks: 0, earnedUnits: 0, combo: 0 })
   const resultCountsRef = useRef<Record<Judgment, number>>({ Perfect: 0, Good: 0, Miss: 0 })
   const feedbackIdRef = useRef(0)
@@ -86,7 +97,7 @@ export default function PlaytestPage() {
   const [accuracy, setAccuracy] = useState(100)
   const [pressed, setPressed] = useState(new Set<number>())
   const [activeHoldLanes, setActiveHoldLanes] = useState(new Set<number>())
-  const [feedback, setFeedback] = useState<Array<{ id: number; lane: number; result: Judgment }>>([])
+  const [feedback, setFeedback] = useState<Array<{ id: number; lane: number; result: FeedbackResult }>>([])
   const [completed, setCompleted] = useState(false)
 
   useEffect(() => {
@@ -101,7 +112,7 @@ export default function PlaytestPage() {
     return audio ? playbackClockRef.current.getTime(audio.currentTime * 1000) : timeRef.current
   }, [audioRef])
 
-  const emitFeedback = useCallback((lane: number, result: Judgment) => {
+  const emitFeedback = useCallback((lane: number, result: FeedbackResult) => {
     const id = ++feedbackIdRef.current
     const previousTimer = feedbackTimersRef.current.get(lane)
     if (previousTimer) window.clearTimeout(previousTimer)
@@ -125,6 +136,16 @@ export default function PlaytestPage() {
     emitFeedback(lane, result)
   }, [emitFeedback, totalTicks])
 
+  const checkRedZones = useCallback((now: number) => {
+    const hits = redTracker.advance(now, pressedRef.current)
+    const fresh = hits & ~redContactRef.current
+    redContactRef.current = hits
+    if (!hits) return
+    const hadCombo = scoringRef.current.combo > 0
+    if (hadCombo) { scoringRef.current.combo = 0; setCombo(0) }
+    if (fresh || hadCombo) for (let lane = 0; lane < 4; lane++) if (hits & (1 << lane)) emitFeedback(lane, 'Red')
+  }, [emitFeedback, redTracker])
+
   const updateActiveHoldLanes = useCallback(() => {
     const lanes = new Set<number>()
     for (const id of holdStartsRef.current.keys()) {
@@ -136,16 +157,31 @@ export default function PlaytestPage() {
 
   const syncBackgroundVideoTime = useCallback((chartTime: number) => {
     const video = backgroundVideoRef.current
-    if (!video) return
+    if (!video || video.readyState === 0) return
     const requestedTime = Math.max(0, chartTime - chart.backgroundVideoStartTime) / 1000
     const targetTime = Number.isFinite(video.duration) && video.duration > 0 ? requestedTime % video.duration : requestedTime
-    if (Math.abs(video.currentTime - targetTime) > 0.05) video.currentTime = targetTime
+    // Allow small decoder drift without continuously interrupting playback with seeks.
+    if (!video.seeking && Math.abs(video.currentTime - targetTime) > 0.15) video.currentTime = targetTime
     video.playbackRate = audioRef.current?.playbackRate ?? 1
   }, [audioRef, chart.backgroundVideoStartTime])
+
+  const syncBackgroundVideoPlayback = useCallback(() => {
+    const video = backgroundVideoRef.current
+    if (!video) return
+    const audio = audioRef.current
+    const chartTime = audio ? audio.currentTime * 1000 : timeRef.current
+    syncBackgroundVideoTime(chartTime)
+    if (audio && playingRef.current && prerollTimeRef.current === null && !audio.paused && !audio.ended && !audio.seeking
+      && audio.readyState >= 3 && chartTime >= chart.backgroundVideoStartTime && !document.hidden) {
+      if (video.paused) void video.play().catch(() => undefined)
+    } else video.pause()
+  }, [audioRef, chart.backgroundVideoStartTime, syncBackgroundVideoTime])
 
   const resetRun = useCallback((startTime = 0) => {
     prerollEpochRef.current += 1; cancelAnimationFrame(prerollFrameRef.current)
     judgedRef.current.clear(); holdStartsRef.current.clear(); holdTicksRef.current.clear(); droppedHoldsRef.current.clear()
+    redTracker.reset(startTime); redContactRef.current = 0; fakeCursorRef.current = 0
+    while (fakeCursorRef.current < fakeNotes.length && fakeNotes[fakeCursorRef.current].time < startTime) fakeCursorRef.current++
     pressedRef.current.clear(); missCursorRef.current = 0; scoringRef.current = { judgedTicks: 0, earnedUnits: 0, combo: 0 }; resultCountsRef.current = { Perfect: 0, Good: 0, Miss: 0 }
     feedbackTimersRef.current.forEach(window.clearTimeout); feedbackTimersRef.current.clear()
     setFeedback([]); setPressed(new Set()); setActiveHoldLanes(new Set()); setScore(0); setAccuracy(100); setCombo(0); setCompleted(false)
@@ -157,7 +193,7 @@ export default function PlaytestPage() {
       if (note.time >= startTime) break
       judgedRef.current.set(note.id, 'Miss')
       missCursorRef.current++
-      scoringRef.current.judgedTicks += 1 + (holdTicksById.get(note.id)?.length ?? 0)
+      scoringRef.current.judgedTicks += (fakeHeads.has(note.id) ? 0 : 1) + (holdTicksById.get(note.id)?.length ?? 0)
       rendererRef.current?.hideNote(note.id)
     }
     timeRef.current = startTime
@@ -165,12 +201,21 @@ export default function PlaytestPage() {
     setDisplayTime(startTime)
     const audio = audioRef.current
     if (audio) { audio.pause(); audio.currentTime = startTime / 1000 }
+    backgroundVideoRef.current?.pause()
     syncBackgroundVideoTime(startTime)
     playingRef.current = false; setPlaying(false)
-  }, [audioRef, holdTicksById, notesByTime, syncBackgroundVideoTime])
+  }, [audioRef, fakeHeads, fakeNotes, holdTicksById, notesByTime, redTracker, syncBackgroundVideoTime])
 
   const processFrame = useCallback((now: number) => {
     timeRef.current = now
+    while (fakeCursorRef.current < fakeNotes.length && fakeNotes[fakeCursorRef.current].time <= now) {
+      const note = fakeNotes[fakeCursorRef.current++]
+      if (note.kind === 'hold' && (holdTicksById.get(note.id)?.length ?? 0) > 0) {
+        holdStartsRef.current.set(note.id, 'Perfect'); holdTicksRef.current.set(note.id, 0)
+        rendererRef.current?.setHoldStarted(note.id)
+      } else judgedRef.current.set(note.id, 'Perfect')
+      // Keep fake notes visible as they pass the line.
+    }
     for (const [id, startedAs] of holdStartsRef.current) {
       const note = noteById.get(id)
       if (!note || judgedRef.current.has(id)) continue
@@ -191,7 +236,7 @@ export default function PlaytestPage() {
     }
     while (missCursorRef.current < notesByTime.length && now - notesByTime[missCursorRef.current].time > windows[2]) {
       const note = notesByTime[missCursorRef.current++]
-      if (judgedRef.current.has(note.id) || holdStartsRef.current.has(note.id)) continue
+      if (fakeHeads.has(note.id) || judgedRef.current.has(note.id) || holdStartsRef.current.has(note.id)) continue
       registerJudgment(note.lane, 'Miss')
       if (note.kind === 'hold') {
         holdStartsRef.current.set(note.id, 'Miss')
@@ -202,29 +247,30 @@ export default function PlaytestPage() {
         judgedRef.current.set(note.id, 'Miss'); rendererRef.current?.hideNote(note.id)
       }
     }
-    const video = backgroundVideoRef.current
-    if (video && now >= chart.backgroundVideoStartTime && video.paused && !document.hidden) void video.play().catch(() => undefined)
-  }, [chart.backgroundVideoStartTime, holdTicksById, noteById, notesByTime, registerJudgment, updateActiveHoldLanes, windows])
+    checkRedZones(now)
+  }, [checkRedZones, fakeHeads, fakeNotes, holdTicksById, noteById, notesByTime, registerJudgment, updateActiveHoldLanes, windows])
 
   useEffect(() => {
     if (!playing) return
     const tick = (timestamp: number) => {
       const audio = audioRef.current
+      syncBackgroundVideoPlayback()
       if (!audio || audio.paused) { rafRef.current = requestAnimationFrame(tick); return }
-      const now = audio.currentTime * 1000
+      const now = getRenderTime()
       processFrame(now)
       if (timestamp - lastUiUpdateRef.current > 70) { setDisplayTime(now); lastUiUpdateRef.current = timestamp }
       rafRef.current = requestAnimationFrame(tick)
     }
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [audioRef, playing, processFrame])
+  }, [audioRef, getRenderTime, playing, processFrame, syncBackgroundVideoPlayback])
 
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
     const handleEnded = () => {
       const endedAt = audio.currentTime * 1000
+      processFrame(endedAt)
       playbackClockRef.current.stop(endedAt)
       timeRef.current = endedAt
       playingRef.current = false
@@ -235,20 +281,28 @@ export default function PlaytestPage() {
     }
     audio.addEventListener('ended', handleEnded)
     return () => audio.removeEventListener('ended', handleEnded)
-  }, [audioRef, formalSession, improvising])
+  }, [audioRef, formalSession, improvising, processFrame])
 
   useEffect(() => {
     const video = backgroundVideoRef.current
     if (!video) return
-    const syncPlayback = () => {
-      syncBackgroundVideoTime(audioRef.current?.currentTime ? audioRef.current.currentTime * 1000 : timeRef.current)
-      if (playing && prerollTimeRef.current === null && audioRef.current && audioRef.current.currentTime * 1000 >= chart.backgroundVideoStartTime && !document.hidden) void video.play().catch(() => undefined)
-      else video.pause()
+    const audio = audioRef.current
+    const events = ['playing', 'pause', 'waiting', 'seeking', 'seeked', 'ratechange', 'ended'] as const
+    syncBackgroundVideoPlayback()
+    document.addEventListener('visibilitychange', syncBackgroundVideoPlayback)
+    video.addEventListener('loadedmetadata', syncBackgroundVideoPlayback)
+    video.addEventListener('canplay', syncBackgroundVideoPlayback)
+    video.addEventListener('seeked', syncBackgroundVideoPlayback)
+    for (const event of events) audio?.addEventListener(event, syncBackgroundVideoPlayback)
+    return () => {
+      document.removeEventListener('visibilitychange', syncBackgroundVideoPlayback)
+      video.removeEventListener('loadedmetadata', syncBackgroundVideoPlayback)
+      video.removeEventListener('canplay', syncBackgroundVideoPlayback)
+      video.removeEventListener('seeked', syncBackgroundVideoPlayback)
+      for (const event of events) audio?.removeEventListener(event, syncBackgroundVideoPlayback)
+      video.pause()
     }
-    syncPlayback()
-    document.addEventListener('visibilitychange', syncPlayback)
-    return () => { document.removeEventListener('visibilitychange', syncPlayback); video.pause() }
-  }, [audioRef, backgroundUrl, chart.backgroundVideoStartTime, playing, syncBackgroundVideoTime])
+  }, [audioRef, backgroundUrl, playing, syncBackgroundVideoPlayback])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -268,7 +322,7 @@ export default function PlaytestPage() {
   }, [chart.bpm, chart.bpmChanges, chart.effects, chart.duration, chart.offset, getRenderTime, hasCustomBackground, hasVideoBackground, notes, preferences.laneTilt, preferences.noteScrollSpeed])
 
   useEffect(() => {
-    resetRun(Math.max(0, Math.min(currentTime, chart.duration)))
+    resetRun(runStartTimeRef.current)
     return () => { playingRef.current = false; prerollEpochRef.current += 1; cancelAnimationFrame(prerollFrameRef.current); cancelAnimationFrame(rafRef.current); audioRef.current?.pause(); feedbackTimersRef.current.forEach(window.clearTimeout) }
   // This initializes a run when the playtest mounts; editor time changes are intentionally ignored afterward.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -295,6 +349,7 @@ export default function PlaytestPage() {
         if (playbackEpoch !== prerollEpochRef.current || exitOpenRef.current) { audio.pause(); return }
         playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
         playingRef.current = true; setPlaying(true)
+        syncBackgroundVideoPlayback()
       }
       catch { playingRef.current = false; setPlaying(false); showToast(text('音频无法播放，请重新选择文件', 'Audio could not be played; select the file again')) }
     }
@@ -312,9 +367,9 @@ export default function PlaytestPage() {
       void startAudio()
     }
     prerollFrameRef.current = requestAnimationFrame(advancePreroll)
-  }, [audioRef, audioUrl, playbackRate, resetRun, showToast])
+  }, [audioRef, audioUrl, playbackRate, resetRun, showToast, syncBackgroundVideoPlayback])
 
-  const restart = useCallback(() => resetRun(0), [resetRun])
+  const restart = useCallback(() => resetRun(runStartTimeRef.current), [resetRun])
 
   const hitLane = useCallback((lane: number) => {
     if (!playingRef.current || exitOpenRef.current || prerollTimeRef.current !== null || audioRef.current?.paused) return
@@ -323,6 +378,7 @@ export default function PlaytestPage() {
       const tap: ChartNote = { id: crypto.randomUUID(), lane, time: now, kind: 'note' }
       recordedRef.current.push(tap)
     }
+    if (redDanger.contains(lane, now)) return
     let reconnecting: ChartNote | undefined
     for (const id of holdStartsRef.current.keys()) {
       const note = noteById.get(id)
@@ -347,15 +403,21 @@ export default function PlaytestPage() {
       rendererRef.current?.setHoldActive(candidate.id, true); updateActiveHoldLanes()
     } else { judgedRef.current.set(candidate.id, result); rendererRef.current?.hideNote(candidate.id) }
     registerJudgment(lane, result)
-  }, [audioRef, duration, getRenderTime, improvising, noteById, notesByLane, registerJudgment, updateActiveHoldLanes, windows])
+  }, [audioRef, duration, getRenderTime, improvising, noteById, notesByLane, redDanger, registerJudgment, updateActiveHoldLanes, windows])
 
   const pressLane = useCallback((lane: number) => {
     if (pressedRef.current.has(lane)) return
+    const judging = playingRef.current && !exitOpenRef.current && prerollTimeRef.current === null && !audioRef.current?.paused
+    const now = getRenderTime()
+    if (judging) processFrame(now) // Advance with the old key state before this transition.
     pressedRef.current = new Set(pressedRef.current).add(lane); setPressed(new Set(pressedRef.current)); rendererRef.current?.setLanePressed(lane, true); hitLane(lane); updateActiveHoldLanes()
-  }, [hitLane, updateActiveHoldLanes])
+    if (judging) checkRedZones(now)
+  }, [audioRef, checkRedZones, getRenderTime, hitLane, processFrame, updateActiveHoldLanes])
 
   const releaseLane = useCallback((lane: number) => {
     if (!pressedRef.current.has(lane)) return
+    if (playingRef.current && !exitOpenRef.current && prerollTimeRef.current === null && !audioRef.current?.paused) processFrame(getRenderTime())
+    redContactRef.current &= ~(1 << lane)
     const next = new Set(pressedRef.current); next.delete(lane); pressedRef.current = next; setPressed(next); rendererRef.current?.setLanePressed(lane, false)
     let active: ChartNote | undefined
     for (const id of holdStartsRef.current.keys()) {
@@ -364,7 +426,7 @@ export default function PlaytestPage() {
     }
     if (active) { droppedHoldsRef.current.add(active.id); rendererRef.current?.setHoldActive(active.id, false) }
     updateActiveHoldLanes()
-  }, [noteById, updateActiveHoldLanes])
+  }, [audioRef, getRenderTime, noteById, processFrame, updateActiveHoldLanes])
 
   const pressTouchLane = useCallback((event: React.PointerEvent<HTMLButtonElement>, lane: number) => {
     event.preventDefault()
@@ -438,12 +500,19 @@ export default function PlaytestPage() {
   }, [releaseLane])
 
   const laneX = (lane: number) => getPlaytestLaneCenterPercent(lane, preferences.laneTilt)
-  const trackInset = `${(1 - getPlaytestTrackHalfWidth(preferences.laneTilt)) * 50}%`
+  const trackInset = getPlaytestTrackInsetPercent(preferences.laneTilt, JUDGMENT_LINE_Y)
+  const trackTopInset = getPlaytestTrackInsetPercent(preferences.laneTilt, 0)
+  const trackBottomInset = getPlaytestTrackInsetPercent(preferences.laneTilt, 1)
+  const videoBackgroundActive = displayTime >= chart.backgroundVideoStartTime
 
-  return <div className="playtest-page page-enter" style={{ '--playtest-track-inset': trackInset } as React.CSSProperties}>
+  return <div className="playtest-page page-enter" style={{ '--playtest-track-inset': `${trackInset}%` } as React.CSSProperties}>
     {formalSession && <audio ref={formalAudioRef} src={audioUrl} preload="auto" />}
     {backgroundUrl && chart.backgroundType === 'image' && <img key={backgroundUrl} className="playtest-background" src={backgroundUrl} alt="" decoding="async" />}
-    {backgroundUrl && chart.backgroundType === 'video' && <video key={backgroundUrl} ref={backgroundVideoRef} className="playtest-background" data-active={displayTime >= chart.backgroundVideoStartTime} src={backgroundUrl} muted loop playsInline preload="metadata" disablePictureInPicture onLoadedMetadata={() => syncBackgroundVideoTime(timeRef.current)} />}
+    {backgroundUrl && chart.backgroundType === 'video' && <video key={backgroundUrl} ref={backgroundVideoRef} className="playtest-background" data-active={videoBackgroundActive} src={backgroundUrl} muted loop playsInline preload="metadata" disablePictureInPicture />}
+    {preferences.trackBackgroundBlur && hasCustomBackground && (!hasVideoBackground || videoBackgroundActive) &&
+      <div className="playtest-track-background-blur" aria-hidden="true" style={{
+        clipPath: `polygon(${trackTopInset}% 0, ${100 - trackTopInset}% 0, ${100 - trackBottomInset}% 100%, ${trackBottomInset}% 100%)`,
+      }} />}
     <canvas ref={canvasRef} className="playtest-canvas" aria-label={text('WebGL2 谱面试玩画面', 'WebGL2 chart playtest')} />
     <div className="playtest-vignette" /><div className="playtest-judgment-line" />
     <header className="playtest-header">
@@ -454,7 +523,7 @@ export default function PlaytestPage() {
     <aside className="playtest-score"><span>SCORE</span><strong>{score.toString().padStart(8, '0')}</strong><span>ACCURACY</span><strong>{accuracy.toFixed(2)}%</strong></aside>
     <aside className="playtest-performance"><div><Gauge /><span><b>{stats.fps || '—'} FPS · P95 {stats.frameTimeP95.toFixed(1)} MS</b><small>MAX {stats.frameTimeMax.toFixed(1)} MS · {Math.round(stats.renderScale * 100)}% SCALE</small></span></div><div><Sparkles /><span><b>{stats.notes} NOTES · {stats.particles} FX</b><small>{stats.longFramePercent.toFixed(1)}% LONG · {stats.clockStalls} CLOCK STALLS</small></span></div></aside>
     {feedback.map((effect) => <div key={`sprite-${effect.id}`} className={`legacy-hit-effect ${effect.result.toLowerCase()} ${effect.lane === 0 || effect.lane === 3 ? 'light' : 'conflict'}`} style={{ left: `${laneX(effect.lane)}%` }}><i style={{ backgroundImage: `url(${effectTexture(effect.lane, effect.result)})` }} /></div>)}
-    {feedback.map((effect) => <div key={`judge-${effect.id}`} className={`playtest-judge-text ${effect.result.toLowerCase()}`} style={{ left: `${laneX(effect.lane)}%` }}>{effect.result}</div>)}
+    {feedback.map((effect) => <div key={`judge-${effect.id}`} className={`playtest-judge-text ${effect.result.toLowerCase()}`} style={{ left: `${laneX(effect.lane)}%` }}>{effect.result === 'Red' ? text(redZoneCopy.hit.zh, redZoneCopy.hit.en) : effect.result}</div>)}
     {[...activeHoldLanes].map((lane) => <i key={lane} className={`playtest-hold-effect ${lane === 0 || lane === 3 ? 'light' : 'conflict'}`} style={{ left: `${laneX(lane)}%`, backgroundImage: `url(${effectTexture(lane)})` }} />)}
     {combo > 0 && <div key={combo} className="playtest-combo"><b>{combo}</b><span>COMBO</span></div>}
     {!playing && !completed && !exitStep && <Button variant="outline" className="playtest-paused" onClick={() => void togglePlayback()}><Play fill="currentColor" /><b>{displayTime > 0 ? text('继续', 'Continue') : formalSession ? text('开始游玩', 'Start play') : text('开始试玩', 'Start playtest')}</b><span>SPACE</span></Button>}
@@ -474,7 +543,7 @@ export default function PlaytestPage() {
       <div className="result-grade">{accuracy >= 99 ? 'SS' : accuracy >= 95 ? 'S' : accuracy >= 90 ? 'A' : accuracy >= 80 ? 'B' : 'C'}</div>
       <div className="result-score"><span>SCORE</span><strong>{score.toString().padStart(8, '0')}</strong><small>{accuracy.toFixed(2)}% ACCURACY</small></div>
       <div className="result-judgments"><div><span>PERFECT</span><b>{resultCountsRef.current.Perfect}</b></div><div><span>GOOD</span><b>{resultCountsRef.current.Good}</b></div><div><span>MISS</span><b>{resultCountsRef.current.Miss}</b></div><div><span>MAX COMBO</span><b>{combo}</b></div></div>
-      <div className="result-actions"><Button onClick={() => resetRun(0)}><RotateCcw />{text('再来一次', 'Retry')}</Button><Button variant="outline" onClick={leave}><ArrowLeft />{text('退出游玩', 'Leave play')}</Button></div>
+      <div className="result-actions"><Button onClick={restart}><RotateCcw />{text('再来一次', 'Retry')}</Button><Button variant="outline" onClick={leave}><ArrowLeft />{text('退出游玩', 'Leave play')}</Button></div>
     </DialogContent></Dialog>
   </div>
 }

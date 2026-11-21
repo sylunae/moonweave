@@ -235,3 +235,13 @@ describe('AI file protocol', () => {
     await expectIssue(prepareAiImport(empty(), 'chart-a', { ...standalone(), notes: Array(50001).fill(tap()) }), 'size')
   })
 })
+
+it('transfers overlapping normal/red notes and binds AI revisions to the red flag', async () => {
+  const source = normalizeChart({ ...empty(), notes: [tap('normal'), { ...tap('red'), red: true }] })
+  const plan = await prepareChartTransfer(empty(), 'destination', source)
+  expect(plan.next.notes).toEqual(source.notes)
+  const recolored = { ...source, notes: source.notes.map((note) => ({ ...note, red: !note.red })) }
+  expect(await aiChartRevision(source)).not.toBe(await aiChartRevision(recolored))
+  expect(await aiNotesRevision(source.notes)).not.toBe(await aiNotesRevision(recolored.notes))
+  await expectIssue(prepareChartTransfer(empty(), 'destination', { ...source, notes: [tap('a'), tap('b')] }), 'collision')
+})

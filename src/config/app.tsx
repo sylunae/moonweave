@@ -1,6 +1,10 @@
 import { Library, Piano } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+export const playSettingsCopy = {
+  trackBackgroundBlur: { zh: '轨道背景模糊', en: 'Track background blur' },
+} as const
+
 export const improvisationCopy = {
   title: { zh: '即兴制谱', en: 'Improvise' },
   entry: { zh: '从当前位置演奏 · 记录敲击并向上退场', en: 'Play from here · Record taps moving upward' },
@@ -146,3 +150,8 @@ export const appConfig = {
 export function isRouteId(value: string): value is RouteId {
   return value === 'manage' || value === 'editor' || value === 'playtest'
 }
+
+export const redZoneCopy = {
+  mode: { zh: '红区模式', en: 'Red zones' },
+  hit: { zh: '踩中红区', en: 'Red zone' },
+} as const

@@ -282,6 +282,7 @@
         "id": {
           "$ref": "#/$defs/id"
         },
+        "red": { "type": "boolean" },
         "kind": {
           "enum": [
             "note",
@@ -335,6 +336,7 @@
         "id": {
           "$ref": "#/$defs/id"
         },
+        "red": { "type": "boolean" },
         "kind": {
           "enum": [
             "note",

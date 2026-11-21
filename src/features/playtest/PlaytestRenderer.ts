@@ -1,8 +1,9 @@
+import { defaultThemePalettes } from '@/app/theme'
 import { beatLinesInRange } from '@/features/chart/tempoMap'
 import type { ChartEffect } from '@/features/chart/effects/scrollSpeed'
 import { createSpeedGeometry, type VisualNote } from './speedGeometry'
 import type { BpmChange, ChartNote } from '@/features/chart/types'
-import { getPlaytestHorizon, getPlaytestTrackHalfWidth } from '@/features/playtest/playtestGeometry'
+import { getPlaytestHorizon, getPlaytestTrackHalfWidth, JUDGMENT_LINE_Y, TRACK_TOP_SCALE_RANGE } from '@/features/playtest/playtestGeometry'
 
 const NOTE_STRIDE = 6
 const PARTICLE_STRIDE = 8
@@ -72,7 +73,7 @@ flat out float vColor;
 flat out float vActive;
 
 float visualScreenY(float noteTime) {
-  float trackTopScale = 1.0 - uTilt * 0.82;
+  float trackTopScale = 1.0 - uTilt * ${TRACK_TOP_SCALE_RANGE};
   float curve = -log(trackTopScale);
   float curveRange = exp(curve) - 1.0;
   float startSlope = curve > 0.0001 ? curve / curveRange : 1.0;
@@ -83,15 +84,15 @@ float visualScreenY(float noteTime) {
     : progress > 1.0 ? 1.0 + (progress - 1.0) * endSlope
     : curve > 0.0001 ? (exp(curve * progress) - 1.0) / curveRange
     : progress;
-  return eased * 0.86;
+  return eased * ${JUDGMENT_LINE_Y};
 }
 
 float trackScaleAt(float screenY) {
-  float trackTopScale = 1.0 - uTilt * 0.82;
+  float trackTopScale = 1.0 - uTilt * ${TRACK_TOP_SCALE_RANGE};
   // Keep extending the perspective line outside the visible track. Clamping
   // here makes notes switch to vertical motion after the judgment line and
   // shears holds whose other endpoint is still inside the track.
-  return mix(trackTopScale, 1.0, screenY / 0.86);
+  return mix(trackTopScale, 1.0, screenY / ${JUDGMENT_LINE_Y});
 }
 
 vec2 projectTrack(float lanePosition, float screenY) {
@@ -137,9 +138,10 @@ flat in float vKind;
 flat in float vColor;
 flat in float vActive;
 uniform vec4 uColors[4];
+uniform vec4 uRedColor;
 out vec4 outColor;
 void main() {
-  vec4 color = uColors[int(vColor + 0.5)];
+  vec4 color = vColor > 3.5 ? uRedColor : uColors[int(vColor + 0.5)];
   vec2 edge = min(vUv, 1.0-vUv);
   // Derive each axis independently. Taking fwidth after min() makes the
   // derivative jump across the quad's internal triangle edge, drawing a
@@ -152,7 +154,8 @@ void main() {
     ? mix(color.rgb * 0.42, color.rgb * 1.18, vActive)
     : color.rgb;
   vec3 stroke = vKind > 0.5 && vActive < 0.5 ? color.rgb : vec3(1.0);
-  outColor = vec4(mix(fill, stroke, border), color.a * (vKind > 0.5 ? 0.9 : 1.0));
+  // The body must fully cover beat lines and other track decoration beneath it.
+  outColor = vec4(mix(fill, stroke, border), color.a);
 }`
 
 const TRACK_VERTEX = `#version 300 es
@@ -163,7 +166,7 @@ uniform float uTrackWidth;
 uniform float uTrackGeometry;
 
 float visualScreenY(float depth) {
-  float trackTopScale = 1.0 - uTilt * 0.82;
+  float trackTopScale = 1.0 - uTilt * ${TRACK_TOP_SCALE_RANGE};
   float curve = -log(trackTopScale);
   float curveRange = exp(curve) - 1.0;
   float startSlope = curve > 0.0001 ? curve / curveRange : 1.0;
@@ -173,13 +176,13 @@ float visualScreenY(float depth) {
     : progress > 1.0 ? 1.0 + (progress - 1.0) * endSlope
     : curve > 0.0001 ? (exp(curve * progress) - 1.0) / curveRange
     : progress;
-  return eased * 0.86;
+  return eased * ${JUDGMENT_LINE_Y};
 }
 
 void main() {
   float screenY = uTrackGeometry > 0.5 ? aPosition.y : visualScreenY(aPosition.y);
-  float trackTopScale = 1.0 - uTilt * 0.82;
-  float trackScale = mix(trackTopScale, 1.0, screenY / 0.86);
+  float trackTopScale = 1.0 - uTilt * ${TRACK_TOP_SCALE_RANGE};
+  float trackScale = mix(trackTopScale, 1.0, screenY / ${JUDGMENT_LINE_Y});
   gl_Position = vec4(aPosition.x * uTrackWidth * trackScale, 1.0 - screenY * 2.0, 0.2, 1.0);
 }`
 
@@ -323,13 +326,14 @@ export class PlaytestRenderer {
   private readonly startedHolds = new Set<string>()
   private readonly activeHolds = new Set<string>()
   private readonly pressedLanes = new Set<number>()
+  private readonly redColor: number[]
   private readonly autoPlayedNotes = new Set<string>()
   private readonly resizeObserver: ResizeObserver
   private frame = 0
   private particleCursor = 0
   private activeParticles = 0
   private renderScale = 1
-  private lastResizeScale = 0
+  private resizePending = true
   private lastStatsAt = performance.now()
   private statsFrames = 0
   private slowWindows = 0
@@ -360,11 +364,14 @@ export class PlaytestRenderer {
     })
     if (!gl) throw new Error('当前设备不支持 WebGL2')
     this.gl = gl
+    const token = getComputedStyle(options.canvas).getPropertyValue('--red-zone').trim()
+    const color = Number.parseInt((/^#[0-9a-f]{6}$/i.test(token) ? token : defaultThemePalettes.dark.redZone).slice(1), 16)
+    this.redColor = [(color >> 16 & 255) / 255, (color >> 8 & 255) / 255, (color & 255) / 255, 1]
     this.renderScale = Math.max(0.72, Math.min(1, options.initialRenderScale ?? 1))
     this.notes = [...options.notes].sort((a, b) => a.time - b.time)
     this.geometry = createSpeedGeometry(this.notes, options.effects)
     this.visualBeats = beatLinesInRange(options, 0, options.duration, 1).map((line) => ({ time: line.time, position: this.geometry.map.positionAt(line.time) }))
-    this.noteProgram = compileProgram(gl, NOTE_VERTEX, NOTE_FRAGMENT, ['uTime', 'uRealTime', 'uHorizon', 'uTilt', 'uTrackWidth', 'uViewportHeight', 'uColors'])
+    this.noteProgram = compileProgram(gl, NOTE_VERTEX, NOTE_FRAGMENT, ['uTime', 'uRealTime', 'uHorizon', 'uTilt', 'uTrackWidth', 'uViewportHeight', 'uColors', 'uRedColor'])
     this.trackProgram = compileProgram(gl, TRACK_VERTEX, TRACK_FRAGMENT, ['uTilt', 'uTrackWidth', 'uTrackGeometry', 'uColor'])
     this.glowProgram = compileProgram(gl, GLOW_VERTEX, GLOW_FRAGMENT, ['uTrackWidth', 'uColor'])
     this.particleProgram = compileProgram(gl, PARTICLE_VERTEX, PARTICLE_FRAGMENT, ['uTime', 'uAspect', 'uTexture', 'uColors'])
@@ -380,9 +387,10 @@ export class PlaytestRenderer {
     this.particleVao = this.createParticleVao()
     this.particleInstances = this.getInstanceBuffer(this.particleVao, 1)
     this.createParticleTexture()
-    this.resizeObserver = new ResizeObserver(() => this.resize())
+    // Resizing clears the drawing buffer. Defer it to the next render so the
+    // compositor can never receive a resized, not-yet-redrawn canvas.
+    this.resizeObserver = new ResizeObserver(() => { this.resizePending = true })
     this.resizeObserver.observe(options.canvas)
-    this.resize()
     this.frame = requestAnimationFrame(this.render)
   }
 
@@ -573,10 +581,10 @@ export class PlaytestRenderer {
     const scale = dpr * this.renderScale
     const width = Math.max(1, Math.round(canvas.clientWidth * scale))
     const height = Math.max(1, Math.round(this.viewportHeight * scale))
-    if (canvas.width !== width || canvas.height !== height || this.lastResizeScale !== scale) {
+    this.resizePending = false
+    if (canvas.width !== width || canvas.height !== height) {
       canvas.width = width
       canvas.height = height
-      this.lastResizeScale = scale
       this.gl.viewport(0, 0, width, height)
     }
   }
@@ -601,14 +609,19 @@ export class PlaytestRenderer {
       if (this.noteData[cursor] !== rounded) { this.noteData[cursor] = rounded; changed = true }
       cursor++
     }
-    for (const note of candidates) {
-      if (this.hiddenNotes.has(note.sourceId) || (note.sourceEndTime < time - 260 && !this.startedHolds.has(note.sourceId))) continue
-      write(note.lane); write(note.time); write(note.endTime ?? note.time)
-      write(note.kind === 'hold' ? 1 : 0); write(note.lane); write(this.activeHolds.has(note.sourceId) ? 1 : 0)
-    }
-    for (let index = firstRecorded; recorded && index < recordedEnd; index++) {
-      const note = recorded[index]
-      write(note.lane); write(note.time); write(note.time); write(0); write(note.lane); write(-1)
+    // Draw ordinary notes first and red zones last, independent of kind, time,
+    // selection or source order. Two linear passes reuse the same GPU batch.
+    for (let layer = 0; layer < 2; layer++) {
+      for (const note of candidates) {
+        if (Boolean(note.red) !== (layer === 1)) continue
+        if (this.hiddenNotes.has(note.sourceId) || (note.sourceEndTime < time - 260 && !this.startedHolds.has(note.sourceId))) continue
+        write(note.lane); write(note.time); write(note.endTime ?? note.time)
+        write(note.kind === 'hold' ? 1 : 0); write(note.red ? 4 : note.lane); write(this.activeHolds.has(note.sourceId) ? 1 : 0)
+      }
+      if (layer === 0) for (let index = firstRecorded; recorded && index < recordedEnd; index++) {
+        const note = recorded[index]
+        write(note.lane); write(note.time); write(note.time); write(0); write(note.lane); write(-1)
+      }
     }
     const count = cursor / NOTE_STRIDE
     changed ||= count !== this.visibleCount
@@ -723,6 +736,7 @@ export class PlaytestRenderer {
     gl.uniform1f(uniforms.uHorizon, getPlaytestHorizon(HORIZON_MS, this.options.scrollSpeed, this.options.laneTilt))
     gl.uniform1f(uniforms.uTilt, this.options.laneTilt / 45)
     gl.uniform1f(uniforms.uTrackWidth, getPlaytestTrackHalfWidth(this.options.laneTilt))
+    gl.uniform4fv(uniforms.uRedColor, this.redColor)
     gl.uniform1f(uniforms.uViewportHeight, this.viewportHeight)
     this.setPalette(uniforms.uColors)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -758,7 +772,7 @@ export class PlaytestRenderer {
     const first = Math.max(0, lowerBound(this.notes, time - 34) - 2)
     for (let index = first; index < this.notes.length && this.notes[index].time <= time + 20; index++) {
       const note = this.notes[index]
-      if (this.autoPlayedNotes.has(note.id)) continue
+      if (note.red || this.autoPlayedNotes.has(note.id)) continue
       this.autoPlayedNotes.add(note.id)
       this.hideNote(note.id)
       this.triggerHit(note.lane, time, 1)
@@ -768,6 +782,7 @@ export class PlaytestRenderer {
 
   private render = (now: number) => {
     const gl = this.gl
+    if (this.resizePending || this.lastDevicePixelRatio !== (window.devicePixelRatio || 1) || this.lastWindowWidth !== window.innerWidth) this.resize()
     const time = this.options.getTime()
     if (this.lastFrameAt > 0) {
       const frameTime = now - this.lastFrameAt
@@ -780,7 +795,6 @@ export class PlaytestRenderer {
     this.lastTime = time
     this.autoplay(time)
     this.uploadVisibleNotes(time)
-    if (this.lastDevicePixelRatio !== (window.devicePixelRatio || 1) || this.lastWindowWidth !== window.innerWidth) this.resize()
     this.drawCalls = 0
     gl.disable(gl.DEPTH_TEST)
     gl.enable(gl.BLEND)
@@ -817,10 +831,11 @@ export class PlaytestRenderer {
       if (longFramePercent >= 12 || frameTimeMax >= 50) { this.slowWindows++; this.fastWindows = 0 }
       else if (longFramePercent <= 3) { this.fastWindows++; this.slowWindows = 0 }
       else { this.slowWindows = 0; this.fastWindows = 0 }
+      const previousRenderScale = this.renderScale
       if (this.slowWindows >= 2 && this.renderScale > 0.72) { this.renderScale = Math.max(0.72, this.renderScale - 0.1); this.slowWindows = 0 }
       if (this.fastWindows >= 5 && this.renderScale < 1) { this.renderScale = Math.min(1, this.renderScale + 0.05); this.fastWindows = 0 }
       this.options.onStats({ fps, backend: 'WebGL2', renderScale: this.renderScale, notes: this.visibleCount, particles: this.activeParticles, drawCalls: this.drawCalls, frameTimeP95, frameTimeMax, longFramePercent, clockStalls: this.clockStalls })
-      this.resize()
+      if (this.renderScale !== previousRenderScale) this.resizePending = true
       this.statsFrames = 0
       this.frameTimeCount = 0
       this.clockStalls = 0

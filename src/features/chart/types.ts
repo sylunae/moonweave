@@ -10,6 +10,8 @@ export interface ChartNote {
   time: number
   endTime?: number
   kind: NoteKind
+  /** Omitted in legacy charts; red zones may overlap ordinary notes. */
+  red?: boolean
 }
 
 export interface ChartSettings {
@@ -77,7 +79,10 @@ export function normalizeChart(input: unknown): Chart {
       && Number.isFinite(candidate.time) && candidate.time! >= 0
       && (candidate.kind === 'note' || candidate.kind === 'hold')
       && (candidate.kind !== 'hold' || (Number.isFinite(candidate.endTime) && candidate.endTime! > candidate.time!))
-  }).map((note) => ({ ...note, lane: Math.round(note.lane) })) : []
+  }).map((note) => {
+    const { red, ...rest } = note
+    return { ...rest, lane: Math.round(note.lane), ...(red === true ? { red: true } : {}) }
+  }) : []
   const settings: Partial<ChartSettings> = value.settings && typeof value.settings === 'object' ? value.settings : {}
   const bpmChanges = Array.isArray(value.bpmChanges)
     ? [...new Map(value.bpmChanges.flatMap((change) => {

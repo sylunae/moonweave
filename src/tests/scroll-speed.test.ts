@@ -105,14 +105,20 @@ describe('scroll speed effects', () => {
     expect(geometry.visible(1000, 1000).map((p) => p.sourceId)).toEqual(['0', '1', '2', '3'])
     expect(geometry.visible(1001, 2000)).toEqual([])
   })
-  it('splits crossing holds into speed segments and retains zero-distance caps', () => {
+  it('keeps holds continuous through ramps and stops without internal caps', () => {
     const geometry = createSpeedGeometry([{ id: 'hold', lane: 0, kind: 'hold', time: 500, endTime: 5000 }],
       [ramp('ramp', 1000, 2000, 0), instant('resume', 4000, 2)])
     expect(geometry.pieces.map((p) => [p.time, p.endTime, p.kind])).toEqual([
-      [500, 1000, 'hold'], [1000, 1500, 'hold'], [1500, 1500, 'note'], [1500, 3500, 'hold'],
+      [500, 3500, 'hold'],
     ])
     expect(geometry.visible(1800, 2000)).toHaveLength(1)
-    expect(geometry.visible(1500, 1500)).toHaveLength(3)
+    expect(geometry.visible(1500, 1500)).toHaveLength(1)
+    expect(geometry.visible(1499, 1501)[0]).toMatchObject({ sourceId: 'hold', sourceTime: 500, sourceEndTime: 5000 })
+  })
+  it('retains a visible cap for a hold entirely inside a scroll stop', () => {
+    const geometry = createSpeedGeometry([{ id: 'hold', lane: 0, kind: 'hold', time: 1500, endTime: 2500 }],
+      [instant('stop', 1000, 0), instant('resume', 4000, 2)])
+    expect(geometry.visible(1000, 1000)).toEqual([expect.objectContaining({ time: 1000, endTime: 1000, kind: 'note', sourceEndTime: 2500 })])
   })
   it('retimes both effect endpoints with initial BPM and shifts them with offset', () => {
     const chart = normalizeChart({ bpm: 120, effects: [ramp('ramp', 2000, 4000, 0)], notes: [{ id: 'n', lane: 0, kind: 'note', time: 2000 }] })

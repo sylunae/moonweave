@@ -13,7 +13,7 @@ export function continuationTarget(previous) {
       || !Number.isFinite(n.time) || (n.kind === 'hold' && (!Number.isFinite(n.endTime) || n.endTime <= n.time))) {
       throw new Error('Baseline contains invalid millisecond notes.')
     }
-    return JSON.stringify([n.id, n.kind, n.lane, n.time, n.endTime ?? null])
+    return JSON.stringify([n.id, n.kind, n.lane, n.time, n.endTime ?? null, ...(n.red ? [true] : [])])
   }).sort()
   return { afterRequestId: previous.requestId, notesRevision: `sha256:${createHash('sha256').update(`[${rows.join(',')}]`).digest('hex')}` }
 }

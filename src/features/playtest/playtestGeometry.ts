@@ -1,5 +1,6 @@
 const MAX_LANE_TILT = 45
-const TRACK_TOP_SCALE_RANGE = 0.82
+export const TRACK_TOP_SCALE_RANGE = 0.82
+export const JUDGMENT_LINE_Y = 0.86
 const VERTICAL_TRACK_HALF_WIDTH = 0.62
 const TILTED_TRACK_HALF_WIDTH = 0.80
 
@@ -23,6 +24,12 @@ export function getPlaytestHorizon(baseHorizon: number, scrollSpeed: number, lan
 export function getPlaytestTrackHalfWidth(laneTilt: number) {
   const tilt = normalizeLaneTilt(laneTilt)
   return VERTICAL_TRACK_HALF_WIDTH + (TILTED_TRACK_HALF_WIDTH - VERTICAL_TRACK_HALF_WIDTH) * tilt
+}
+
+export function getPlaytestTrackInsetPercent(laneTilt: number, screenY: number) {
+  const topScale = 1 - normalizeLaneTilt(laneTilt) * TRACK_TOP_SCALE_RANGE
+  const scale = topScale + (1 - topScale) * screenY / JUDGMENT_LINE_Y
+  return (1 - getPlaytestTrackHalfWidth(laneTilt) * scale) * 50
 }
 
 export function getPlaytestLaneCenterPercent(lane: number, laneTilt: number) {

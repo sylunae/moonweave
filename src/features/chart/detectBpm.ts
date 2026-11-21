@@ -24,7 +24,7 @@ function readDuration(url: string, signal: AbortSignal) {
   })
 }
 
-async function readEncodedAudio(url: string, signal: AbortSignal): Promise<ArrayBuffer> {
+export async function readEncodedAudio(url: string, signal: AbortSignal): Promise<ArrayBuffer> {
   if (url.startsWith('moon-audio:') && window.moonweave) {
     // Managed media playback uses a custom scheme that intentionally disallows
     // cross-origin fetch. The preload exposes only chart-owned, bounded reads.

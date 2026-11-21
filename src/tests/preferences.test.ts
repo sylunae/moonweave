@@ -30,6 +30,11 @@ describe('normalizePreferences', () => {
     expect(normalizePreferences({ playbackRate: 2 }).playbackRate).toBe(defaultPreferences.playbackRate)
   })
 
+  it('defaults track background blur on and preserves a saved off setting', () => {
+    expect(normalizePreferences({ schemaVersion: 1 }).trackBackgroundBlur).toBe(true)
+    expect(normalizePreferences({ trackBackgroundBlur: false }).trackBackgroundBlur).toBe(false)
+  })
+
   it('migrates legacy per-chart play settings only once', () => {
     const oldPreferences = normalizePreferences({ theme: 'light' })
     const migrated = migrateLegacyChartPreferences(oldPreferences, { settings: { keys: ['a', 's', 'k', 'l'], scrollSpeed: 9, laneTilt: 24, timingWindow: 'strict' } })

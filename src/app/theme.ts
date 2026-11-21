@@ -11,6 +11,7 @@ export interface ThemePalette {
   brand: string
   accentSoft: string
   accentDeep: string
+  redZone: string
   danger: string
   dangerSoft: string
   success: string
@@ -35,6 +36,7 @@ export const themeColorFields: Array<{ key: keyof ThemePalette; label: string }>
   { key: 'brand', label: '品牌主色' },
   { key: 'accentSoft', label: '浅强调色' },
   { key: 'accentDeep', label: '深强调色' },
+  { key: 'redZone', label: '红区音符' },
   { key: 'danger', label: '危险状态' },
   { key: 'dangerSoft', label: '危险背景' },
   { key: 'success', label: '成功状态' },
@@ -44,13 +46,13 @@ export const themeColorFields: Array<{ key: keyof ThemePalette; label: string }>
 export const themeColorLabelsEn: Record<keyof ThemePalette, string> = {
   bg: 'Page background', surface: 'Primary surface', surface2: 'Secondary surface', surface3: 'Accent surface', sidebarBg: 'Sidebar',
   text: 'Primary text', mutedText: 'Secondary text', faint: 'Faint text', line: 'Borders and dividers', brand: 'Brand color',
-  accentSoft: 'Soft accent', accentDeep: 'Deep accent', danger: 'Danger state', dangerSoft: 'Danger background', success: 'Success state', successSoft: 'Success background',
+  redZone: 'Red zone notes', accentSoft: 'Soft accent', accentDeep: 'Deep accent', danger: 'Danger state', dangerSoft: 'Danger background', success: 'Success state', successSoft: 'Success background',
 }
 
 export const themeCssVariables: Record<keyof ThemePalette, string> = {
   bg: '--bg', surface: '--surface', surface2: '--surface-2', surface3: '--surface-3', sidebarBg: '--sidebar-bg',
   text: '--text', mutedText: '--muted-text', faint: '--faint', line: '--line', brand: '--brand',
-  accentSoft: '--accent-soft', accentDeep: '--accent-deep', danger: '--danger', dangerSoft: '--danger-soft',
+  redZone: '--red-zone', accentSoft: '--accent-soft', accentDeep: '--accent-deep', danger: '--danger', dangerSoft: '--danger-soft',
   success: '--success', successSoft: '--success-soft',
 }
 
@@ -58,13 +60,13 @@ export const defaultThemePalettes: ThemePalettes = {
   light: {
     bg: '#eef2ff', surface: '#ffffff', surface2: '#e5e9f7', surface3: '#d9deef', sidebarBg: '#e7ebf8',
     text: '#101522', mutedText: '#596176', faint: '#747b93', line: '#c9d0e4', brand: '#0786a5',
-    accentSoft: '#d7f7ff', accentDeep: '#075b70', danger: '#bd285d', dangerSoft: '#ffe1eb',
+    accentSoft: '#d7f7ff', accentDeep: '#075b70', redZone: '#a81d35', danger: '#bd285d', dangerSoft: '#ffe1eb',
     success: '#26744d', successSoft: '#dff7e9',
   },
   dark: {
     bg: '#070911', surface: '#0d101b', surface2: '#111522', surface3: '#171b29', sidebarBg: '#090c15',
     text: '#eef2ff', mutedText: '#747b93', faint: '#525a70', line: '#252a3a', brand: '#28d7ff',
-    accentSoft: '#102733', accentDeep: '#8aeaff', danger: '#ff568f', dangerSoft: '#311521',
+    accentSoft: '#102733', accentDeep: '#8aeaff', redZone: '#b82540', danger: '#ff568f', dangerSoft: '#311521',
     success: '#67e8a4', successSoft: '#10271d',
   },
 }
@@ -103,6 +105,7 @@ export function getThemeContrastIssue(palettes: ThemePalettes, language: 'zh' | 
     { foreground: 'faint', backgrounds: ['bg', 'surface', 'sidebarBg'], minimum: 1.8 },
     { foreground: 'accentDeep', backgrounds: ['accentSoft'], minimum: 3 },
     { foreground: 'danger', backgrounds: ['dangerSoft', 'surface'], minimum: 3 },
+    { foreground: 'redZone', backgrounds: ['surface'], minimum: 3 },
     { foreground: 'success', backgrounds: ['successSoft'], minimum: 3 },
   ]
   for (const mode of ['light', 'dark'] as const) {

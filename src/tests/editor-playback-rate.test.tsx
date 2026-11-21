@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, it, vi } from 'vitest'
 import { ChartProvider, useChart } from '@/features/chart/ChartProvider'
+import * as editorAudio from '@/features/chart/editorAudio'
 
 const dependencies = vi.hoisted(() => ({ setPreferences: vi.fn() }))
 vi.mock('@/app/preferences', () => ({ usePreferences: () => ({ setPreferences: dependencies.setPreferences }), migrateLegacyChartPreferences: vi.fn() }))
@@ -11,6 +12,50 @@ vi.mock('@/features/chart/webLibrary', () => ({
   readWebChart: async () => ({ chart: { bpm: 120 }, audio: new Blob(['audio']) }),
   writeWebChart: vi.fn(async () => ({ updatedAt: 1 })), deleteWebChart: vi.fn(),
 }))
+
+it('starts MP3 playback at the latest seek and reuses the PCM source after a backwards seek', async () => {
+  Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+  vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1))
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  const originalCreate = URL.createObjectURL, originalRevoke = URL.revokeObjectURL
+  URL.createObjectURL = vi.fn(() => 'blob:original')
+  URL.revokeObjectURL = vi.fn()
+  let resolve!: (url: string) => void
+  const ready = new Promise<string>(done => { resolve = done })
+  const dispose = vi.fn()
+  const cache = vi.spyOn(editorAudio, 'cacheEditorAudio').mockReturnValue({ ready, url: 'blob:pcm', dispose })
+  let paused = true
+  const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(async () => { paused = false })
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => { paused = true })
+  const root = createRoot(document.createElement('div'))
+  let context: ReturnType<typeof useChart>
+  function Harness() { context = useChart(); return null }
+  try {
+    await act(async () => root.render(<ChartProvider><Harness /></ChartProvider>))
+    await act(async () => context!.setChart(c => ({ ...c, audioName: 'song.mp3', duration: 165000 })))
+    const audio = context!.audioRef.current!
+    Object.defineProperty(audio, 'paused', { get: () => paused })
+    let starting!: Promise<void>
+    await act(async () => { starting = context!.togglePlay(0.5, 4) })
+    await act(async () => context!.setCurrentTime(124000))
+    expect(play).not.toHaveBeenCalled()
+    await act(async () => { resolve('blob:pcm'); await starting })
+    expect(audio.src).toBe('blob:pcm')
+    expect(audio.currentTime).toBe(124)
+    await act(async () => context!.togglePlay(0.5, 4))
+    await act(async () => context!.setCurrentTime(55000))
+    await act(async () => context!.togglePlay(0.5, 4))
+    expect(audio.currentTime).toBe(55)
+    expect(audio.playbackRate).toBe(0.5)
+    expect(audio.src).toBe('blob:pcm')
+    expect(cache).toHaveBeenCalledTimes(1)
+  } finally {
+    await act(async () => root.unmount())
+    expect(dispose).toHaveBeenCalledTimes(1)
+    URL.createObjectURL = originalCreate; URL.revokeObjectURL = originalRevoke
+    vi.restoreAllMocks(); vi.unstubAllGlobals()
+  }
+})
 
 it('applies playback rate immediately to audio and timeline without pausing, seeking, or editing the chart', async () => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })

@@ -14,6 +14,7 @@ export interface Preferences {
   reduceMotion: boolean
   playKeys: string[]
   noteScrollSpeed: number
+  trackBackgroundBlur: boolean
   playbackRate: number
   laneTilt: number
   timingWindow: TimingWindow
@@ -36,6 +37,7 @@ export const defaultPreferences: Preferences = {
   reduceMotion: false,
   playKeys: ['D', 'F', 'J', 'K'],
   noteScrollSpeed: 8,
+  trackBackgroundBlur: true,
   playbackRate: 1,
   laneTilt: 45,
   timingWindow: 'standard',
@@ -78,6 +80,7 @@ export function normalizePreferences(input: unknown): Preferences {
     reduceMotion: Boolean(value.reduceMotion),
     playKeys,
     noteScrollSpeed,
+    trackBackgroundBlur: typeof value.trackBackgroundBlur === 'boolean' ? value.trackBackgroundBlur : defaultPreferences.trackBackgroundBlur,
     playbackRate,
     laneTilt,
     timingWindow,

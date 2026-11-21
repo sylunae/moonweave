@@ -4,6 +4,7 @@ export type Judgment = 'Perfect' | 'Good' | 'Miss'
 export const MAX_SCORE = 10_000_000
 
 export function countNoteTicks(note: ChartNote, holdTickMs: number) {
+  if (note.red) return 0
   if (note.kind !== 'hold' || !note.endTime) return 1
   let ticks = 1
   for (let next = note.time + holdTickMs; next + holdTickMs < note.endTime - 0.01; next += holdTickMs) ticks++

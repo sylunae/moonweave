@@ -1,6 +1,6 @@
 import { EffectsModule, useEffectsEditor } from '@/features/chart/effects/EffectsModule'
 import { shiftChartOffset } from '@/features/chart/editHistory'
-import { aiChartCopy, editorEffects, improvisationCopy } from '@/config/app'
+import { aiChartCopy, editorEffects, improvisationCopy, redZoneCopy } from '@/config/app'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   BookOpen, ClipboardPaste, Copy, FlipHorizontal2, Gamepad2, Gauge, ImagePlus,
@@ -59,12 +59,19 @@ export default function ChartEditorPage() {
   const { preferences, setPreferences } = usePreferences()
   const playbackRate = preferences.playbackRate
   const editorRef = useRef<ChartEditorHandle>(null)
+  const playbackLifetime = useRef<AbortController | null>(null)
+  useEffect(() => {
+    const controller = new AbortController()
+    playbackLifetime.current = controller
+    return () => controller.abort()
+  }, [])
   const [subdivision, setSubdivision] = useState<(typeof SUBDIVISIONS)[number]>(4)
   const toggleEditorPlay = useCallback(() => {
     editorRef.current?.flushSeek()
-    return togglePlay(playbackRate, subdivision)
+    return togglePlay(playbackRate, subdivision, playbackLifetime.current?.signal)
   }, [playbackRate, subdivision, togglePlay])
   const [tool, setTool] = useState<ToolMode>('note')
+  const [redMode, setRedMode] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
   const effectsEditor = useEffectsEditor(tool, (tool) => { setTool(tool); setHoldStart(null); setRegion(null); setSelectedIds(new Set()) })
   const [holdStart, setHoldStart] = useState<{ lane: number; time: number } | null>(null)
@@ -80,8 +87,8 @@ export default function ChartEditorPage() {
   const [bpmDraft, setBpmDraft] = useState(String(chart.bpm))
   const [offsetDraft, setOffsetDraft] = useState(String(chart.offset))
   const [backgroundVideoStartDraft, setBackgroundVideoStartDraft] = useState(String(chart.backgroundVideoStartTime))
-  const regionNotes = useMemo(() => !region || region.end === null ? [] : notesInRegion(chart.notes, region.start, region.end), [chart.notes, region])
-  const selectedNotes = useMemo(() => chart.notes.filter((note) => selectedIds.has(note.id)), [chart.notes, selectedIds])
+  const regionNotes = useMemo(() => !region || region.end === null ? [] : notesInRegion(chart.notes, region.start, region.end).filter((note) => Boolean(note.red) === redMode), [chart.notes, redMode, region])
+  const selectedNotes = useMemo(() => chart.notes.filter((note) => selectedIds.has(note.id) && Boolean(note.red) === redMode), [chart.notes, redMode, selectedIds])
   const regionStatus = useMemo(() => {
     if (effectsEditor.status) return effectsEditor.status
     if (actionFeedback) return actionFeedback
@@ -122,8 +129,8 @@ export default function ChartEditorPage() {
   const chooseRegionLine = useCallback((time: number) => {
     if (!region || region.end !== null) { setRegion({ start: time, end: null }); setSelectedIds(new Set()); return }
     const start = Math.min(region.start, time); const end = Math.max(region.start, time)
-    setRegion({ start, end }); setSelectedIds(new Set(notesInRegion(chart.notes, start, end).map((note) => note.id)))
-  }, [chart.notes, region])
+    setRegion({ start, end }); setSelectedIds(new Set(notesInRegion(chart.notes, start, end).filter((note) => Boolean(note.red) === redMode).map((note) => note.id)))
+  }, [chart.notes, redMode, region])
   const copySelection = useCallback(() => {
     if (!selectedNotes.length) return
     const start = Math.min(...selectedNotes.map((note) => note.time))
@@ -137,7 +144,7 @@ export default function ChartEditorPage() {
     const delta = time - clipboard.start
     if (clipboard.notes.some((note) => note.time + delta < 0 || (note.endTime ?? note.time) + delta > chart.duration)) { showEditorFeedback(text('无法粘贴到这里', 'Cannot paste here'), text('目标位置超出谱面时长，请选择另一条节拍线。', 'The target is outside the chart duration; choose another beat line.'), 'empty'); return }
     const pasted = clipboard.notes.map((note) => ({ ...note, id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, time: note.time + delta, endTime: note.endTime === undefined ? undefined : note.endTime + delta }))
-    commitNotes([...chart.notes, ...pasted]); setSelectedIds(new Set(pasted.map((note) => note.id))); setRegion(null); setTool('note'); showEditorFeedback(text('已粘贴音符', 'Notes pasted'), text(`${pasted.length} 个音符已粘贴并保持选中。`, `${pasted.length} notes pasted and kept selected.`))
+    commitNotes([...chart.notes, ...pasted]); setRedMode(Boolean(pasted[0].red)); setSelectedIds(new Set(pasted.map((note) => note.id))); setRegion(null); setTool('note'); showEditorFeedback(text('已粘贴音符', 'Notes pasted'), text(`${pasted.length} 个音符已粘贴并保持选中。`, `${pasted.length} notes pasted and kept selected.`))
   }, [chart.duration, chart.notes, clipboard, commitNotes, showEditorFeedback, text])
   const pasteAtCurrentBeat = useCallback(() => {
     if (!clipboard?.notes.length) return
@@ -150,8 +157,8 @@ export default function ChartEditorPage() {
   }, [chart.notes, commitNotes, selectedNotes, showEditorFeedback, text])
   const deleteSelection = useCallback(() => {
     if (!selectedIds.size) { setTool('delete'); setHoldStart(null); return }
-    commitNotes(chart.notes.filter((note) => !selectedIds.has(note.id))); setSelectedIds(new Set()); setTool('note')
-  }, [chart.notes, commitNotes, selectedIds])
+    commitNotes(chart.notes.filter((note) => !(selectedIds.has(note.id) && Boolean(note.red) === redMode))); setSelectedIds(new Set()); setTool('note')
+  }, [chart.notes, commitNotes, redMode, selectedIds])
   const changeSubdivision = useCallback((direction: -1 | 1) => {
     setSubdivision((current) => {
       const index = SUBDIVISIONS.indexOf(current)
@@ -222,7 +229,7 @@ export default function ChartEditorPage() {
     <div className="editor-workspace">
       <ChartEditor
         ref={editorRef}
-        chart={chart} currentTime={currentTime} subdivision={subdivision} tool={tool} holdStart={holdStart}
+        chart={chart} currentTime={currentTime} subdivision={subdivision} tool={tool} redMode={redMode} holdStart={holdStart}
         selectedIds={selectedIds} region={region} isPlaying={isPlaying} onSeek={setCurrentTime}
         onNotesChange={commitNotes} onHoldStart={setHoldStart} onSelectionChange={setSelectedIds}
         onRegionLine={chooseRegionLine} onTempoLine={chooseTempoLine} onEffectLine={effectsEditor.onLine} onEffectEdit={effectsEditor.edit}
@@ -248,7 +255,8 @@ export default function ChartEditorPage() {
         <div className="playback-rate">{PLAYBACK_RATES.map((rate) => <button key={rate} className={playbackRate === rate ? 'active' : ''} onClick={() => { editorRef.current?.flushSeek(); setPlaybackRate(rate) }}>{rate}×</button>)}</div>
       </aside>
 
-      <aside className="editor-action-rail editor-action-rail-right" aria-label={text('音符工具', 'Note tools')}>
+      <aside className={`editor-action-rail editor-action-rail-right${redMode ? ' red-placement' : ''}`} aria-label={text('音符工具', 'Note tools')}>
+        <button className={`editor-action red-mode-toggle${redMode ? ' active' : ''}`} aria-label={text(redZoneCopy.mode.zh, redZoneCopy.mode.en)} aria-pressed={redMode} onClick={() => { setRedMode((value) => !value); resetToolContext(tool === 'hold' ? 'hold' : 'note'); setSelectedIds(new Set()); setRegion(null) }}><span><Sparkles /></span><b>{text(redZoneCopy.mode.zh, redZoneCopy.mode.en)}</b></button>
         <button className={`editor-action${tool === 'note' ? ' active' : ''}`} onClick={() => resetToolContext('note')}><span className="note-glyph tap" /><b>NOTE</b></button>
         <button className={`editor-action${tool === 'hold' ? ' active' : ''}`} onClick={() => resetToolContext('hold')}><span className="note-glyph hold" /><b>HOLD</b></button>
       </aside>

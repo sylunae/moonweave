@@ -22,6 +22,7 @@ interface EditorProps {
   currentTime: number
   subdivision: number
   tool: ToolMode
+  redMode?: boolean
   holdStart: { lane: number; time: number } | null
   selectedIds: Set<string>
   region: { start: number; end: number | null } | null
@@ -44,7 +45,7 @@ const formatOverviewTime = (milliseconds: number) => {
   return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`
 }
 
-export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdStart, selectedIds, region, isPlaying, onSeek, onNotesChange, onHoldStart, onSelectionChange, onRegionLine, onRegionMove, onTempoLine, onEffectLine, onEffectEdit, onZoomChange, onSubdivisionChange }: EditorProps) {
+export function ChartEditor({ ref, chart, currentTime, subdivision, tool, redMode = false, holdStart, selectedIds, region, isPlaying, onSeek, onNotesChange, onHoldStart, onSelectionChange, onRegionLine, onRegionMove, onTempoLine, onEffectLine, onEffectEdit, onZoomChange, onSubdivisionChange }: EditorProps) {
   const { preferences } = usePreferences()
   const { text } = useI18n()
   const laneRef = useRef<HTMLDivElement>(null)
@@ -97,19 +98,19 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
     if (tool === 'effect') { onEffectLine(time); return }
     if (tool === 'delete') return
     const beatIndex = Math.round(beatAtTime(chart, time) * subdivision)
-    const noteOnBeat = chart.notes.find((note) => note.lane === lane && Math.round(beatAtTime(chart, note.time) * subdivision) === beatIndex)
+    const noteOnBeat = chart.notes.find((note) => Boolean(note.red) === redMode && note.lane === lane && Math.round(beatAtTime(chart, note.time) * subdivision) === beatIndex)
     if (noteOnBeat) {
       const next = new Set(selectedIds)
       if (next.has(noteOnBeat.id)) next.delete(noteOnBeat.id); else next.add(noteOnBeat.id)
       onSelectionChange(next); return
     }
     if (selectedIds.size) { onSelectionChange(new Set()); return }
-    if (tool === 'note') onNotesChange([...chart.notes, { id: uid(), lane, time, kind: 'note' }])
+    if (tool === 'note') onNotesChange([...chart.notes, { id: uid(), lane, time, kind: 'note', ...(redMode ? { red: true } : {}) }])
     else if (!holdStart) onHoldStart({ lane, time })
     else {
       const start = Math.min(holdStart.time, time)
       const end = Math.max(holdStart.time, time)
-      if (Math.abs(beatAtTime(chart, end) - beatAtTime(chart, start)) >= 0.5 / subdivision) onNotesChange([...chart.notes, { id: uid(), lane: holdStart.lane, time: start, endTime: end, kind: 'hold' }])
+      if (Math.abs(beatAtTime(chart, end) - beatAtTime(chart, start)) >= 0.5 / subdivision) onNotesChange([...chart.notes, { id: uid(), lane: holdStart.lane, time: start, endTime: end, kind: 'hold', ...(redMode ? { red: true } : {}) }])
       onHoldStart(null)
     }
   }
@@ -121,6 +122,7 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
   }
   const notePointerDown = (event: React.PointerEvent, id?: string) => {
     if (event.button !== 0) return
+    if (id && Boolean(chart.notes.find((note) => note.id === id)?.red) !== redMode) return
     event.stopPropagation(); event.preventDefault()
     pointerCleanupRef.current()
     suppressRegionClickRef.current = false
@@ -139,7 +141,7 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
     const rect = laneRef.current!.querySelector('.lanes')!.getBoundingClientRect()
     const time = pointerTime(startY)
     const canDrag = !regionMode || (region?.end != null && (wasSelected || (id === undefined && time >= region.start && time <= region.end)))
-    const selectedNotes = canDrag ? chart.notes.filter((note) => nextSelection.has(note.id)) : []
+    const selectedNotes = canDrag ? chart.notes.filter((note) => nextSelection.has(note.id) && Boolean(note.red) === redMode) : []
     const earliest = Math.min(...selectedNotes.map((note) => note.time))
     const latest = Math.max(...selectedNotes.map((note) => note.endTime ?? note.time))
     let didDrag = false
@@ -180,7 +182,7 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
     event.stopPropagation(); event.preventDefault()
     suppressRegionClickRef.current = true
     pointerCleanupRef.current()
-    const holds = chart.notes.filter((note) => note.kind === 'hold' && selectedIds.has(note.id))
+    const holds = chart.notes.filter((note) => note.kind === 'hold' && selectedIds.has(note.id) && Boolean(note.red) === redMode)
     if (!holds.length) return
     const startY = event.clientY
     const pointerId = event.pointerId
@@ -315,7 +317,7 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
         </div>
         <time>{formatOverviewTime(timelineTime)} / {formatOverviewTime(chart.duration)}</time>
       </aside>
-      <div className={`lane-editor ${tool === 'region' || tool === 'tempo' || tool === 'effect' ? 'region-mode' : ''}`} ref={laneRef}>
+      <div className={`lane-editor ${redMode ? 'red-placement' : ''} ${tool === 'region' || tool === 'tempo' || tool === 'effect' ? 'region-mode' : ''}`} ref={laneRef}>
         <EffectMarkers effects={chart.effects} from={visibleRange.from} to={visibleRange.to} height={laneHeight} yAt={yAt} onEdit={onEffectEdit} />
         {region && <div className="region-overlay" style={{ top: yAt((region.end ?? region.start) + regionDelta), height: Math.max(2, (scrollPositionAtTime(chart, (region.end ?? region.start) + regionDelta) - scrollPositionAtTime(chart, region.start + regionDelta)) / 1000 * pps) }} />}
         <div className="beat-layer">{lines.map((line) => {
@@ -329,8 +331,8 @@ export function ChartEditor({ ref, chart, currentTime, subdivision, tool, holdSt
           const note = dragPreview[originalNote.id] ? { ...originalNote, ...dragPreview[originalNote.id] } : originalNote
           const y = yAt(note.time); const endY = note.kind === 'hold' ? yAt(note.endTime!) : y
           if (y < -150 || endY > laneHeight) return null
-          return <div key={note.id} className={`editor-note ${note.kind} ${selectedIds.has(note.id) ? 'selected' : ''} ${tool === 'delete' ? 'deletable' : ''}`} onPointerDown={(event) => notePointerDown(event, note.id)} onClick={regionClick} style={{ left: `${note.lane * 25 + 1.6}%`, top: note.kind === 'hold' ? endY : y - 7, height: note.kind === 'hold' ? Math.max(16, y - endY + 12) : 14, '--lane': LANE_COLORS[note.lane] } as React.CSSProperties}><i />{note.kind === 'hold' && selectedIds.has(note.id) && <><button className="hold-resize-handle end" aria-label={text('调整 Hold 终点', 'Adjust Hold end')} onPointerDown={(event) => resizeHold(event, 'end')} /><button className="hold-resize-handle start" aria-label={text('调整 Hold 起点', 'Adjust Hold start')} onPointerDown={(event) => resizeHold(event, 'start')} /></>}</div>
-        })}{holdStart && <div className="hold-pending" style={{ left: `${holdStart.lane * 25 + 2}%`, top: yAt(holdStart.time) - 8 }} />}</div>
+          return <div key={note.id} className={`editor-note ${note.kind} ${note.red ? 'red-zone' : ''} ${Boolean(note.red) !== redMode ? 'inactive-mode' : ''} ${selectedIds.has(note.id) ? 'selected' : ''} ${tool === 'delete' ? 'deletable' : ''}`} onPointerDown={(event) => notePointerDown(event, note.id)} onClick={regionClick} style={{ left: `${note.lane * 25 + 1.6}%`, top: note.kind === 'hold' ? endY : y - 7, height: note.kind === 'hold' ? Math.max(16, y - endY + 12) : 14, '--lane': note.red ? 'var(--red-zone)' : LANE_COLORS[note.lane] } as React.CSSProperties}><i />{note.kind === 'hold' && selectedIds.has(note.id) && Boolean(note.red) === redMode && <><button className="hold-resize-handle end" aria-label={text('调整 Hold 终点', 'Adjust Hold end')} onPointerDown={(event) => resizeHold(event, 'end')} /><button className="hold-resize-handle start" aria-label={text('调整 Hold 起点', 'Adjust Hold start')} onPointerDown={(event) => resizeHold(event, 'start')} /></>}</div>
+        })}{holdStart && <div className="hold-pending" style={{ left: `${holdStart.lane * 25 + 2}%`, top: yAt(holdStart.time) - 8, '--lane': redMode ? 'var(--red-zone)' : undefined } as React.CSSProperties} />}</div>
         <div className="judgment-line" style={{ top: judgmentY }}><span>{isPlaying ? 'PLAYING' : 'JUDGEMENT'}</span></div>
       </div>
     </div>

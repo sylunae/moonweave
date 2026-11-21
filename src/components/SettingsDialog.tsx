@@ -2,7 +2,7 @@ import { Gamepad2, Info, Laptop, Moon, Palette, RotateCcw, Settings, Sun } from 
 import { useState } from 'react'
 import { useI18n } from '@/app/i18n'
 import { usePreferences, type ThemeMode, type TimingWindow } from '@/app/preferences'
-import { appConfig } from '@/config/app'
+import { appConfig, playSettingsCopy } from '@/config/app'
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
 import { Input } from './ui/input'
@@ -14,6 +14,7 @@ export function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenCh
   const [section, setSection] = useState<'appearance' | 'play' | 'about'>('appearance')
   const { preferences, setPreferences, resetPreferences } = usePreferences()
   const { text } = useI18n()
+  const trackBackgroundBlurLabel = text(playSettingsCopy.trackBackgroundBlur.zh, playSettingsCopy.trackBackgroundBlur.en)
   const themeOptions: Array<{ value: ThemeMode; label: string; icon: typeof Laptop }> = [
     { value: 'system', label: text('跟随系统', 'System'), icon: Laptop },
     { value: 'light', label: text('浅色', 'Light'), icon: Sun },
@@ -51,6 +52,14 @@ export function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenCh
               <label className="slider-setting"><span><strong>{text('音符下落速度', 'Note scroll speed')}</strong><small>{text('控制试玩时音符的视觉速度', 'Controls the visual speed of notes during playtesting')}</small></span><div><Slider min={4} max={12} step={.5} value={[preferences.noteScrollSpeed]} onValueChange={([noteScrollSpeed]) => setPreferences((current) => ({ ...current, noteScrollSpeed }))} /><output>{preferences.noteScrollSpeed}</output></div></label>
               <label className="slider-setting"><span><strong>{text('轨道倾斜度', 'Lane tilt')}</strong><small>{text('只改变透视，不影响判定', 'Changes perspective without affecting judgment')}</small></span><div><Slider min={0} max={45} value={[preferences.laneTilt]} onValueChange={([laneTilt]) => setPreferences((current) => ({ ...current, laneTilt }))} /><output>{preferences.laneTilt}°</output></div></label>
               <div className="config-block"><span>{text('判定宽松度', 'Timing window')}</span><div className="moon-segmented">{timingOptions.map(({ value, label }) => <button key={value} className={preferences.timingWindow === value ? 'active' : ''} onClick={() => setPreferences((current) => ({ ...current, timingWindow: value }))}>{label}</button>)}</div></div>
+            </section>
+            <section className="settings-pane setting-row">
+              <strong>{trackBackgroundBlurLabel}</strong>
+              <Switch
+                aria-label={trackBackgroundBlurLabel}
+                checked={preferences.trackBackgroundBlur}
+                onCheckedChange={(trackBackgroundBlur) => setPreferences((current) => ({ ...current, trackBackgroundBlur }))}
+              />
             </section>
             <Button variant="outline" onClick={resetPreferences}><RotateCcw />{text('恢复默认设置', 'Restore defaults')}</Button>
           </> : <>

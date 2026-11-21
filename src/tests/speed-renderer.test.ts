@@ -3,7 +3,7 @@ import { expect, it, vi } from 'vitest'
 import { PlaytestRenderer } from '@/features/playtest/PlaytestRenderer'
 import type { ChartNote } from '@/features/chart/types'
 
-it('reuses unchanged instances, batches particle uploads, and avoids frame-by-frame layout reads', () => {
+it.each(['note', 'hold'] as const)('keeps red %s above ordinary holds in one cached batch without frame layout reads', (redKind) => {
   const methods = new Map<PropertyKey, ReturnType<typeof vi.fn>>()
   const gl = new Proxy({}, { get: (_target, key) => {
     if (typeof key === 'string' && /^[A-Z_0-9]+$/.test(key)) return 1
@@ -19,20 +19,23 @@ it('reuses unchanged instances, batches particle uploads, and avoids frame-by-fr
   const height = vi.spyOn(canvas, 'clientHeight', 'get').mockReturnValue(800)
   let renderer: PlaytestRenderer | undefined
   try {
-    renderer = new PlaytestRenderer({ canvas, notes: [{ id: 'hold', kind: 'hold', lane: 0, time: 1000.123, endTime: 2000.456 }],
+    renderer = new PlaytestRenderer({ canvas, notes: [{ id: 'red', kind: redKind, lane: 0, time: 1100, ...(redKind === 'hold' ? { endTime: 2100 } : {}), red: true }, { id: 'hold', kind: 'hold', lane: 0, time: 1000.123, endTime: 2000.456 }],
       bpm: 120, bpmChanges: [], effects: [], offset: 0, duration: 5000, laneTilt: 0, scrollSpeed: 7,
       autoplay: false, getTime: () => 1100, getPlaying: () => true, onStats: vi.fn(),
     })
     frame(10)
     const upload = methods.get('bufferSubData')!
+    const noteUpload = upload.mock.calls.find((call) => call[2].length === 12)
+    expect([noteUpload?.[2][4], noteUpload?.[2][10]]).toEqual([0, 4]) // Both palettes share one batch.
+    expect(methods.get('drawArraysInstanced')!.mock.calls[0][3]).toBe(2)
     upload.mockClear(); height.mockClear()
     frame(20)
     // Beat lines still move each frame; note instances do not need another upload.
-    expect(upload.mock.calls.filter((call) => call[2].length === 6)).toHaveLength(0)
+    expect(upload.mock.calls.filter((call) => call[2].length === 12)).toHaveLength(0)
     expect(height).not.toHaveBeenCalled()
     renderer.setHoldActive('hold', true)
     frame(30)
-    expect(upload.mock.calls.find((call) => call[2].length === 6)?.[2][5]).toBe(1)
+    expect(upload.mock.calls.find((call) => call[2].length === 12)?.[2][5]).toBe(1)
     upload.mockClear()
     renderer.triggerHit(0, 1100); renderer.triggerHit(1, 1100)
     expect(upload).not.toHaveBeenCalled()
