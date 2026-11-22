@@ -1,0 +1,75 @@
+name: 发布 Windows 桌面版
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_only:
+        description: 仅构建安装包，保存在 Actions Artifact
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-windows
+
+jobs:
+  build:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: windows-2025
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: 读取发行版本
+        id: version
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[a-z]+\.\d+)?$') { throw '无效的版本号' }
+          "version=$version" >> $env:GITHUB_OUTPUT
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test -- --maxWorkers=1
+      - run: npm run build:web
+      - run: npm run build:desktop
+      - run: npx --no-install electron-builder --win nsis --x64 --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: release/Moonweave-${{ steps.version.outputs.version }}-Setup.exe
+          if-no-files-found: error
+
+  publish:
+    if: ${{ !inputs.build_only }}
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-x64
+          path: release
+      - name: 发布安装包
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          tag="v$VERSION"
+          notes="documentation/releases/$tag.md"
+          flags=(--generate-notes)
+          if [[ -f "$notes" ]]; then flags=(--notes-file "$notes"); fi
+          if [[ "$VERSION" == *-* ]]; then flags+=(--prerelease); fi
+          gh release create "$tag" --target "$GITHUB_SHA" --draft --title "织月制谱 $tag · Windows x64" "${flags[@]}" "release/Moonweave-$VERSION-Setup.exe"
+          gh release edit "$tag" --draft=false

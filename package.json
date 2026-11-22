@@ -1,6 +1,6 @@
 {
   "name": "moonweave",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.1",
   "private": true,
   "description": "织月制谱（Moonweave Chart Editor）——专注于 4K 下落式节奏谱面的桌面制谱工具。",
   "main": "out/main/index.js",
