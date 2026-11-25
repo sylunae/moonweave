@@ -1,4 +1,5 @@
 import { normalizeEffects, type ChartEffect } from './effects/scrollSpeed'
+import { libraryMetadata, tiers, type DifficultyTrack } from './libraryMetadata'
 import { currentText } from '../../app/currentText'
 
 export type NoteKind = 'note' | 'hold'
@@ -24,6 +25,8 @@ export interface BpmChange {
 }
 
 export interface Chart {
+  library?: import('./libraryMetadata').LibraryMetadata
+  tracks?: Record<number, import('./libraryMetadata').DifficultyTrack>
   version: 1
   title: string
   artist: string
@@ -95,6 +98,13 @@ export function normalizeChart(input: unknown): Chart {
     : []
   return {
     ...DEFAULT_CHART, ...value, version: 1,
+    ...(value.library ? { library: libraryMetadata(value.library) } : {}),
+    ...(value.tracks ? { tracks: Object.fromEntries(tiers.flatMap((_, i) => {
+      const track = value.tracks?.[i]
+      if (!track || typeof track !== 'object') return []
+      const { notes, effects, aiImportHistory } = normalizeChart({ notes: track.notes, effects: track.effects, aiImportHistory: track.aiImportHistory })
+      return [[i, { notes, effects, aiImportHistory } satisfies DifficultyTrack]]
+    })) } : {}),
     title: typeof value.title === 'string' ? value.title : DEFAULT_CHART.title,
     artist: typeof value.artist === 'string' ? value.artist : '',
     audioPath: typeof value.audioPath === 'string' ? value.audioPath : '',

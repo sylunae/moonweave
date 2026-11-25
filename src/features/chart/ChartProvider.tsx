@@ -1,3 +1,5 @@
+import { libraryMetadata, totalNotes } from './libraryMetadata'
+import { GameToast } from '@/components/ui/game-controls'
 import { editSnapshot, restoreEdit, type EditSnapshot } from './editHistory'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { migrateLegacyChartPreferences, usePreferences } from '@/app/preferences'
@@ -21,9 +23,10 @@ const packagedAssetBlob = (asset: { data: Uint8Array; name: string }) => {
   const type = ({ mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', flac: 'audio/flac', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', avif: 'image/avif', mp4: 'video/mp4', webm: 'video/webm' } as Record<string, string>)[extension] ?? ''
   return new Blob([asset.data.slice().buffer as ArrayBuffer], { type })
 }
-const webSummary = (id: string, chart: Chart, updatedAt: number, coverUrl = ''): ChartLibraryItem => ({
-  id, title: chart.title, artist: chart.artist, audioName: chart.audioName, noteCount: chart.notes.length, updatedAt, coverUrl,
-})
+const webSummary = (id: string, chart: Chart, updatedAt: number, coverUrl = ''): ChartLibraryItem => {
+  const library = libraryMetadata(chart.library)
+  return { id, library, title: chart.title, artist: chart.artist, audioName: chart.audioName, noteCount: totalNotes(chart.notes, chart.tracks, library.levels, library.tier), updatedAt, coverUrl }
+}
 
 interface ChartContextValue {
   chart: Chart
@@ -58,7 +61,11 @@ interface ChartContextValue {
   flushActiveChart(): Promise<boolean>
   importChart(): Promise<string | null>
   exportChart(id: string): Promise<boolean>
-  createChart(): Promise<string | null>
+  inspectAudio(id: string): Promise<string | Blob>
+  inspectChart(id: string): Promise<Chart | null>
+  saveLibraryChart(id: string, chart: Chart): Promise<boolean>
+  duplicateChart(id: string): Promise<string | null>
+  createChart(initial?: Chart): Promise<string | null>
   selectChart(id: string): Promise<boolean>
   deleteChart(id: string): Promise<boolean>
   revealLibrary(): Promise<void>
@@ -95,7 +102,8 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const [future, setFuture] = useState<EditSnapshot[]>([])
   const historyRef = useRef<EditSnapshot[]>([])
   const futureRef = useRef<EditSnapshot[]>([])
-  const [toast, setToast] = useState('')
+  const [messages, setMessages] = useState<{ id: number; text: string }[]>([])
+  const toast = messages.at(-1)?.text ?? ''
   const [bpmRequest, setBpmRequest] = useState<{ sequence: number; id: string; url: string } | null>(null)
   const audioImportSequence = useRef(0)
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -113,7 +121,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const mediaWaitingRef = useRef(false)
   const playbackQueueRef = useRef<Promise<void>>(Promise.resolve())
   const playbackEpochRef = useRef(0)
-  const toastTimerRef = useRef(0)
+  const toastTimers = useRef(new Set<number>())
   const chartRef = useRef(chart)
   const activeIdRef = useRef(activeChartId)
   const writeQueueRef = useRef(Promise.resolve(true))
@@ -123,9 +131,12 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   activeIdRef.current = activeChartId
 
   const showToast = useCallback((message: string) => {
-    window.clearTimeout(toastTimerRef.current)
-    setToast(message)
-    toastTimerRef.current = window.setTimeout(() => setToast(''), 2600)
+    const id = window.setTimeout(() => {
+      toastTimers.current.delete(id)
+      setMessages(current => current.filter(entry => entry.id !== id))
+    }, 2600)
+    toastTimers.current.add(id)
+    setMessages(current => [...current.slice(-2), { id, text: message }])
   }, [])
   const stopPlayback = useCallback(() => {
     mediaWaitingRef.current = false
@@ -257,25 +268,64 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const selectChart = useCallback(async (id: string) => {
     if (!id) return false
     if (id === activeIdRef.current) return true
-    await flushActiveChart()
+    if (activeIdRef.current && !await flushActiveChart()) return false
     const record = await readManagedChart(id)
     if (!record) { showToast(text('找不到这份谱面', 'Chart not found')); return false }
-    setActiveChartId(id); resetSession(record.chart, record.audioUrl, record.backgroundUrl, record.coverUrl)
+    activeIdRef.current = id; setActiveChartId(id); resetSession(record.chart, record.audioUrl, record.backgroundUrl, record.coverUrl)
     return true
   }, [flushActiveChart, readManagedChart, resetSession, showToast])
-  const createChart = useCallback(async () => {
-    await flushActiveChart()
-    const id = crypto.randomUUID(); const created = freshChart()
+  const createChart = useCallback(async (initial?: Chart) => {
+    if (activeIdRef.current && !await flushActiveChart()) return null
+    const id = crypto.randomUUID(); const created = initial ?? freshChart()
     if (!await persistSnapshot(id, created)) return null
-    setActiveChartId(id); resetSession(created); showToast(text('已新建谱面', 'New chart created'))
+    activeIdRef.current = id; setActiveChartId(id); resetSession(created); showToast(text('已新建谱面', 'New chart created'))
     return id
   }, [flushActiveChart, persistSnapshot, resetSession, showToast])
+  const inspectAudio = useCallback(async (id: string) => {
+    if (id === activeIdRef.current) return audioUrl
+    if (window.moonweave) return (await window.moonweave.readChart(id))?.audioUrl || ''
+    return (await readWebChart(id))?.audio || ''
+  }, [audioUrl])
+  const inspectChart = useCallback(async (id: string) => id === activeIdRef.current ? chartRef.current : readChartForExport(id), [readChartForExport])
+  const saveLibraryChart = useCallback(async (id: string, next: Chart) => {
+    if (!await persistSnapshot(id, next)) return false
+    if (activeIdRef.current === id) {
+      chartRef.current = next
+      setChart(next)
+      historyRef.current = []; futureRef.current = []; setHistory([]); setFuture([])
+    }
+    return true
+  }, [persistSnapshot])
+  const duplicateChart = useCallback(async (id: string) => {
+    if (activeIdRef.current === id && !await flushActiveChart()) return null
+    if (window.moonweave) {
+      const item = await window.moonweave.duplicateChart(id)
+      updateSummary(item)
+      return item.id
+    }
+    const record = await readWebChart(id)
+    if (!record) return null
+    const newId = crypto.randomUUID()
+    const copy = { ...record.chart, title: record.chart.title + text('（副本）', ' (Copy)'), library: { ...libraryMetadata(record.chart.library), status: 'draft' as const } }
+    const url = record.cover ? URL.createObjectURL(record.cover) : ''
+    if (!await persistSnapshot(newId, copy, { audio: record.audio, background: record.background, cover: record.cover, coverUrl: url })) {
+      if (url) URL.revokeObjectURL(url)
+      return null
+    }
+    if (url) webCoverUrlsRef.current.set(newId, url)
+    return newId
+  }, [flushActiveChart, persistSnapshot, updateSummary])
   const deleteChart = useCallback(async (id: string) => {
     deletedIdsRef.current.add(id)
     await writeQueueRef.current
-    if (window.moonweave) await window.moonweave.deleteChart(id)
-    else {
-      await deleteWebChart(id)
+    try {
+      if (window.moonweave) await window.moonweave.deleteChart(id)
+      else await deleteWebChart(id)
+    } catch (error) {
+      deletedIdsRef.current.delete(id)
+      throw error
+    }
+    if (!window.moonweave) {
       const cover = webCoverUrlsRef.current.get(id)
       if (cover) URL.revokeObjectURL(cover)
       webCoverUrlsRef.current.delete(id)
@@ -588,7 +638,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => () => {
     releasePreparedAudio()
-    cancelAnimationFrame(animationRef.current); window.clearTimeout(toastTimerRef.current)
+    cancelAnimationFrame(animationRef.current); toastTimers.current.forEach(id => window.clearTimeout(id))
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
     if (backgroundObjectUrlRef.current) URL.revokeObjectURL(backgroundObjectUrlRef.current)
     for (const url of webCoverUrlsRef.current.values()) URL.revokeObjectURL(url)
@@ -597,8 +647,8 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<ChartContextValue>(() => ({
     improvising, setImprovising, chart, setChart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, audioRef, currentTime, isPlaying,
     historyLength: history.length, futureLength: future.length, toast,
-    setCurrentTime, setPlaybackRate, commitNotes, commitEdit, applyAiImport, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast,
-  }), [improvising, chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, setPlaybackRate, commitNotes, commitEdit, applyAiImport, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
+    setCurrentTime, setPlaybackRate, commitNotes, commitEdit, applyAiImport, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, inspectAudio, inspectChart, saveLibraryChart, duplicateChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast,
+  }), [improvising, chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, setPlaybackRate, commitNotes, commitEdit, applyAiImport, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, inspectAudio, inspectChart, saveLibraryChart, duplicateChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
   return <ChartContext.Provider value={value}>
     <audio ref={audioRef} src={audioUrl || undefined} preload="auto" onLoadedMetadata={(event) => {
       if (event.currentTarget.currentSrc === preparedAudioRef.current?.url) return
@@ -659,7 +709,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
       commitEdit((previous) => ({ ...previous, bpm }))
       showToast(text(bpmDetectionCopy.applied.zh, bpmDetectionCopy.applied.en))
     }} />}
-    {toast && <div className="chart-toast" role="status">{toast}</div>}
+    <div className="chart-toasts">{messages.map(entry => <GameToast key={entry.id}>{entry.text}</GameToast>)}</div>
   </ChartContext.Provider>
 }
 

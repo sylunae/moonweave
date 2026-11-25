@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto'
+import { libraryMetadata, totalNotes } from '../../src/features/chart/libraryMetadata'
 import { normalizeEffects } from '../../src/features/chart/effects/scrollSpeed'
 import { app, BrowserWindow, dialog, ipcMain, protocol, shell } from 'electron'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
@@ -39,6 +41,7 @@ function parseStoredChart(id: string): StoredChart | null {
 
 function summaryOf(record: StoredChart): ChartLibraryItem {
   const chart = record.chart
+  const library = libraryMetadata(chart.library)
   const coverPath = typeof chart.coverPath === 'string' ? chart.coverPath : ''
   const resolvedCover = coverPath ? path.join(coverDirectory(), path.basename(coverPath)) : ''
   return {
@@ -46,7 +49,8 @@ function summaryOf(record: StoredChart): ChartLibraryItem {
     title: typeof chart.title === 'string' ? chart.title : 'Untitled constellation',
     artist: typeof chart.artist === 'string' ? chart.artist : '',
     audioName: typeof chart.audioName === 'string' ? chart.audioName : '',
-    noteCount: Array.isArray(chart.notes) ? chart.notes.length : 0,
+    library,
+    noteCount: totalNotes(chart.notes, chart.tracks, library.levels, library.tier),
     updatedAt: record.updatedAt,
     coverUrl: resolvedCover && existsSync(resolvedCover) ? coverUrlFor(record.id, coverPath, statSync(resolvedCover).mtimeMs) : '',
   }
@@ -172,7 +176,7 @@ function copyCoverIntoLibrary(id: string, source: string) {
 protocol.registerSchemesAsPrivileged([
   { scheme: 'moon-audio', privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true } },
   { scheme: 'moon-media', privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true } },
-  { scheme: 'moon-cover', privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true } },
+  { scheme: 'moon-cover', privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true, corsEnabled: true } },
 ])
 
 function titlebarOverlay(theme: TitlebarTheme) {
@@ -229,6 +233,31 @@ function registerIpc(): void {
   ipcMain.handle('library:write', (_event, id: unknown, chart: unknown) => {
     if (!validId(id) || !chart || typeof chart !== 'object') throw new Error('谱面数据无效')
     return summaryOf(writeStoredChart(id, chart as Record<string, unknown>))
+  })
+  ipcMain.handle('library:duplicate', (_event, source: unknown) => {
+    const record = validId(source) && parseStoredChart(source)
+    if (!record) throw new Error('Chart not found')
+    const id = randomUUID()
+    const chart = { ...record.chart }
+    const copied: string[] = []
+    try {
+      for (const [key, directory] of [['audioPath', audioDirectory()], ['backgroundPath', backgroundDirectory()], ['coverPath', coverDirectory()]]) {
+        const file = chart[key]
+        if (typeof file !== 'string' || !file) continue
+        const ext = path.extname(file)
+        if (file !== record.id + ext || !Object.hasOwn(CONTENT_TYPES, ext)) throw new Error('Invalid managed media')
+        const name = id + ext
+        copied.push(path.join(directory, name))
+        copyFileSync(path.join(directory, file), path.join(directory, name))
+        chart[key] = name
+      }
+      chart.title = String(chart.title ?? '') + ' (Copy)'
+      chart.library = { ...libraryMetadata(chart.library), status: 'draft' }
+      return summaryOf(writeStoredChart(id, chart))
+    } catch (error) {
+      for (const file of copied) if (existsSync(file)) unlinkSync(file)
+      throw error
+    }
   })
   ipcMain.handle('library:delete', (_event, id: unknown) => {
     if (!validId(id)) return false
@@ -400,7 +429,14 @@ app.whenReady().then(() => {
   }
   protocol.handle('moon-audio', (request) => serveManagedAsset(request, audioDirectory(), 'library'))
   protocol.handle('moon-media', (request) => serveManagedAsset(request, backgroundDirectory(), 'library'))
-  protocol.handle('moon-cover', (request) => serveManagedAsset(request, coverDirectory(), 'library'))
+  const rendererUrl = process.env.ELECTRON_RENDERER_URL
+  const rendererOrigin = rendererUrl ? new URL(rendererUrl).origin : 'null'
+  protocol.handle('moon-cover', (request) => {
+    const response = serveManagedAsset(request, coverDirectory(), 'library')
+    // The renderer samples cover pixels in a canvas using an anonymous image request.
+    response.headers.set('Access-Control-Allow-Origin', rendererOrigin)
+    return response
+  })
   registerIpc(); createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })

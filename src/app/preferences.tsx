@@ -18,6 +18,7 @@ export interface Preferences {
   playbackRate: number
   laneTilt: number
   timingWindow: TimingWindow
+  judgmentDisplay: 'lane' | 'center'
   judgmentLineHeight: number
   themePalettes: ThemePalettes
   particleAppearanceId: string | null
@@ -42,6 +43,7 @@ export const defaultPreferences: Preferences = {
   playbackRate: 1,
   laneTilt: 45,
   timingWindow: 'standard',
+  judgmentDisplay: 'lane',
   judgmentLineHeight: 200,
   themePalettes: defaultThemePalettes,
   particleAppearanceId: null,
@@ -86,6 +88,7 @@ export function normalizePreferences(input: unknown): Preferences {
     playbackRate,
     laneTilt,
     timingWindow,
+    judgmentDisplay: value.judgmentDisplay === 'center' ? 'center' : defaultPreferences.judgmentDisplay,
     judgmentLineHeight,
     themePalettes: normalizeThemePalettes(value.themePalettes),
     particleAppearanceId: typeof value.particleAppearanceId === 'string' && value.particleAppearanceId.length <= 64

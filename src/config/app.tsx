@@ -3,6 +3,9 @@ import type { LucideIcon } from 'lucide-react'
 
 export const playSettingsCopy = {
   trackBackgroundBlur: { zh: '轨道背景模糊', en: 'Track background blur' },
+  judgmentDisplay: { zh: '判定显示位置', en: 'Judgment display position' },
+  judgmentLane: { zh: '音符判定线', en: 'Judgment line' },
+  judgmentCenter: { zh: '连击数上方', en: 'Above combo' },
 } as const
 
 export const particleAppearanceCopy = {

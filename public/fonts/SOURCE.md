@@ -1,16 +1,14 @@
-# ChillRoundF
+# Sarasa UI SC
 
-Bundled file: `chill-round.ttf` (ChillRoundF Version 3.000, per embedded metadata).
+Bundled files in `src/assets/` are `sarasa-ui-sc-regular.woff2` and
+`sarasa-ui-sc-bold.woff2`. They come from the hinted Regular and Bold TTF files
+in the upstream Sarasa UI SC 1.0.43 release.
 
-- Upstream: https://github.com/Warren2060/ChillRound
-- Upstream v3.0 file: https://github.com/Warren2060/ChillRound/blob/46dda1602729b58de96e3fdee9f918d7aaa64727/ChillRoundF%20v3.0.ttf
-- License copied from: https://github.com/Warren2060/ChillRound/blob/46dda1602729b58de96e3fdee9f918d7aaa64727/LICENSE
-- Bundled SHA-256: `7dae804b344f7bc1a1c8426b9515e9b54d7baac3e123263d0bae94d0a305a732`
-- Git blob SHA-1: `4f7c5af27a6ef15edadf53aec804de7d157a9181` (matches the upstream v3.0 file byte-for-byte).
+- Upstream release: https://github.com/be5invis/Sarasa-Gothic/releases/tag/v1.0.43
+- Source archive: https://github.com/be5invis/Sarasa-Gothic/releases/download/v1.0.43/SarasaUiSC-TTF-1.0.43.7z
+- Archive SHA-256: `3dc0f534b2cfa5f98b58a574948d3e3f9eb140600bd738f259c3d077acb2de66`
+- License: https://github.com/be5invis/Sarasa-Gothic/blob/v1.0.43/LICENSE
 
-The embedded notices include `{Kosugi Maru}{Justfont}{Maoken}{ChillType}` and
-`Copyright(C)2010 MOTOYA CO.,LTD.` The font identifies Justfont, Maoken and
-ChillType among its contributors. Keep the binary metadata unchanged.
-
-The adjacent OFL.txt preserves the upstream license, copyright and reserved font
-names. This font remains under OFL-1.1 and is not relicensed under the project's MIT license.
+The TTFs were converted to WOFF2 with fontTools 4.68.0 and Brotli 1.2.1 (quality 7).
+Both fonts retain the upstream character maps. The adjacent OFL.txt preserves
+the upstream copyright notices and SIL Open Font License 1.1.

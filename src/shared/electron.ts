@@ -16,6 +16,7 @@ export interface ChartLibraryItem {
   title: string
   artist: string
   audioName: string
+  library: import('../features/chart/libraryMetadata').LibraryMetadata
   noteCount: number
   updatedAt: number
   coverUrl: string
@@ -36,6 +37,7 @@ export interface MoonweaveAPI {
   readChart(id: string): Promise<ManagedChart | null>
   readAudioForAnalysis(id: string): Promise<Uint8Array | null>
   writeChart(id: string, chart: Chart): Promise<ChartLibraryItem>
+  duplicateChart(id: string): Promise<ChartLibraryItem>
   deleteChart(id: string): Promise<boolean>
   chooseAudio(id: string): Promise<{ audioPath: string; url: string; name: string } | null>
   chooseBackground(id: string): Promise<{ backgroundPath: string; backgroundType: 'image' | 'video'; url: string; name: string } | null>

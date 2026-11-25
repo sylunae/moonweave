@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { DEFAULT_CHART, type Chart, type ChartNote } from '@/features/chart/types'
 import PlaytestPage from '@/pages/PlaytestPage'
 
-const state = vi.hoisted(() => ({ editor: {} as Record<string, unknown>, options: {} as { getRecordedNotes(): ChartNote[] }, navigate: vi.fn(), lanePressed: vi.fn() }))
+const state = vi.hoisted(() => ({ editor: {} as Record<string, unknown>, options: {} as { getRecordedNotes(): ChartNote[] }, navigate: vi.fn(), lanePressed: vi.fn(), judgmentDisplay: 'lane' }))
 const particles = vi.hoisted(() => ({ id: null as string | null, readAssets: vi.fn() }))
 vi.mock('@/features/appearance/particleLibrary', () => ({ readParticleAssets: particles.readAssets }))
 vi.mock('@/features/chart/ChartProvider', () => ({ useChart: () => state.editor }))
@@ -13,6 +13,7 @@ vi.mock('@/app/i18n', () => ({ useI18n: () => ({ text: (zh: string) => zh }) }))
 vi.mock('@/app/navigation', () => ({ navigate: (...args: unknown[]) => state.navigate(...args) }))
 vi.mock('@/app/preferences', () => ({ usePreferences: () => ({ preferences: {
   playbackRate: 1, timingWindow: 'normal', laneTilt: 0, noteScrollSpeed: 7, playKeys: ['d', 'f', 'j', 'k'],
+  judgmentDisplay: state.judgmentDisplay,
   particleAppearanceId: particles.id, reduceMotion: Boolean(particles.id),
 } }) }))
 vi.mock('@/features/playtest/PlaytestRenderer', () => ({ PlaytestRenderer: class {
@@ -28,6 +29,7 @@ const commitEdit = vi.fn()
 const flush = vi.fn()
 
 beforeEach(() => {
+  state.judgmentDisplay = 'lane'
   particles.id = null
   particles.readAssets.mockReset()
   frames = new Map()
@@ -302,6 +304,22 @@ it('shows Miss text without a sprite for a missed tap or hold head', async () =>
   expect(document.querySelector('.playtest-hit-effect, .playtest-hold-effect')).toBeNull()
   await frame(1500)
   expect(document.querySelector('.playtest-hold-effect')).toBeTruthy()
+})
+
+it('shows only the latest judgment at center even after the combo breaks', async () => {
+  state.judgmentDisplay = 'center'
+  chart([note('hit', 500, 1), note('miss', 600, 2)])
+  render(<PlaytestPage />)
+  await start()
+  tap(0.5, 'f')
+  expect(screen.getByText('Perfect').matches('.playtest-judge-text.centered')).toBe(true)
+  expect(document.querySelector('.playtest-hit-effect')).toBeTruthy()
+  expect(combo()).toBe('1')
+
+  await frame(801)
+  expect(screen.queryByText('Perfect')).toBeNull()
+  expect(screen.getByText('Miss').matches('.playtest-judge-text.centered')).toBe(true)
+  expect(combo()).toBe('0')
 })
 
 it('keeps the hold sprite mounted across scoring ticks without spawning a tap sprite', async () => {

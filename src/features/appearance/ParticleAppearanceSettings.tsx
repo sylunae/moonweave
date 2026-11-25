@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { GameSelect } from '@/components/ui/game-select'
 import { particleAppearanceCopy as copy } from '@/config/app'
 import { defaultHoldSprite, defaultTapSprite, ParticleSprite, useParticleAppearance } from './ParticleSprite'
 import { addParticleAppearance, deleteParticleAppearance, listParticleAppearances, renameParticleAppearance, type ParticleAppearance } from './particleLibrary'
@@ -103,10 +103,9 @@ export function ParticleAppearanceSettings() {
       <div><h3>{label('title')}</h3><p>{label('description')}</p></div>
     </div>
     <div className="particle-appearance-actions">
-      <NativeSelect className="particle-appearance-select" aria-label={label('selected')} value={selected?.id ?? ''} disabled={!appearances || busy} onChange={(event) => selectAppearance(event.target.value || null)}>
-        <NativeSelectOption value="">{label('builtIn')}</NativeSelectOption>
-        {appearances?.map((item) => <NativeSelectOption value={item.id} key={item.id}>{item.name}</NativeSelectOption>)}
-      </NativeSelect>
+      <GameSelect className="particle-appearance-select" label={label('selected')} value={selected?.id ?? 'built-in'}
+        disabled={!appearances || busy} onValueChange={value => selectAppearance(value === 'built-in' ? null : value)}
+        options={[[ 'built-in', label('builtIn') ], ...(appearances ?? []).map(item => [item.id, item.name] as const)]} />
       <Button variant="outline" size="sm" disabled={!appearances || busy} onClick={() => open('add')}><Plus />{label('add')}</Button>
       {selected && <>
         <Button variant="outline" size="icon-sm" disabled={busy} aria-label={label('rename')} title={label('rename')} onClick={() => open('rename')}><Pencil /></Button>

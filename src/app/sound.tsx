@@ -64,7 +64,9 @@ function preloadSounds(onProgress: (loaded: number, total: number) => void) {
   return preloadPromise
 }
 
+let soundEnabled = true
 function playSound(type: UiSound) {
+  if (!soundEnabled) return
   const pool = pools.get(type)
   if (!pool?.length) return
   const index = poolIndices.get(type) ?? 0
@@ -75,10 +77,12 @@ function playSound(type: UiSound) {
 }
 
 interface SoundContextValue {
+  enabled: boolean
+  toggle(): void
   play: (sound: UiSound) => void
 }
 
-const SoundContext = createContext<SoundContextValue>({ play: playSound })
+const SoundContext = createContext<SoundContextValue>({ play: playSound, enabled: true, toggle: () => {} })
 
 function soundForElement(element: HTMLElement): UiSound | null {
   const requested = element.dataset.sound
@@ -172,7 +176,8 @@ function SoundLoadingScreen({ onReady }: { onReady: () => void }) {
 
 export function SoundGate({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false)
-  const value = useMemo(() => ({ play: playSound }), [])
+  const [enabled, setEnabled] = useState(soundEnabled)
+  const value = useMemo(() => ({ play: playSound, enabled, toggle: () => { soundEnabled = !soundEnabled; setEnabled(soundEnabled) } }), [enabled])
   if (!ready) return <SoundLoadingScreen onReady={() => setReady(true)} />
   return <SoundContext.Provider value={value}><GlobalSoundEvents />{children}</SoundContext.Provider>
 }

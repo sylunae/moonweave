@@ -30,6 +30,12 @@ requireMatch(/\.chart-management-page \{[^}]*height:\s*100%;[^}]*overflow:\s*hid
 requireMatch(/\.chart-library-list \{[^}]*overflow-y:\s*auto;/.test(styles), 'Chart library scrolling must remain local to the list')
 requireMatch(/\.editor-workspace \{[^}]*height:\s*100%;[^}]*overflow:\s*hidden;/.test(styles), 'Editor workspace must remain fixed and hide overflow')
 
+const libraryCards = read('src/features/chart/LibraryCards.tsx')
+requireMatch(libraryCards.includes('className="library-density-bars"') && !libraryCards.includes('className="density-bars"'),
+  'Library histogram must remain independent of the vertical editor minimap')
+requireMatch(/\.library-density-bars \{[^}]*position:\s*relative;[^}]*flex-direction:\s*row;/.test(styles),
+  'Library density bars must stay in flow and run horizontally')
+
 const aiDialog = read('src/features/chart/ai/AiChartDialog.tsx')
 requireMatch(aiDialog.includes('className="ai-chart-body" data-scroll-region'), 'AI dialog must mark its local scroll region')
 requireMatch(/\.ai-chart-dialog \{[^}]*max-height:/.test(styles), 'AI dialog must fit the viewport')

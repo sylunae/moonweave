@@ -4,6 +4,7 @@ import type { ChartEffect } from '@/features/chart/effects/scrollSpeed'
 import { createSpeedGeometry, type VisualNote } from './speedGeometry'
 import type { BpmChange, ChartNote } from '@/features/chart/types'
 import { getPlaytestHorizon, getPlaytestTrackHalfWidth, JUDGMENT_LINE_Y, TRACK_TOP_SCALE_RANGE } from '@/features/playtest/playtestGeometry'
+import { NOTE_APPEARANCE, NOTE_GLOW_PADDING } from './noteAppearance'
 
 const NOTE_STRIDE = 6
 const HORIZON_MS = 1_400
@@ -63,9 +64,10 @@ uniform float uRealTime;
 uniform float uHorizon;
 uniform float uTilt;
 uniform float uTrackWidth;
-uniform float uViewportHeight;
-out vec2 vUv;
-flat out float vKind;
+uniform vec2 uViewportSize;
+out float vLaneX;
+out float vScreenYTimesW;
+flat out vec4 vNoteBounds;
 flat out float vColor;
 flat out float vActive;
 
@@ -100,21 +102,29 @@ vec2 projectTrack(float lanePosition, float screenY) {
 
 void main() {
   float lane = iNote.x;
-  float startTime = iNote.y;
-  float endTime = iNote.z;
-  float kind = iNote.w;
-  float widthInset = kind > 0.5 ? 0.09 : 0.08;
-  float lanePosition = (lane + mix(widthInset, 1.0 - widthInset, aCorner.x)) / 4.0;
-  float bottomY = visualScreenY(startTime);
-  float topY = kind > 0.5
-    ? visualScreenY(endTime)
-    : bottomY - (36.0 / uViewportHeight) * trackScaleAt(bottomY);
+  bool hold = iNote.w > 0.5;
+  float noteWidth = max(1.0, 0.84 * uTrackWidth * uViewportSize.x / 4.0);
+  float glowPadding = ${NOTE_GLOW_PADDING};
+  vLaneX = mix(-glowPadding / noteWidth, 1.0 + glowPadding / noteWidth, aCorner.x);
+  float lanePosition = (lane + 0.5 + (vLaneX - 0.5) * 0.84) / 4.0;
+  float headBottom = visualScreenY(iNote.y);
+  float tailY = hold ? visualScreenY(iNote.z) : headBottom;
+  float headScale = max(0.0, trackScaleAt(headBottom));
+  float minHeadHeight = mix(36.0, 44.0, smoothstep(480.0, 850.0, uViewportSize.x));
+  float headHeight = clamp(noteWidth * 0.34, minHeadHeight, 54.0) * headScale / uViewportSize.y;
+  float headTop = headBottom - headHeight;
+  vNoteBounds = vec4(headTop, headBottom, tailY, noteWidth);
+  // Pad the same instance quad for the local halo. The solid head still ends
+  // at its timing line and the hold body begins exactly at the tail time.
+  float top = min(headTop, tailY);
+  float topPadding = glowPadding * max(0.0, trackScaleAt(top)) / uViewportSize.y;
+  float bottomPadding = glowPadding * headScale / uViewportSize.y;
   // Long holds can extend far past the top of the viewport. Once their
   // projected scale crosses zero the left and right vertices swap, turning
   // the quad into large triangles. Trim only the off-screen portion; track
   // projection is linear in screenY, so the visible trajectory is unchanged.
-  bottomY = clamp(bottomY, -0.05, 1.05);
-  topY = clamp(topY, -0.05, 1.05);
+  float bottomY = clamp(headBottom + bottomPadding, -0.05, 1.05);
+  float topY = clamp(top - topPadding, -0.05, 1.05);
   float screenY = mix(bottomY, topY, aCorner.y);
   float perspectiveW = 1.0 / trackScaleAt(screenY);
   vec2 position = projectTrack(lanePosition, screenY);
@@ -122,37 +132,63 @@ void main() {
   // This makes UV interpolation continuous across the two triangles that form
   // the trapezoid instead of leaving a short seam at either endpoint.
   gl_Position = vec4(position * perspectiveW, 0.0, perspectiveW);
-  vUv = aCorner;
-  vKind = kind;
+  // Undo perspective correction for screen Y only. Cap heights are measured
+  // in screen space, while lane X stays perspective-correct along the hold.
+  vScreenYTimesW = screenY * perspectiveW;
   vColor = iColor;
   vActive = iActive;
 }`
 
 const NOTE_FRAGMENT = `#version 300 es
 precision highp float;
-in vec2 vUv;
-flat in float vKind;
+in float vLaneX;
+in float vScreenYTimesW;
+flat in vec4 vNoteBounds;
 flat in float vColor;
 flat in float vActive;
 uniform vec4 uColors[4];
 uniform vec4 uRedColor;
+uniform vec2 uViewportSize;
 out vec4 outColor;
+${NOTE_APPEARANCE}
 void main() {
-  vec4 color = vColor > 3.5 ? uRedColor : uColors[int(vColor + 0.5)];
-  vec2 edge = min(vUv, 1.0-vUv);
-  // Derive each axis independently. Taking fwidth after min() makes the
-  // derivative jump across the quad's internal triangle edge, drawing a
-  // dotted diagonal through long holds.
-  vec2 borderWidth = max(fwidth(vUv) * (vKind > 0.5 ? 5.5 : 1.45), vec2(0.006));
-  float borderX = 1.0 - smoothstep(0.0, borderWidth.x, edge.x);
-  float borderY = 1.0 - smoothstep(0.0, borderWidth.y, edge.y);
-  float border = max(borderX, borderY);
-  vec3 fill = vKind > 0.5
-    ? mix(color.rgb * 0.42, color.rgb * 1.18, vActive)
-    : color.rgb;
-  vec3 stroke = vKind > 0.5 && vActive < 0.5 ? color.rgb : vec3(1.0);
-  // The body must fully cover beat lines and other track decoration beneath it.
-  outColor = vec4(mix(fill, stroke, border), color.a);
+  vec3 color = (vColor > 3.5 ? uRedColor : uColors[int(vColor + 0.5)]).rgb;
+  float screenY = vScreenYTimesW * gl_FragCoord.w;
+  // The reciprocal clip-space W is the projected track scale at this pixel.
+  float scale = gl_FragCoord.w;
+  float halfWidth = vNoteBounds.w * scale * 0.5;
+  float x = (vLaneX - 0.5) * 2.0 * halfWidth;
+  vec2 pixel = fwidth(vec2(x, screenY * uViewportSize.y));
+  float antialias = max(0.35, 0.55 * max(pixel.x, pixel.y));
+  float near = smoothstep(0.0, ${JUDGMENT_LINE_Y}, screenY);
+  float isHeld = max(0.0, vActive);
+  color *= mix(0.89, 1.0, near);
+  float glowRadius = mix(6.0, 11.0, near) * scale;
+  float glowStrength = mix(0.43, 0.85, near);
+
+  float headTop = vNoteBounds.x;
+  float headBottom = vNoteBounds.y;
+  float tailY = vNoteBounds.z;
+  float bodyBottom = mix(headTop, headBottom, 0.27);
+  // Inset the body so its straight edges meet inside the rounded head.
+  float bodyHalfWidth = halfWidth * 0.88;
+  vec4 body = vec4(0.0);
+  if (tailY < bodyBottom && screenY < bodyBottom + glowRadius / uViewportSize.y) {
+    float height = (bodyBottom - tailY) * uViewportSize.y;
+    float y = (screenY - tailY) * uViewportSize.y - height * 0.5;
+    body = shadeHoldBody(color, vec2(x, y), vec2(bodyHalfWidth, height * 0.5),
+      antialias, glowRadius, glowStrength, isHeld);
+  }
+
+  if (screenY < headTop - glowRadius / uViewportSize.y) {
+    outColor = body;
+    return;
+  }
+  float height = (headBottom - headTop) * uViewportSize.y;
+  float y = (screenY - headTop) * uViewportSize.y - height * 0.5;
+  vec4 head = shadeNoteHead(color, vec2(x, y), vec2(halfWidth, height * 0.5),
+    antialias, glowRadius, glowStrength);
+  outColor = noteOver(head, body);
 }`
 
 const TRACK_VERTEX = `#version 300 es
@@ -290,6 +326,7 @@ export class PlaytestRenderer {
   private fastWindows = 0
   private readonly visibleCandidates: VisualNote[] = []
   private noteData = new Float32Array(0)
+  private viewportWidth = 1
   private viewportHeight = 1
   private lastDevicePixelRatio = 0
   private lastWindowWidth = 0
@@ -319,7 +356,7 @@ export class PlaytestRenderer {
     this.notes = [...options.notes].sort((a, b) => a.time - b.time)
     this.geometry = createSpeedGeometry(this.notes, options.effects)
     this.visualBeats = beatLinesInRange(options, 0, options.duration, 1).map((line) => ({ time: line.time, position: this.geometry.map.positionAt(line.time) }))
-    this.noteProgram = compileProgram(gl, NOTE_VERTEX, NOTE_FRAGMENT, ['uTime', 'uRealTime', 'uHorizon', 'uTilt', 'uTrackWidth', 'uViewportHeight', 'uColors', 'uRedColor'])
+    this.noteProgram = compileProgram(gl, NOTE_VERTEX, NOTE_FRAGMENT, ['uTime', 'uRealTime', 'uHorizon', 'uTilt', 'uTrackWidth', 'uViewportSize', 'uColors', 'uRedColor'])
     this.trackProgram = compileProgram(gl, TRACK_VERTEX, TRACK_FRAGMENT, ['uTilt', 'uTrackWidth', 'uTrackGeometry', 'uColor'])
     this.glowProgram = compileProgram(gl, GLOW_VERTEX, GLOW_FRAGMENT, ['uTrackWidth', 'uColor'])
     this.noteVao = this.createNoteVao()
@@ -480,10 +517,11 @@ export class PlaytestRenderer {
     const nativeDpr = window.devicePixelRatio || 1
     this.lastDevicePixelRatio = nativeDpr
     this.lastWindowWidth = window.innerWidth
+    this.viewportWidth = Math.max(1, canvas.clientWidth)
     this.viewportHeight = Math.max(1, canvas.clientHeight)
     const dpr = Math.min(nativeDpr * (window.innerWidth < 760 ? 1 : 1.5), window.innerWidth < 760 ? 1.5 : 2)
     const scale = dpr * this.renderScale
-    const width = Math.max(1, Math.round(canvas.clientWidth * scale))
+    const width = Math.max(1, Math.round(this.viewportWidth * scale))
     const height = Math.max(1, Math.round(this.viewportHeight * scale))
     this.resizePending = false
     if (canvas.width !== width || canvas.height !== height) {
@@ -641,7 +679,7 @@ export class PlaytestRenderer {
     gl.uniform1f(uniforms.uTilt, this.options.laneTilt / 45)
     gl.uniform1f(uniforms.uTrackWidth, getPlaytestTrackHalfWidth(this.options.laneTilt))
     gl.uniform4fv(uniforms.uRedColor, this.redColor)
-    gl.uniform1f(uniforms.uViewportHeight, this.viewportHeight)
+    gl.uniform2f(uniforms.uViewportSize, this.viewportWidth, this.viewportHeight)
     this.setPalette(uniforms.uColors)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.visibleCount)

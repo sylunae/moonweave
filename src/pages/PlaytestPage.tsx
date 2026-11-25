@@ -108,6 +108,7 @@ export default function PlaytestPage() {
   const [pressed, setPressed] = useState(new Set<number>())
   const [holdSprites, setHoldSprites] = useState(new Map<number, 'active' | 'finishing'>())
   const [feedback, setFeedback] = useState<Array<{ id: number; lane: number; result: FeedbackResult; sprite: FeedbackSprite }>>([])
+  const [latestFeedbackId, setLatestFeedbackId] = useState(0)
   const [completed, setCompleted] = useState(false)
 
   useEffect(() => {
@@ -127,6 +128,7 @@ export default function PlaytestPage() {
     const previousTimer = feedbackTimersRef.current.get(lane)
     if (previousTimer) window.clearTimeout(previousTimer)
     setFeedback((items) => [...items.filter((item) => item.lane !== lane), { id, lane, result, sprite }])
+    setLatestFeedbackId(id)
     feedbackTimersRef.current.set(lane, window.setTimeout(() => {
       setFeedback((items) => items.filter((item) => item.id !== id))
       feedbackTimersRef.current.delete(lane)
@@ -585,6 +587,8 @@ export default function PlaytestPage() {
   const trackTopInset = getPlaytestTrackInsetPercent(preferences.laneTilt, 0)
   const trackBottomInset = getPlaytestTrackInsetPercent(preferences.laneTilt, 1)
   const videoBackgroundActive = displayTime >= chart.backgroundVideoStartTime
+  const centeredJudgment = preferences.judgmentDisplay === 'center'
+  const judgmentFeedback = centeredJudgment ? feedback.filter(({ id }) => id === latestFeedbackId) : feedback
 
   return <div className="playtest-page page-enter" style={{ '--playtest-track-inset': `${trackInset}%` } as React.CSSProperties}>
     {formalSession && <audio ref={formalAudioRef} src={audioUrl} preload="auto" />}
@@ -613,7 +617,11 @@ export default function PlaytestPage() {
       atlas={effect.sprite === 'tap' ? particleAppearance?.tap : undefined}
       reduceMotion={preferences.reduceMotion}
     />)}
-    {feedback.map((effect) => <div key={`judge-${effect.id}`} className={`playtest-judge-text ${effect.result.toLowerCase()}`} style={{ left: `${laneX(effect.lane)}%` }}>{effect.result === 'Red' ? text(redZoneCopy.hit.zh, redZoneCopy.hit.en) : effect.result}</div>)}
+    {judgmentFeedback.map((effect) => <div
+      key={`judge-${effect.id}`}
+      className={`playtest-judge-text ${centeredJudgment ? 'centered' : 'on-lane'} ${effect.result.toLowerCase()}`}
+      style={centeredJudgment ? undefined : { left: `${laneX(effect.lane)}%` }}
+    >{effect.result === 'Red' ? text(redZoneCopy.hit.zh, redZoneCopy.hit.en) : effect.result}</div>)}
     {[...holdSprites].map(([lane, state]) => (
       <ParticleSprite
         key={lane}

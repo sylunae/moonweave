@@ -35,6 +35,12 @@ describe('normalizePreferences', () => {
     expect(normalizePreferences({ trackBackgroundBlur: false }).trackBackgroundBlur).toBe(false)
   })
 
+  it('defaults to lane judgments and preserves the saved center position', () => {
+    expect(normalizePreferences({ schemaVersion: 1 }).judgmentDisplay).toBe('lane')
+    expect(normalizePreferences({ judgmentDisplay: 'invalid' }).judgmentDisplay).toBe('lane')
+    expect(normalizePreferences({ judgmentDisplay: 'center' }).judgmentDisplay).toBe('center')
+  })
+
   it('migrates legacy per-chart play settings only once', () => {
     const oldPreferences = normalizePreferences({ theme: 'light' })
     const migrated = migrateLegacyChartPreferences(oldPreferences, { settings: { keys: ['a', 's', 'k', 'l'], scrollSpeed: 9, laneTilt: 24, timingWindow: 'strict' } })

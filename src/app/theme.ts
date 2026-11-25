@@ -1,8 +1,11 @@
 export interface ThemePalette {
+  previewStage: string
+  previewNote: string
   bg: string
   surface: string
   surface2: string
   surface3: string
+  warning: string
   sidebarBg: string
   text: string
   mutedText: string
@@ -24,11 +27,14 @@ export interface ThemePalettes {
 }
 
 export const themeColorFields: Array<{ key: keyof ThemePalette; label: string }> = [
+  { key: 'previewStage', label: '试听轨道背景' },
+  { key: 'previewNote', label: '试听音符与光晕' },
   { key: 'bg', label: '页面背景' },
   { key: 'surface', label: '主要容器' },
   { key: 'surface2', label: '次级容器' },
   { key: 'surface3', label: '强调容器' },
-  { key: 'sidebarBg', label: '侧边栏' },
+  { key: 'sidebarBg', label: '设置导航背景' },
+  { key: 'warning', label: '提醒与草稿' },
   { key: 'text', label: '主要文字' },
   { key: 'mutedText', label: '次要文字' },
   { key: 'faint', label: '弱化文字' },
@@ -44,13 +50,15 @@ export const themeColorFields: Array<{ key: keyof ThemePalette; label: string }>
 ]
 
 export const themeColorLabelsEn: Record<keyof ThemePalette, string> = {
-  bg: 'Page background', surface: 'Primary surface', surface2: 'Secondary surface', surface3: 'Accent surface', sidebarBg: 'Sidebar',
+  previewStage: 'Preview track background', previewNote: 'Preview notes and glare',
+  bg: 'Page background', surface: 'Primary surface', surface2: 'Secondary surface', surface3: 'Accent surface', warning: 'Warning and drafts', sidebarBg: 'Settings navigation',
   text: 'Primary text', mutedText: 'Secondary text', faint: 'Faint text', line: 'Borders and dividers', brand: 'Brand color',
   redZone: 'Red zone notes', accentSoft: 'Soft accent', accentDeep: 'Deep accent', danger: 'Danger state', dangerSoft: 'Danger background', success: 'Success state', successSoft: 'Success background',
 }
 
 export const themeCssVariables: Record<keyof ThemePalette, string> = {
-  bg: '--bg', surface: '--surface', surface2: '--surface-2', surface3: '--surface-3', sidebarBg: '--sidebar-bg',
+  previewStage: '--preview-stage', previewNote: '--preview-note',
+  bg: '--bg', surface: '--surface', surface2: '--surface-2', surface3: '--surface-3', warning: '--warning', sidebarBg: '--sidebar-bg',
   text: '--text', mutedText: '--muted-text', faint: '--faint', line: '--line', brand: '--brand',
   redZone: '--red-zone', accentSoft: '--accent-soft', accentDeep: '--accent-deep', danger: '--danger', dangerSoft: '--danger-soft',
   success: '--success', successSoft: '--success-soft',
@@ -58,13 +66,15 @@ export const themeCssVariables: Record<keyof ThemePalette, string> = {
 
 export const defaultThemePalettes: ThemePalettes = {
   light: {
-    bg: '#eef2ff', surface: '#ffffff', surface2: '#e5e9f7', surface3: '#d9deef', sidebarBg: '#e7ebf8',
+    previewStage: '#040610', previewNote: '#ffffff',
+    bg: '#eef2ff', surface: '#ffffff', surface2: '#e5e9f7', surface3: '#d9deef', warning: '#966319', sidebarBg: '#e7ebf8',
     text: '#101522', mutedText: '#596176', faint: '#747b93', line: '#c9d0e4', brand: '#0786a5',
     accentSoft: '#d7f7ff', accentDeep: '#075b70', redZone: '#a81d35', danger: '#bd285d', dangerSoft: '#ffe1eb',
     success: '#26744d', successSoft: '#dff7e9',
   },
   dark: {
-    bg: '#070911', surface: '#0d101b', surface2: '#111522', surface3: '#171b29', sidebarBg: '#090c15',
+    previewStage: '#040610', previewNote: '#ffffff',
+    bg: '#070911', surface: '#0d101b', surface2: '#111522', surface3: '#171b29', warning: '#f4be67', sidebarBg: '#090c15',
     text: '#eef2ff', mutedText: '#747b93', faint: '#525a70', line: '#252a3a', brand: '#28d7ff',
     accentSoft: '#102733', accentDeep: '#8aeaff', redZone: '#b82540', danger: '#ff568f', dangerSoft: '#311521',
     success: '#67e8a4', successSoft: '#10271d',
@@ -105,6 +115,7 @@ export function getThemeContrastIssue(palettes: ThemePalettes, language: 'zh' | 
     { foreground: 'faint', backgrounds: ['bg', 'surface', 'sidebarBg'], minimum: 1.8 },
     { foreground: 'accentDeep', backgrounds: ['accentSoft'], minimum: 3 },
     { foreground: 'danger', backgrounds: ['dangerSoft', 'surface'], minimum: 3 },
+    { foreground: 'warning', backgrounds: ['surface'], minimum: 3 },
     { foreground: 'redZone', backgrounds: ['surface'], minimum: 3 },
     { foreground: 'success', backgrounds: ['successSoft'], minimum: 3 },
   ]

@@ -28,9 +28,13 @@ async function transact<T>(mode: IDBTransactionMode, operation: (store: IDBObjec
   const database = await openDatabase()
   return new Promise<T>((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, mode)
-    operation(transaction.objectStore(STORE_NAME), resolve, reject)
-    transaction.oncomplete = () => database.close()
-    transaction.onerror = () => reject(transaction.error ?? new Error(currentText('浏览器谱面库操作失败', 'Browser chart library operation failed')))
+    let result: T
+    operation(transaction.objectStore(STORE_NAME), value => { result = value }, reject)
+    transaction.oncomplete = () => { database.close(); resolve(result) }
+    transaction.onabort = () => {
+      database.close()
+      reject(transaction.error ?? new Error(currentText('浏览器谱面库操作失败', 'Browser chart library operation failed')))
+    }
   })
 }
 
@@ -47,17 +51,21 @@ export const readWebChart = (id: string) => transact<WebChartRecord | undefined>
 })
 
 export async function writeWebChart(id: string, chart: Chart, assets: { audio?: Blob; background?: Blob | null; cover?: Blob | null } = {}) {
-  const existing = await readWebChart(id)
-  const record: WebChartRecord = {
-    id, chart: { ...chart, effects: normalizeEffects(chart.effects) }, updatedAt: Date.now(),
-    audio: assets.audio === undefined ? existing?.audio : assets.audio,
-    background: assets.background === undefined ? existing?.background : assets.background ?? undefined,
-    cover: assets.cover === undefined ? existing?.cover : assets.cover ?? undefined,
-  }
-  return transact<WebChartRecord>('readwrite', (store, resolve, reject) => {
-    const request = store.put(record)
-    request.onsuccess = () => resolve(record)
-    request.onerror = () => reject(request.error)
+  return transact<WebChartRecord>('readwrite', (store, done, reject) => {
+    const read = store.get(id)
+    read.onsuccess = () => {
+      const existing = read.result as WebChartRecord | undefined
+      const record: WebChartRecord = {
+        id, chart: { ...chart, effects: normalizeEffects(chart.effects) }, updatedAt: Date.now(),
+        audio: assets.audio ?? existing?.audio,
+        background: assets.background === undefined ? existing?.background : assets.background ?? undefined,
+        cover: assets.cover === undefined ? existing?.cover : assets.cover ?? undefined,
+      }
+      const write = store.put(record)
+      write.onsuccess = () => done(record)
+      write.onerror = () => reject(write.error)
+    }
+    read.onerror = () => reject(read.error)
   })
 }
 
