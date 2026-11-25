@@ -121,10 +121,11 @@ void main() {
   float bottomPadding = glowPadding * headScale / uViewportSize.y;
   // Long holds can extend far past the top of the viewport. Once their
   // projected scale crosses zero the left and right vertices swap, turning
-  // the quad into large triangles. Trim only the off-screen portion; track
-  // projection is linear in screenY, so the visible trajectory is unchanged.
-  float bottomY = clamp(headBottom + bottomPadding, -0.05, 1.05);
-  float topY = clamp(top - topPadding, -0.05, 1.05);
+  // the quad into large triangles, so trim the off-screen extent.
+  // Held notes also clip at the judgment line, including their halo.
+  float clipBottom = iActive > 0.5 ? ${JUDGMENT_LINE_Y} : 1.05;
+  float bottomY = clamp(headBottom + bottomPadding, -0.05, clipBottom);
+  float topY = clamp(top - topPadding, -0.05, clipBottom);
   float screenY = mix(bottomY, topY, aCorner.y);
   float perspectiveW = 1.0 / trackScaleAt(screenY);
   vec2 position = projectTrack(lanePosition, screenY);

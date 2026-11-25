@@ -8,7 +8,7 @@ export const clockTime = (ms: number) => Math.floor(ms / 60000) + ':' + String(M
 
 export function ChartCover({ item, children }: { item: ChartLibraryItem; children?: ReactNode }) {
   // Preview renderer can mount over the jacket without replacing the cover.
-  return <span className="record-art" style={{ '--hue': item.library.hue } as CSSProperties}>
+  return <span className="record-art">
     {item.coverUrl ? <img src={item.coverUrl} alt="" loading="lazy" /> : <span className="record-art-type" aria-hidden><small>MOONWEAVE</small><b>{item.title.slice(0,2).toUpperCase() || 'MW'}</b><i>4K ／ CHART</i></span>}
     {children}
   </span>
@@ -22,7 +22,7 @@ export function ChartCard({ item, index, distance, tier, query, status, onSelect
   return <button className="record-row" role="option" aria-selected={distance === 0} tabIndex={distance === 0 ? 0 : -1} data-id={item.id} style={{ '--level-color': ['var(--success)','var(--accent-deep)','var(--warning)','var(--danger)'][tier], '--shift': (distance === 0 ? 22 : Math.max(-2,14 - Math.sqrt(distance)*8)) + 'px' } as CSSProperties} onClick={onSelect} onDoubleClick={onOpen}>
     <span className="record-inner"><span className="record-index">{String(index + 1).padStart(2,'0')}</span><ChartCover item={item} />
     <span className="record-copy"><strong>{highlight(item.title || text('未命名谱面','Untitled'),query)}</strong><span><em className={'record-status '+item.library.status}>{status}</em>{highlight(item.artist || text('未知艺术家','Unknown artist'),query)}<span className="record-dots" aria-hidden>{item.library.levels.map((level,i) => level ? <i key={i} data-tier={i} /> : null)}</span><small className="record-notes">{item.noteCount} NOTES</small></span></span>
-    <span className="record-level"><b>{item.library.levels[tier]}</b><small>{new Date(item.updatedAt).toLocaleDateString(locale,{month:'2-digit',day:'2-digit'})}</small></span></span>
+    <span className="record-level"><b>{item.library.levels[tier] || '—'}</b><small>{new Date(item.updatedAt).toLocaleDateString(locale,{month:'2-digit',day:'2-digit'})}</small></span></span>
   </button>
 }
 const formatCount = (value: number) => String(Math.round(value))

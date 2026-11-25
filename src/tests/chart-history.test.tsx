@@ -15,6 +15,66 @@ vi.mock('@/features/chart/webLibrary', () => ({
   readWebChart: async () => ({ id: 'test-chart', chart: { bpm: 120, title: 'Original' } }),
   writeWebChart: dependencies.writeWebChart, deleteWebChart: vi.fn(),
 }))
+vi.mock('@/features/chart/BpmDetectionDialog', () => ({ BpmDetectionDialog: () => null }))
+
+it('requires creation audio and shares song info while keeping four distinct difficulty tracks', async () => {
+  Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+  const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
+  vi.stubGlobal('URL', class extends URL {
+    static createObjectURL() { return 'blob:test-song' }
+    static revokeObjectURL() {}
+  })
+  const root = createRoot(document.createElement('div'))
+  let context!: ReturnType<typeof useChart>
+  function Harness() { context = useChart(); return null }
+  try {
+    await act(async () => root.render(<ChartProvider><Harness /></ChartProvider>))
+    dependencies.writeWebChart.mockClear()
+    const initial = normalizeChart({ title: 'Four tracks' })
+    expect(await context.createChart(initial, {})).toBeNull()
+    expect(dependencies.writeWebChart).not.toHaveBeenCalled()
+
+    const audio = new File(['audio'], 'song.ogg', { type: 'audio/ogg' })
+    const cover = new File(['cover'], 'cover.png', { type: 'image/png' })
+    let id = ''
+    await act(async () => { id = (await context.createChart(initial, { audio, cover }))! })
+    expect(context.chart.library).toMatchObject({ status: 'draft', levels: [1, 1, 1, 1], tier: 1 })
+    expect(Object.keys(context.chart.tracks!)).toEqual(['0', '2', '3'])
+    expect(dependencies.writeWebChart).toHaveBeenLastCalledWith(id, expect.objectContaining({ audioName: 'song.ogg', coverName: 'cover.png' }), { audio, cover })
+
+    for (const tier of [0, 1, 2, 3]) {
+      await act(async () => { await context.selectChart(id, tier) })
+      expect(context.chart.notes).toEqual([])
+      await act(async () => context.commitNotes([{ id: String(tier), kind: 'note', lane: tier, time: 2000 }]))
+    }
+    await act(async () => {
+      const chart = retimeInitialBpm(context.chart, 240)
+      await context.saveChartInfo(id, { ...chart, title: 'Renamed', library: { ...chart.library!, levels: [2, 4, 6, 8] } }, {})
+    })
+    for (const tier of [0, 1, 2, 3]) {
+      await act(async () => { await context.selectChart(id, tier) })
+      expect(context.chart).toMatchObject({
+        title: 'Renamed', bpm: 240, audioName: 'song.ogg', coverName: 'cover.png',
+        library: { tier, levels: [2, 4, 6, 8] },
+        notes: [{ id: String(tier), lane: tier, time: 1000 }],
+      })
+    }
+    const normalNotes = context.chart.tracks![1].notes
+    expect(await context.importNotes(normalNotes, id, 2)).toBe('stale')
+    await act(async () => { expect(await context.importNotes(normalNotes, id, 3)).toBe('saved') })
+    expect(context.chart.notes).toEqual(normalNotes)
+    expect(context.chart.tracks?.[1].notes).toEqual(normalNotes)
+    expect(context.chart).toMatchObject({ title: 'Renamed', bpm: 240, audioName: 'song.ogg', coverName: 'cover.png' })
+    expect(dependencies.writeWebChart).toHaveBeenLastCalledWith(id, expect.objectContaining({ notes: normalNotes }), expect.anything())
+    await act(async () => context.undo())
+    expect(context.chart.notes).toEqual([{ id: '3', kind: 'note', lane: 3, time: 1000 }])
+  } finally {
+    await act(async () => root.unmount())
+    pause.mockRestore()
+    vi.unstubAllGlobals()
+    dependencies.writeWebChart.mockClear()
+  }
+})
 
 it('undoes and redoes BPM, notes, effects and linked retiming as atomic edits', async () => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })

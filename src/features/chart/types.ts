@@ -1,5 +1,5 @@
 import { normalizeEffects, type ChartEffect } from './effects/scrollSpeed'
-import { libraryMetadata, tiers, type DifficultyTrack } from './libraryMetadata'
+import { emptyDifficultyTrack, libraryMetadata, managedLibraryMetadata, tiers, type DifficultyTrack } from './libraryMetadata'
 import { currentText } from '../../app/currentText'
 
 export type NoteKind = 'note' | 'hold'
@@ -126,4 +126,12 @@ export function normalizeChart(input: unknown): Chart {
       editorZoom: Number.isFinite(settings.editorZoom) ? Math.max(90, Math.min(1320, settings.editorZoom!)) : DEFAULT_CHART.settings.editorZoom,
     },
   }
+}
+
+export function normalizeManagedChart(input: unknown): Chart {
+  const chart = normalizeChart(input)
+  const library = managedLibraryMetadata(chart.library)
+  const tracks = Object.fromEntries(tiers.flatMap((_, tier) =>
+    tier === library.tier ? [] : [[tier, chart.tracks?.[tier] ?? emptyDifficultyTrack()]]))
+  return { ...chart, library, tracks }
 }

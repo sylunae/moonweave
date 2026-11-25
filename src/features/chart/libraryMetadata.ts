@@ -14,7 +14,7 @@ export interface LibraryMetadata {
 
 export function libraryMetadata(input: unknown): LibraryMetadata {
   const value = (input && typeof input === 'object' ? input : {}) as Partial<LibraryMetadata>
-  const levels = tiers.map((_, i) => Math.max(0, Math.min(20, Math.round(Number(value.levels?.[i]) || 0))))
+  const levels = tiers.map((_, i) => Math.max(0, Math.min(99, Math.round(Number(value.levels?.[i]) || 0))))
   if (!levels.some(Boolean)) levels[1] = 1
   const tier = Number(value.tier)
   return {
@@ -27,6 +27,15 @@ export function libraryMetadata(input: unknown): LibraryMetadata {
   }
 }
 
+export function newChartMetadata(input: unknown): LibraryMetadata {
+  return { ...libraryMetadata(input), levels: tiers.map(() => 1), tier: 1, status: 'draft' }
+}
+
+export function managedLibraryMetadata(input: unknown): LibraryMetadata {
+  const library = libraryMetadata(input)
+  return { ...library, levels: library.levels.map(level => level || 1) }
+}
+
 export function totalNotes(notes: unknown, tracks: unknown, levels: number[], active: number) {
   const maps = tracks as Record<number, Partial<DifficultyTrack>> | null
   return levels.reduce((sum, level, i) => {
@@ -36,11 +45,13 @@ export function totalNotes(notes: unknown, tracks: unknown, levels: number[], ac
 }
 
 export type DifficultyTrack = Pick<Chart, 'notes' | 'effects' | 'aiImportHistory'>
+export const emptyDifficultyTrack = (): DifficultyTrack => ({ notes: [], effects: [], aiImportHistory: [] })
+
 export function chooseDifficulty(chart: Chart, tier: number): Chart {
   const meta = libraryMetadata(chart.library)
   if (tier === meta.tier || !meta.levels[tier]) return chart
   const tracks = { ...chart.tracks, [meta.tier]: { notes: chart.notes, effects: chart.effects, aiImportHistory: chart.aiImportHistory } }
-  const track = tracks[tier] ?? { notes: [], effects: [], aiImportHistory: [] }
+  const track = tracks[tier] ?? emptyDifficultyTrack()
   delete tracks[tier]
   return { ...chart, ...track, tracks, library: { ...meta, tier } }
 }

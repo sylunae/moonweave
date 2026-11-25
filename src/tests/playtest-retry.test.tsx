@@ -6,13 +6,13 @@ import PlaytestPage from '@/pages/PlaytestPage'
 
 const state = vi.hoisted(() => ({
   editor: {} as Record<string, unknown>, session: null as Record<string, unknown> | null,
-  reset: vi.fn(), hideNote: vi.fn(),
+  reset: vi.fn(), hideNote: vi.fn(), laneTilt: 0,
 }))
 vi.mock('@/features/chart/ChartProvider', () => ({ useChart: () => state.editor }))
 vi.mock('@/features/platform/PlatformProvider', () => ({ usePlatform: () => ({ session: state.session }) }))
 vi.mock('@/app/i18n', () => ({ useI18n: () => ({ text: (zh: string) => zh }) }))
 vi.mock('@/app/preferences', () => ({ usePreferences: () => ({ preferences: {
-  playbackRate: 1, timingWindow: 'normal', laneTilt: 0, noteScrollSpeed: 7, playKeys: ['d', 'f', 'j', 'k'],
+  playbackRate: 1, timingWindow: 'normal', laneTilt: state.laneTilt, noteScrollSpeed: 7, playKeys: ['d', 'f', 'j', 'k'],
 } }) }))
 vi.mock('@/features/playtest/PlaytestRenderer', () => ({ PlaytestRenderer: class {
   reset = state.reset
@@ -27,6 +27,7 @@ let frameId = 0
 beforeEach(() => {
   frames = new Map()
   state.session = null
+  state.laneTilt = 0
   state.reset.mockClear(); state.hideNote.mockClear()
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frames.set(++frameId, callback); return frameId })
   vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id))
@@ -82,4 +83,46 @@ it('retries a formal play result from zero even when the editor is at another po
   fireEvent.click(screen.getByRole('button', { name: '再来一次' }))
   expect(formalAudio.currentTime).toBe(0)
   expect(state.reset).toHaveBeenLastCalledWith(-1000)
+})
+
+it('pauses for settings, blocks play shortcuts, and preserves the run when the view changes', async () => {
+  const onSettings = vi.fn()
+  const setEditorTime = vi.fn()
+  state.editor.setCurrentTime = setEditorTime
+  state.editor.setImprovising = vi.fn()
+  const view = render(<PlaytestPage onSettings={onSettings} />)
+  fireEvent.keyDown(window, { code: 'Space' })
+  await act(async () => {
+    const pending = [...frames.values()]; frames.clear(); pending.forEach((callback) => callback(1100))
+  })
+  expect(screen.getByTitle('暂停')).toBeTruthy()
+
+  audio.currentTime = 26
+  const pause = vi.mocked(audio.pause)
+  pause.mockClear()
+  fireEvent.click(screen.getByRole('button', { name: '设置' }))
+  expect(onSettings).toHaveBeenCalledOnce()
+  expect(pause).toHaveBeenCalledOnce()
+  expect(audio.currentTime).toBe(26)
+
+  view.rerender(<PlaytestPage onSettings={onSettings} settingsOpen />)
+  const play = vi.mocked(audio.play)
+  play.mockClear()
+  fireEvent.keyDown(window, { code: 'Space' })
+  fireEvent.keyDown(window, { code: 'Escape' })
+  expect(play).not.toHaveBeenCalled()
+  expect(setEditorTime).not.toHaveBeenCalled()
+
+  state.hideNote.mockClear()
+  state.reset.mockClear()
+  state.laneTilt = 20
+  view.rerender(<PlaytestPage onSettings={onSettings} settingsOpen />)
+  expect(state.hideNote).toHaveBeenCalledWith('before')
+  expect(state.reset).not.toHaveBeenCalled()
+
+  view.rerender(<PlaytestPage onSettings={onSettings} />)
+  expect(play).not.toHaveBeenCalled()
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: /继续/ })) })
+  expect(play).toHaveBeenCalledOnce()
+  expect(audio.currentTime).toBe(26)
 })

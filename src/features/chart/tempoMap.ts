@@ -147,9 +147,14 @@ export function retimeInitialBpm(chart: Chart, bpm: number): Chart {
   })
   const next = { ...chart, bpm, bpmChanges }
   const retime = (time: number) => timeAtBeat(next, beatAtTime(chart, time), Math.min(0, chart.offset), Math.max(chart.duration * 2, time * 2 + 1))
+  const retimeTrack = (track: Pick<Chart, 'notes' | 'effects' | 'aiImportHistory'>) => ({
+    aiImportHistory: track.aiImportHistory,
+    effects: track.effects.map((effect) => ({ ...effect, time: retime(effect.time), ...(effect.endTime === undefined ? {} : { endTime: retime(effect.endTime) }) })),
+    notes: track.notes.map((note) => ({ ...note, time: retime(note.time), endTime: note.endTime === undefined ? undefined : retime(note.endTime) })),
+  })
   return {
     ...next,
-    effects: chart.effects.map((effect) => ({ ...effect, time: retime(effect.time), ...(effect.endTime === undefined ? {} : { endTime: retime(effect.endTime) }) })),
-    notes: chart.notes.map((note) => ({ ...note, time: retime(note.time), endTime: note.endTime === undefined ? undefined : retime(note.endTime) })),
+    ...retimeTrack(chart),
+    ...(chart.tracks && { tracks: Object.fromEntries(Object.entries(chart.tracks).map(([tier, track]) => [tier, retimeTrack(track)])) }),
   }
 }

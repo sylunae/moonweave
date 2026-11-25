@@ -1,5 +1,12 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import type { SylunaeShellAPI, TitlebarTheme } from '../../src/shared/electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
+import type { ChartInfoMedia, SylunaeShellAPI, TitlebarTheme } from '../../src/shared/electron'
+
+const selectedPath = (file: File | null | undefined) => {
+  if (file == null) return file
+  const source = webUtils.getPathForFile(file)
+  if (!source) throw new Error('请选择本地媒体文件 / Select a local media file')
+  return source
+}
 
 const api: SylunaeShellAPI = Object.freeze({
   platform: 'electron',
@@ -23,6 +30,11 @@ contextBridge.exposeInMainWorld('moonweave', Object.freeze({
   readAudioForAnalysis: (id: string) => ipcRenderer.invoke('library:read-analysis-audio', id),
   duplicateChart: (id: string) => ipcRenderer.invoke('library:duplicate', id),
   writeChart: (id: string, chart: unknown) => ipcRenderer.invoke('library:write', id, chart),
+  writeChartInfo: (id: string, chart: unknown, media: ChartInfoMedia) => ipcRenderer.invoke('library:write-info', id, chart, {
+    audio: selectedPath(media.audio),
+    background: selectedPath(media.background),
+    cover: selectedPath(media.cover),
+  }),
   deleteChart: (id: string) => ipcRenderer.invoke('library:delete', id),
   chooseAudio: (id: string) => ipcRenderer.invoke('library:choose-audio', id),
   chooseBackground: (id: string) => ipcRenderer.invoke('library:choose-background', id),

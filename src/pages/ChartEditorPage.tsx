@@ -1,11 +1,11 @@
 import { EffectsModule, useEffectsEditor } from '@/features/chart/effects/EffectsModule'
 import { shiftChartOffset } from '@/features/chart/editHistory'
-import { aiChartCopy, editorEffects, improvisationCopy, redZoneCopy } from '@/config/app'
+import { aiChartCopy, editorEffects, improvisationCopy, noteImportTitle, redZoneCopy } from '@/config/app'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   BookOpen, ClipboardPaste, Copy, FlipHorizontal2, Gamepad2, Gauge, ImagePlus,
   LogOut, Music2, Pause, Play, Plus, Redo2, ScanSearch, SlidersHorizontal, Trash2,
-  Undo2, Upload, X, Sparkles, FileJson,
+  Undo2, Upload, X, Sparkles, FileJson, FileUp,
 } from 'lucide-react'
 import { navigate } from '@/app/navigation'
 import { useI18n } from '@/app/i18n'
@@ -18,11 +18,14 @@ import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ChartEditor, type ChartEditorHandle } from '@/features/chart/ChartEditor'
 import { useChart } from '@/features/chart/ChartProvider'
+import { DifficultyLevelFields } from '@/features/chart/DifficultyLevelFields'
+import { libraryMetadata, tiers } from '@/features/chart/libraryMetadata'
 import { adjacentBeatLine, bpmAtTime, retimeInitialBpm, snapToBeatLine } from '@/features/chart/tempoMap'
 import type { ChartNote, ToolMode } from '@/features/chart/types'
 
 const SUBDIVISIONS = [2, 3, 4, 6, 8, 12, 16, 24, 32] as const
 const AiChartDialog = lazy(() => import('@/features/chart/ai/AiChartDialog'))
+const NoteImportDialog = lazy(() => import('@/features/chart/NoteImportDialog'))
 const PLAYBACK_RATES = [0.5, 0.75, 1] as const
 const BPM_MIN = 20
 const BPM_MAX = 400
@@ -73,6 +76,7 @@ export default function ChartEditorPage() {
   const [tool, setTool] = useState<ToolMode>('note')
   const [redMode, setRedMode] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
+  const [noteImportOpen, setNoteImportOpen] = useState(false)
   const effectsEditor = useEffectsEditor(tool, (tool) => { setTool(tool); setHoldStart(null); setRegion(null); setSelectedIds(new Set()) })
   const [holdStart, setHoldStart] = useState<{ lane: number; time: number } | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -262,6 +266,7 @@ export default function ChartEditorPage() {
       </aside>
 
       <aside className="editor-utility-dock intro" aria-label={text('编辑器工具栏', 'Editor toolbar')}>
+        <Tooltip><TooltipTrigger asChild><button onClick={() => { editorRef.current?.flushSeek(); setNoteImportOpen(true) }} aria-label={text(noteImportTitle.zh, noteImportTitle.en)}><span className="editor-dock-label">{text(noteImportTitle.zh, noteImportTitle.en)}</span><FileUp /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text(noteImportTitle.zh, noteImportTitle.en)}</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger asChild><button onClick={() => { editorRef.current?.flushSeek(); setAiOpen(true) }} aria-label={text(aiChartCopy.title.zh, aiChartCopy.title.en)}><span className="editor-dock-label">{text(aiChartCopy.title.zh, aiChartCopy.title.en)}</span><FileJson /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text(aiChartCopy.title.zh, aiChartCopy.title.en)}</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('info')} aria-label={text('谱面信息', 'Chart info')}><span className="editor-dock-label">{text('谱面信息', 'Chart info')}</span><BookOpen /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('谱面信息', 'Chart info')}</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('tempo')} aria-label={text('BPM 变化', 'BPM changes')}><span className="editor-dock-label">{text('BPM 变化', 'BPM changes')}</span><Gauge /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('BPM 变化', 'BPM changes')}</TooltipContent></Tooltip>
@@ -274,11 +279,12 @@ export default function ChartEditorPage() {
     </div>
 
     <EffectsModule editor={effectsEditor} />
+    {noteImportOpen && <Suspense fallback={null}><NoteImportDialog key={activeChartId} onClose={() => setNoteImportOpen(false)} onApplied={() => { setSelectedIds(new Set()); setHoldStart(null); setRegion(null); setTool('note') }} /></Suspense>}
     {aiOpen && <Suspense fallback={null}><AiChartDialog key={activeChartId} onClose={() => setAiOpen(false)} onApplied={() => { setSelectedIds(new Set()); setHoldStart(null); setRegion(null); setTool('note') }} subdivision={subdivision} initialRange={region?.end != null ? { start: region.start, end: region.end } : null} /></Suspense>}
 
     <Sheet open={openSheet === 'info'} onOpenChange={(open) => setOpenSheet(open ? 'info' : null)}>
       <SheetContent className="editor-sheet">
-        <SheetHeader><SheetTitle>{text('谱面信息', 'Chart info')}</SheetTitle><SheetDescription>{storageStatus === 'saving' ? text('正在保存到内部谱面库', 'Saving to the local chart library') : storageStatus === 'error' ? text('内部保存失败', 'Local save failed') : text('已自动保存到内部谱面库', 'Autosaved to the local chart library')}</SheetDescription></SheetHeader>
+        <SheetHeader><SheetTitle>{text('谱面信息', 'Chart info')} · {tiers[libraryMetadata(chart.library).tier]}</SheetTitle><SheetDescription>{storageStatus === 'saving' ? text('正在保存到内部谱面库', 'Saving to the local chart library') : storageStatus === 'error' ? text('内部保存失败', 'Local save failed') : text('已自动保存到内部谱面库', 'Autosaved to the local chart library')}</SheetDescription></SheetHeader>
         <div className="editor-sheet-scroll">
           <section className="sheet-section">
             <div className="sheet-section-heading"><span><Music2 /></span><div><h3>{text('歌曲信息', 'Song info')}</h3><p>{text('修改初始 BPM 时会保持音符相对节拍位置。', 'Changing the initial BPM preserves each note’s relative beat position.')}</p></div></div>
@@ -288,6 +294,13 @@ export default function ChartEditorPage() {
               <label><span>{text('初始 BPM', 'Initial BPM')}</span><Input inputMode="decimal" value={bpmDraft} onChange={(event) => { const raw = event.target.value; setBpmDraft(raw) }} onBlur={() => { const value = Number(bpmDraft); if (bpmDraft === '' || !Number.isFinite(value) || value < BPM_MIN || value > BPM_MAX) { showToast(text(`BPM 需在 ${BPM_MIN}–${BPM_MAX} 之间`, `BPM must be between ${BPM_MIN} and ${BPM_MAX}`)); setBpmDraft(String(chart.bpm)) } else applyBpm(value) }} /></label>
               <label><span>{text('谱面偏移（ms）', 'Chart offset (ms)')}</span><Input inputMode="numeric" value={offsetDraft} onChange={(event) => { const raw = event.target.value; setOffsetDraft(raw) }} onBlur={() => { if (offsetDraft === '' || !Number.isFinite(Number(offsetDraft))) { showToast(text('偏移值必须是有效毫秒数', 'Offset must be a valid millisecond value')); setOffsetDraft(String(chart.offset)) } else applyOffset(Number(offsetDraft)) }} /></label>
             </div>
+            <DifficultyLevelFields levels={libraryMetadata(chart.library).levels} onCommit={(tier, level) => {
+              setChart(current => {
+                const meta = libraryMetadata(current.library)
+                if (meta.levels[tier] === level) return current
+                return { ...current, library: { ...meta, levels: meta.levels.map((value, index) => index === tier ? level : value) } }
+              })
+            }} />
             <button className="audio-drop" onClick={() => void chooseAudio()}><span className="audio-icon"><Upload /></span><span><strong>{chart.audioName || text('上传音频文件', 'Upload audio file')}</strong><small>{text('MP3、WAV、OGG、M4A 或 FLAC', 'MP3, WAV, OGG, M4A, or FLAC')}</small></span><b>{chart.audioName ? text('替换', 'Replace') : text('上传', 'Upload')}</b></button>
             <div className="managed-media-row"><button className="audio-drop" onClick={() => void chooseBackground()}><span className="audio-icon"><ImagePlus /></span><span><strong>{chart.backgroundName || text('上传试玩背景', 'Upload playtest background')}</strong><small>{text('图片或 MP4 / WebM 视频', 'Image or MP4 / WebM video')}</small></span><b>{chart.backgroundName ? text('替换', 'Replace') : text('上传', 'Upload')}</b></button>{chart.backgroundName && <Button variant="outline" size="icon" title={text('移除背景', 'Remove background')} onClick={() => void removeBackground()}><X /></Button>}</div>
             {chart.backgroundType === 'video' && <label className="video-start-setting"><span><strong>{text('视频起始偏移（ms）', 'Video start offset (ms)')}</strong><small>{text('正数延后开始，负数提前播放', 'Positive values delay playback; negative values start early')}</small></span><Input inputMode="numeric" value={backgroundVideoStartDraft} onChange={(event) => setBackgroundVideoStartDraft(event.target.value)} onBlur={() => { const value = Number(backgroundVideoStartDraft); if (!Number.isFinite(value)) { showToast(text('视频起始偏移必须是有效毫秒数', 'Video start offset must be a valid millisecond value')); setBackgroundVideoStartDraft(String(chart.backgroundVideoStartTime)); return } const backgroundVideoStartTime = Math.round(value); setBackgroundVideoStartDraft(String(backgroundVideoStartTime)); setChart((current) => ({ ...current, backgroundVideoStartTime })) }} /></label>}

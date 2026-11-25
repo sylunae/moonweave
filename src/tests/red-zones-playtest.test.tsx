@@ -312,14 +312,37 @@ it('shows only the latest judgment at center even after the combo breaks', async
   render(<PlaytestPage />)
   await start()
   tap(0.5, 'f')
-  expect(screen.getByText('Perfect').matches('.playtest-judge-text.centered')).toBe(true)
+  expect(screen.getByText('Perfect').closest('.playtest-judgment.centered')).toBeTruthy()
   expect(document.querySelector('.playtest-hit-effect')).toBeTruthy()
   expect(combo()).toBe('1')
 
   await frame(801)
   expect(screen.queryByText('Perfect')).toBeNull()
-  expect(screen.getByText('Miss').matches('.playtest-judge-text.centered')).toBe(true)
+  expect(screen.getByText('Miss').closest('.playtest-judgment.centered')).toBeTruthy()
+  expect(screen.getByText('Late')).toBeTruthy()
   expect(combo()).toBe('0')
+})
+
+it('replays the pop and replaces the timing text during dense repeated judgments', async () => {
+  state.judgmentDisplay = 'center'
+  chart([note('early', 600), note('late', 490, 1), note('perfect', 750)])
+  render(<PlaytestPage />)
+  await start()
+
+  tap(0.5)
+  const firstResult = screen.getByText('Good')
+  expect(firstResult.closest('.playtest-judgment.centered')?.previousElementSibling?.textContent).toBe('1')
+  expect(firstResult.contains(screen.getByText('Early'))).toBe(true)
+
+  tap(0.59, 'f')
+  const nextResult = screen.getByText('Good')
+  expect(nextResult).not.toBe(firstResult)
+  expect(nextResult.contains(screen.getByText('Late'))).toBe(true)
+  expect(screen.queryByText('Early')).toBeNull()
+
+  tap(0.75)
+  expect(screen.getByText('Perfect')).toBeTruthy()
+  expect(screen.queryByText('Late')).toBeNull()
 })
 
 it('keeps the hold sprite mounted across scoring ticks without spawning a tap sprite', async () => {

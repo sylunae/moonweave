@@ -1,23 +1,24 @@
-import { libraryMetadata, totalNotes } from './libraryMetadata'
+import { chooseDifficulty, emptyDifficultyTrack, libraryMetadata, newChartMetadata, tiers, totalNotes } from './libraryMetadata'
 import { GameToast } from '@/components/ui/game-controls'
 import { editSnapshot, restoreEdit, type EditSnapshot } from './editHistory'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { migrateLegacyChartPreferences, usePreferences } from '@/app/preferences'
-import type { ChartLibraryItem } from '@/shared/electron'
+import type { ChartInfoMedia, ChartLibraryItem } from '@/shared/electron'
 import { PlaybackClock } from '@/features/playtest/PlaybackClock'
 import { deleteWebChart, listWebCharts, readWebChart, writeWebChart } from './webLibrary'
 import { createChartPackage, readChartPackage } from './chartPackage'
-import { DEFAULT_CHART, normalizeChart, type Chart, type ChartNote } from './types'
+import { DEFAULT_CHART, normalizeManagedChart, type Chart, type ChartNote } from './types'
 import { snapToBeatLine } from './tempoMap'
 import { BpmDetectionDialog } from './BpmDetectionDialog'
 import { cacheEditorAudio } from './editorAudio'
 import { bpmDetectionCopy } from '@/config/app'
 import type { BpmFailureReason } from './detectBpm'
 import { applyAiPlan, type AiPlan } from './ai/aiChart'
+import { noteImportIssue } from './noteImport'
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 const text = (zh: string, en: string) => document.documentElement.lang.startsWith('zh') ? zh : en
-const freshChart = () => normalizeChart(DEFAULT_CHART)
+const freshChart = () => normalizeManagedChart(DEFAULT_CHART)
 const packagedAssetBlob = (asset: { data: Uint8Array; name: string }) => {
   const extension = asset.name.split('.').pop()?.toLowerCase() ?? ''
   const type = ({ mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', flac: 'audio/flac', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', avif: 'image/avif', mp4: 'video/mp4', webm: 'video/webm' } as Record<string, string>)[extension] ?? ''
@@ -49,6 +50,7 @@ interface ChartContextValue {
   setCurrentTime(time: number): void
   setPlaybackRate(rate: number): void
   commitNotes(notes: ChartNote[]): void
+  importNotes(notes: ChartNote[], chartId: string, tier: number): Promise<'saved' | 'unsaved' | 'stale' | 'duration' | 'duplicate'>
   commitEdit(update: (chart: Chart) => Chart): void
   applyAiImport(plan: AiPlan): Promise<boolean>
   undo(): void
@@ -63,10 +65,10 @@ interface ChartContextValue {
   exportChart(id: string): Promise<boolean>
   inspectAudio(id: string): Promise<string | Blob>
   inspectChart(id: string): Promise<Chart | null>
-  saveLibraryChart(id: string, chart: Chart): Promise<boolean>
+  saveChartInfo(id: string, chart: Chart, media: ChartInfoMedia): Promise<boolean>
   duplicateChart(id: string): Promise<string | null>
-  createChart(initial?: Chart): Promise<string | null>
-  selectChart(id: string): Promise<boolean>
+  createChart(initial: Chart, media: ChartInfoMedia): Promise<string | null>
+  selectChart(id: string, tier?: number): Promise<boolean>
   deleteChart(id: string): Promise<boolean>
   revealLibrary(): Promise<void>
   togglePlay(playbackRate: number, subdivision: number, signal?: AbortSignal): Promise<void>
@@ -124,7 +126,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const toastTimers = useRef(new Set<number>())
   const chartRef = useRef(chart)
   const activeIdRef = useRef(activeChartId)
-  const writeQueueRef = useRef(Promise.resolve(true))
+  const writeQueueRef = useRef<Promise<unknown>>(Promise.resolve())
   const queuedSnapshotRef = useRef<{ id: string; snapshot: Chart } | null>(null)
   const deletedIdsRef = useRef(new Set<string>())
   chartRef.current = chart
@@ -178,23 +180,31 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
       return [next, ...items.filter((candidate) => candidate.id !== item.id)].sort((a, b) => b.updatedAt - a.updatedAt)
     })
   }, [])
-  const persistSnapshot = useCallback((id: string, snapshot: Chart, assets: { audio?: Blob; background?: Blob | null; cover?: Blob | null; coverUrl?: string } = {}) => {
-    if (!id) return Promise.resolve(false)
+  const queueWrite = useCallback(<T,>(id: string, snapshot: Chart, write: () => Promise<T>) => {
+    if (!id) return Promise.resolve(false as const)
     queuedSnapshotRef.current = { id, snapshot }
     setStorageStatus('saving')
     const operation = async () => {
-      if (deletedIdsRef.current.has(id)) return false
-      const item = window.moonweave
-        ? await window.moonweave.writeChart(id, snapshot)
-        : webSummary(id, snapshot, (await writeWebChart(id, snapshot, { audio: assets.audio, background: assets.background, cover: assets.cover })).updatedAt, assets.coverUrl)
-      updateSummary(item, window.moonweave ? false : assets.cover === undefined); setStorageStatus('saved'); return true
+      if (deletedIdsRef.current.has(id)) return false as const
+      const result = await write()
+      setStorageStatus('saved')
+      return result
     }
     const queued = writeQueueRef.current.then(operation, operation).catch((error) => {
-      setStorageStatus('error'); showToast(error instanceof Error ? error.message : text('谱面保存失败', 'Failed to save chart')); return false
+      setStorageStatus('error'); showToast(error instanceof Error ? error.message : text('谱面保存失败', 'Failed to save chart')); return false as const
     })
     writeQueueRef.current = queued
     return queued
-  }, [showToast, updateSummary])
+  }, [showToast])
+  const persistSnapshot = useCallback((id: string, snapshot: Chart, assets: { audio?: Blob; background?: Blob | null; cover?: Blob | null; coverUrl?: string } = {}, autosave = false) =>
+    queueWrite(id, snapshot, async () => {
+      if (autosave && (activeIdRef.current !== id || chartRef.current !== snapshot)) return true
+      const item = window.moonweave
+        ? await window.moonweave.writeChart(id, snapshot)
+        : webSummary(id, snapshot, (await writeWebChart(id, snapshot, assets)).updatedAt, assets.coverUrl)
+      updateSummary(item, window.moonweave ? false : assets.cover === undefined)
+      return true
+    }), [queueWrite, updateSummary])
   const flushActiveChart = useCallback(() => persistSnapshot(activeIdRef.current, chartRef.current), [persistSnapshot])
   const migrateLegacyPreferences = useCallback((input: unknown) => {
     setPreferences((current) => migrateLegacyChartPreferences(current, input))
@@ -205,13 +215,13 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
       const record = await window.moonweave.readChart(id)
       if (!record) return null
       migrateLegacyPreferences(record.chart)
-      return { chart: normalizeChart(record.chart), audioUrl: record.audioUrl, backgroundUrl: record.backgroundUrl, coverUrl: record.coverUrl }
+      return { chart: normalizeManagedChart(record.chart), audioUrl: record.audioUrl, backgroundUrl: record.backgroundUrl, coverUrl: record.coverUrl }
     }
     const record = await readWebChart(id)
     if (!record) return null
     migrateLegacyPreferences(record.chart)
     return {
-      chart: normalizeChart(record.chart),
+      chart: normalizeManagedChart(record.chart),
       audioUrl: record.audio ? URL.createObjectURL(record.audio) : '',
       backgroundUrl: record.background ? URL.createObjectURL(record.background) : '',
       coverUrl: record.cover ? webCoverUrlsRef.current.get(id) || (() => { const url = URL.createObjectURL(record.cover); webCoverUrlsRef.current.set(id, url); return url })() : '',
@@ -221,10 +231,10 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const readChartForExport = useCallback(async (id: string) => {
     if (window.moonweave) {
       const record = await window.moonweave.readChart(id)
-      return record ? normalizeChart(record.chart) : null
+      return record ? normalizeManagedChart(record.chart) : null
     }
     const record = await readWebChart(id)
-    return record ? normalizeChart(record.chart) : null
+    return record ? normalizeManagedChart(record.chart) : null
   }, [])
 
   useEffect(() => {
@@ -236,7 +246,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
           : (await listWebCharts()).map((record) => {
             const cover = record.cover ? URL.createObjectURL(record.cover) : ''
             if (cover) webCoverUrlsRef.current.set(record.id, cover)
-            return webSummary(record.id, normalizeChart(record.chart), record.updatedAt, cover)
+            return webSummary(record.id, normalizeManagedChart(record.chart), record.updatedAt, cover)
           }).sort((a, b) => b.updatedAt - a.updatedAt)
         if (cancelled) return
         setCharts(items)
@@ -260,42 +270,109 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     if (queuedSnapshotRef.current?.id === activeChartId && queuedSnapshotRef.current.snapshot === chart) return
     setStorageStatus('saving')
     const timer = window.setTimeout(() => {
-      if (queuedSnapshotRef.current?.id !== activeChartId || queuedSnapshotRef.current.snapshot !== chart) void persistSnapshot(activeChartId, chart)
+      if (queuedSnapshotRef.current?.id !== activeChartId || queuedSnapshotRef.current.snapshot !== chart) void persistSnapshot(activeChartId, chart, {}, true)
     }, 550)
     return () => window.clearTimeout(timer)
   }, [activeChartId, chart, libraryReady, persistSnapshot])
 
-  const selectChart = useCallback(async (id: string) => {
+  const selectChart = useCallback(async (id: string, tier?: number) => {
     if (!id) return false
-    if (id === activeIdRef.current) return true
+    if (id === activeIdRef.current) {
+      const next = tier === undefined ? chartRef.current : chooseDifficulty(chartRef.current, tier)
+      if (next !== chartRef.current) {
+        stopPlayback()
+        if (audioRef.current) audioRef.current.currentTime = 0
+        playbackClockRef.current.reset(0)
+        chartRef.current = next; setChart(next); setCurrentTimeState(0)
+        historyRef.current = []; futureRef.current = []; setHistory([]); setFuture([])
+      }
+      return true
+    }
     if (activeIdRef.current && !await flushActiveChart()) return false
     const record = await readManagedChart(id)
     if (!record) { showToast(text('找不到这份谱面', 'Chart not found')); return false }
-    activeIdRef.current = id; setActiveChartId(id); resetSession(record.chart, record.audioUrl, record.backgroundUrl, record.coverUrl)
+    const next = tier === undefined ? record.chart : chooseDifficulty(record.chart, tier)
+    activeIdRef.current = id; setActiveChartId(id); resetSession(next, record.audioUrl, record.backgroundUrl, record.coverUrl)
     return true
-  }, [flushActiveChart, readManagedChart, resetSession, showToast])
-  const createChart = useCallback(async (initial?: Chart) => {
+  }, [flushActiveChart, readManagedChart, resetSession, showToast, stopPlayback])
+
+  const writeChartInfo = useCallback((id: string, next: Chart, media: ChartInfoMedia, creating = false) =>
+    queueWrite(id, activeIdRef.current === id ? chartRef.current : next, async () => {
+      if (window.moonweave) {
+        const record = await window.moonweave.writeChartInfo(id, next, media)
+        const saved = normalizeManagedChart(record.chart)
+        updateSummary(webSummary(id, saved, record.updatedAt, record.coverUrl), false)
+        return { chart: saved, audioUrl: record.audioUrl, backgroundUrl: record.backgroundUrl, coverUrl: record.coverUrl }
+      }
+      const saved = { ...next }
+      if (media.audio) { saved.audioPath = 'indexeddb'; saved.audioName = media.audio.name }
+      if (media.cover !== undefined) {
+        saved.coverPath = media.cover ? 'indexeddb' : ''
+        saved.coverName = media.cover?.name ?? ''
+      }
+      if (media.background !== undefined) {
+        saved.backgroundPath = media.background ? 'indexeddb' : ''
+        saved.backgroundName = media.background?.name ?? ''
+        saved.backgroundType = !media.background ? '' : /\.(mp4|webm)$/i.test(media.background.name) ? 'video' : 'image'
+        if (saved.backgroundType !== 'video') saved.backgroundVideoStartTime = 0
+      }
+      const record = await writeWebChart(id, saved, media)
+      const coverUrls = webCoverUrlsRef.current
+      if (media.cover !== undefined) {
+        const previous = coverUrls.get(id)
+        if (previous) URL.revokeObjectURL(previous)
+        coverUrls.delete(id)
+        if (record.cover) coverUrls.set(id, URL.createObjectURL(record.cover))
+      }
+      const coverUrl = coverUrls.get(id) ?? ''
+      const loadMedia = creating || id === activeIdRef.current
+      updateSummary(webSummary(id, saved, record.updatedAt, coverUrl), media.cover === undefined)
+      return {
+        chart: saved, coverUrl,
+        audioUrl: loadMedia && media.audio ? URL.createObjectURL(media.audio) : '',
+        backgroundUrl: loadMedia && media.background ? URL.createObjectURL(media.background) : '',
+      }
+    }), [queueWrite, updateSummary])
+  const createChart = useCallback(async (initial: Chart, media: ChartInfoMedia) => {
+    if (!media.audio) return null
     if (activeIdRef.current && !await flushActiveChart()) return null
-    const id = crypto.randomUUID(); const created = initial ?? freshChart()
-    if (!await persistSnapshot(id, created)) return null
-    activeIdRef.current = id; setActiveChartId(id); resetSession(created); showToast(text('已新建谱面', 'New chart created'))
+    const id = crypto.randomUUID()
+    const library = newChartMetadata(initial.library)
+    const tracks = Object.fromEntries(tiers.flatMap((_, tier) =>
+      tier === library.tier ? [] : [[tier, emptyDifficultyTrack()]]))
+    const created = { ...initial, library, tracks }
+    const record = await writeChartInfo(id, created, media, true)
+    if (!record) return null
+    queuedSnapshotRef.current = { id, snapshot: record.chart }
+    activeIdRef.current = id; setActiveChartId(id); resetSession(record.chart, record.audioUrl, record.backgroundUrl, record.coverUrl)
+    if (record.audioUrl) setBpmRequest({ sequence: audioImportSequence.current, id, url: record.audioUrl })
     return id
-  }, [flushActiveChart, persistSnapshot, resetSession, showToast])
+  }, [flushActiveChart, resetSession, writeChartInfo])
   const inspectAudio = useCallback(async (id: string) => {
     if (id === activeIdRef.current) return audioUrl
     if (window.moonweave) return (await window.moonweave.readChart(id))?.audioUrl || ''
     return (await readWebChart(id))?.audio || ''
   }, [audioUrl])
   const inspectChart = useCallback(async (id: string) => id === activeIdRef.current ? chartRef.current : readChartForExport(id), [readChartForExport])
-  const saveLibraryChart = useCallback(async (id: string, next: Chart) => {
-    if (!await persistSnapshot(id, next)) return false
+  const saveChartInfo = useCallback(async (id: string, next: Chart, media: ChartInfoMedia) => {
+    const record = await writeChartInfo(id, next, media)
+    if (!record) return false
     if (activeIdRef.current === id) {
-      chartRef.current = next
-      setChart(next)
+      queuedSnapshotRef.current = { id, snapshot: record.chart }
+      chartRef.current = record.chart
+      setChart(record.chart)
       historyRef.current = []; futureRef.current = []; setHistory([]); setFuture([])
+      if (media.audio) {
+        stopPlayback()
+        replaceAudioUrl(record.audioUrl, record.audioUrl.startsWith('blob:'))
+        setCurrentTimeState(0)
+        setBpmRequest({ sequence: ++audioImportSequence.current, id, url: record.audioUrl })
+      }
+      if (media.background !== undefined) replaceBackgroundUrl(record.backgroundUrl, record.backgroundUrl.startsWith('blob:'))
+      if (media.cover !== undefined) setCoverUrl(record.coverUrl)
     }
     return true
-  }, [persistSnapshot])
+  }, [replaceAudioUrl, replaceBackgroundUrl, stopPlayback, writeChartInfo])
   const duplicateChart = useCallback(async (id: string) => {
     if (activeIdRef.current === id && !await flushActiveChart()) return null
     if (window.moonweave) {
@@ -465,7 +542,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
         const record = await window.moonweave.importChart()
         if (!record) return null
         migrateLegacyPreferences(record.chart)
-        const loaded = normalizeChart(record.chart)
+        const loaded = normalizeManagedChart(record.chart)
         setActiveChartId(record.id); resetSession(loaded, record.audioUrl, record.backgroundUrl, record.coverUrl)
         updateSummary(webSummary(record.id, loaded, record.updatedAt, record.coverUrl), false); showToast(text('谱面资源已导入内部谱面库', 'Chart resources imported into the local library'))
         return record.id
@@ -474,7 +551,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
       const packageFile = files.find((file) => file.name.toLowerCase().endsWith('.mwchart'))
       if (packageFile) {
         const packaged = await readChartPackage(new Uint8Array(await packageFile.arrayBuffer()))
-        const loaded = normalizeChart(packaged.chart)
+        const loaded = normalizeManagedChart(packaged.chart)
         const audio = packaged.assets.audio ? packagedAssetBlob(packaged.assets.audio) : undefined
         const background = packaged.assets.background ? packagedAssetBlob(packaged.assets.background) : undefined
         const cover = packaged.assets.cover ? packagedAssetBlob(packaged.assets.cover) : undefined
@@ -494,7 +571,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
       if (!json) return null
       const imported = JSON.parse(await json.text())
       migrateLegacyPreferences(imported)
-      const loaded = normalizeChart(imported)
+      const loaded = normalizeManagedChart(imported)
       const expected = (loaded.audioName || loaded.audioPath.split(/[\\/]/).pop() || '').toLowerCase()
       const audio = files.find((file) => file !== json && (file.type.startsWith('audio/') || file.name.toLowerCase() === expected))
       const expectedBackground = (loaded.backgroundName || loaded.backgroundPath.split(/[\\/]/).pop() || '').toLowerCase()
@@ -545,6 +622,14 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const commitNotes = useCallback((notes: ChartNote[]) => {
     commitEdit((previous) => ({ ...previous, notes: [...notes].sort((a, b) => a.time - b.time) }))
   }, [commitEdit])
+  const importNotes = useCallback<ChartContextValue['importNotes']>(async (notes, chartId, tier) => {
+    if (activeIdRef.current !== chartId || libraryMetadata(chartRef.current.library).tier !== tier || !notes.length) return 'stale'
+    const issue = noteImportIssue(notes, chartRef.current.duration)
+    if (issue) return issue
+    stopPlayback()
+    commitNotes(notes)
+    return await flushActiveChart() ? 'saved' : 'unsaved'
+  }, [commitNotes, flushActiveChart, stopPlayback])
   const applyAiImport = useCallback(async (plan: AiPlan) => {
     applyAiPlan(chartRef.current, activeIdRef.current, plan)
     stopPlayback()
@@ -647,8 +732,8 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<ChartContextValue>(() => ({
     improvising, setImprovising, chart, setChart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, audioRef, currentTime, isPlaying,
     historyLength: history.length, futureLength: future.length, toast,
-    setCurrentTime, setPlaybackRate, commitNotes, commitEdit, applyAiImport, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, inspectAudio, inspectChart, saveLibraryChart, duplicateChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast,
-  }), [improvising, chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, setPlaybackRate, commitNotes, commitEdit, applyAiImport, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, inspectAudio, inspectChart, saveLibraryChart, duplicateChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
+    setCurrentTime, setPlaybackRate, commitNotes, commitEdit, importNotes, applyAiImport, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, inspectAudio, inspectChart, saveChartInfo, duplicateChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast,
+  }), [improvising, chart, activeChartId, charts, libraryReady, storageStatus, audioUrl, backgroundUrl, coverUrl, currentTime, isPlaying, history.length, future.length, toast, setCurrentTime, setPlaybackRate, commitNotes, commitEdit, importNotes, applyAiImport, undo, redo, chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, flushActiveChart, importChart, exportChart, createChart, inspectAudio, inspectChart, saveChartInfo, duplicateChart, selectChart, deleteChart, revealLibrary, togglePlay, showToast])
   return <ChartContext.Provider value={value}>
     <audio ref={audioRef} src={audioUrl || undefined} preload="auto" onLoadedMetadata={(event) => {
       if (event.currentTarget.currentSrc === preparedAudioRef.current?.url) return

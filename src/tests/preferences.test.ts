@@ -35,10 +35,11 @@ describe('normalizePreferences', () => {
     expect(normalizePreferences({ trackBackgroundBlur: false }).trackBackgroundBlur).toBe(false)
   })
 
-  it('defaults to lane judgments and preserves the saved center position', () => {
-    expect(normalizePreferences({ schemaVersion: 1 }).judgmentDisplay).toBe('lane')
-    expect(normalizePreferences({ judgmentDisplay: 'invalid' }).judgmentDisplay).toBe('lane')
+  it('defaults to centered judgments and preserves saved positions', () => {
+    expect(normalizePreferences({ schemaVersion: 1 }).judgmentDisplay).toBe('center')
+    expect(normalizePreferences({ judgmentDisplay: 'invalid' }).judgmentDisplay).toBe('center')
     expect(normalizePreferences({ judgmentDisplay: 'center' }).judgmentDisplay).toBe('center')
+    expect(normalizePreferences({ judgmentDisplay: 'lane' }).judgmentDisplay).toBe('lane')
   })
 
   it('migrates legacy per-chart play settings only once', () => {

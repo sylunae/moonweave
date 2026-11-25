@@ -1,8 +1,8 @@
 import { Gamepad2, Info, Laptop, Moon, Palette, RotateCcw, Settings, Sun } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useI18n } from '@/app/i18n'
 import { usePreferences, type ThemeMode, type TimingWindow } from '@/app/preferences'
-import { appConfig, playSettingsCopy } from '@/config/app'
+import { appConfig, playSettingsCopy, settingsCopy } from '@/config/app'
 import { ParticleAppearanceSettings } from '@/features/appearance/ParticleAppearanceSettings'
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
@@ -12,8 +12,39 @@ import { Slider } from './ui/slider'
 import { Switch } from './ui/switch'
 import { ThemePaletteEditor } from './ThemePaletteEditor'
 
-export function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const [section, setSection] = useState<'appearance' | 'play' | 'about'>('appearance')
+type SettingsSection = 'appearance' | 'play' | 'about'
+
+function PlaySettingSlider({ label, description, min, max, step, value, unit, onCommit }: {
+  label: string
+  description: string
+  min: number
+  max: number
+  step?: number
+  value: number
+  unit?: string
+  onCommit: (value: number) => void
+}) {
+  const [draft, setDraft] = useState<number | null>(null)
+  useEffect(() => setDraft(null), [value])
+  const displayedValue = draft ?? value
+  return <label className="slider-setting">
+    <span><strong>{label}</strong><small>{description}</small></span>
+    <div>
+      <Slider aria-label={label} min={min} max={max} step={step} value={[displayedValue]}
+        onValueChange={([next]) => setDraft(next)} onValueCommit={([next]) => onCommit(next)}
+        onPointerCancel={() => setDraft(null)} />
+      <output>{displayedValue}{unit}</output>
+    </div>
+  </label>
+}
+
+export function SettingsDialog({ open, onOpenChange, initialSection = 'appearance', onCloseAutoFocus }: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  initialSection?: SettingsSection
+  onCloseAutoFocus?: (event: Event) => void
+}) {
+  const [section, setSection] = useState(initialSection)
   const { preferences, setPreferences, resetPreferences } = usePreferences()
   const { text } = useI18n()
   const trackBackgroundBlurLabel = text(playSettingsCopy.trackBackgroundBlur.zh, playSettingsCopy.trackBackgroundBlur.en)
@@ -28,11 +59,11 @@ export function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenCh
   ]
 
   return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent size="xl" mobileSize="fullscreen" className="settings-modal">
-      <DialogHeader className="sr-only"><DialogTitle>{text('设置', 'Settings')}</DialogTitle><DialogDescription>{text('调整 Moonweave 的外观、谱面游玩与个人偏好。', 'Customize Moonweave’s appearance, chart play, and personal preferences.')}</DialogDescription></DialogHeader>
+    <DialogContent size="xl" mobileSize="fullscreen" className="settings-modal" onCloseAutoFocus={onCloseAutoFocus}>
+      <DialogHeader className="sr-only"><DialogTitle>{text(settingsCopy.title.zh, settingsCopy.title.en)}</DialogTitle><DialogDescription>{text('调整 Moonweave 的外观、谱面游玩与个人偏好。', 'Customize Moonweave’s appearance, chart play, and personal preferences.')}</DialogDescription></DialogHeader>
       <div className="settings-layout">
         <aside className="settings-nav">
-          <div className="settings-brand"><span><Settings size={18} /></span><div><strong>{text('设置', 'Settings')}</strong><small>{text('定制 Moonweave', 'Customize Moonweave')}</small></div></div>
+          <div className="settings-brand"><span><Settings size={18} /></span><div><strong>{text(settingsCopy.title.zh, settingsCopy.title.en)}</strong><small>{text('定制 Moonweave', 'Customize Moonweave')}</small></div></div>
           <nav aria-label={text('设置导航', 'Settings navigation')}>
             <button className={section === 'appearance' ? 'active' : ''} onClick={() => setSection('appearance')}><Palette size={17} />{text('外观', 'Appearance')}</button>
             <button className={section === 'play' ? 'active' : ''} onClick={() => setSection('play')}><Gamepad2 size={17} />{text('谱面游玩', 'Chart Play')}</button>
@@ -53,8 +84,10 @@ export function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenCh
             <section className="settings-pane play-settings-pane">
               <div className="settings-title"><span><Gamepad2 size={18} /></span><div><h3>{text('按键设置', 'Key bindings')}</h3><p>{text('设置四条轨道在试玩时使用的按键。', 'Choose the keys used for the four lanes during playtesting.')}</p></div></div>
               <div className="key-inputs">{preferences.playKeys.map((key, index) => <Input key={index} value={key} maxLength={1} aria-label={text(`轨道 ${index + 1} 按键`, `Lane ${index + 1} key`)} onChange={(event) => { const playKeys = [...preferences.playKeys]; playKeys[index] = event.target.value.slice(-1).toUpperCase(); setPreferences((current) => ({ ...current, playKeys })) }} />)}</div>
-              <label className="slider-setting"><span><strong>{text('音符下落速度', 'Note scroll speed')}</strong><small>{text('控制试玩时音符的视觉速度', 'Controls the visual speed of notes during playtesting')}</small></span><div><Slider min={4} max={12} step={.5} value={[preferences.noteScrollSpeed]} onValueChange={([noteScrollSpeed]) => setPreferences((current) => ({ ...current, noteScrollSpeed }))} /><output>{preferences.noteScrollSpeed}</output></div></label>
-              <label className="slider-setting"><span><strong>{text('轨道倾斜度', 'Lane tilt')}</strong><small>{text('只改变透视，不影响判定', 'Changes perspective without affecting judgment')}</small></span><div><Slider min={0} max={45} value={[preferences.laneTilt]} onValueChange={([laneTilt]) => setPreferences((current) => ({ ...current, laneTilt }))} /><output>{preferences.laneTilt}°</output></div></label>
+              <PlaySettingSlider label={text('音符下落速度', 'Note scroll speed')} description={text('控制游玩时音符的视觉速度', 'Controls the visual speed of notes during play')}
+                min={4} max={12} step={.5} value={preferences.noteScrollSpeed} onCommit={(noteScrollSpeed) => setPreferences((current) => ({ ...current, noteScrollSpeed }))} />
+              <PlaySettingSlider label={text('轨道倾斜度', 'Lane tilt')} description={text('只改变透视，不影响判定', 'Changes perspective without affecting judgment')}
+                min={0} max={45} value={preferences.laneTilt} unit="°" onCommit={(laneTilt) => setPreferences((current) => ({ ...current, laneTilt }))} />
               <div className="config-block"><span>{text('判定宽松度', 'Timing window')}</span><div className="moon-segmented">{timingOptions.map(({ value, label }) => <button key={value} className={preferences.timingWindow === value ? 'active' : ''} onClick={() => setPreferences((current) => ({ ...current, timingWindow: value }))}>{label}</button>)}</div></div>
               <div className="config-block">
                 <span>{judgmentDisplayLabel}</span>

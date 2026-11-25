@@ -25,6 +25,25 @@ const safeExtension = (name: string) => {
   return match?.[0].toLowerCase() ?? ''
 }
 
+function unpackChartMetadata(files: Record<string, Uint8Array>) {
+  const manifestBytes = files['manifest.json']
+  const chartBytes = files['chart.json']
+  if (!manifestBytes || !chartBytes) throw new Error('无效的 Moonweave 谱面包')
+  const manifest = JSON.parse(strFromU8(manifestBytes)) as Partial<ChartPackageManifest>
+  if (manifest.format !== 'moonweave-chart' || manifest.version !== 1 || !manifest.assets) throw new Error('不支持的 Moonweave 谱面包版本')
+  return { manifest, chart: JSON.parse(strFromU8(chartBytes)) as unknown }
+}
+
+export function readChartPackageMetadata(data: Uint8Array, maxChartBytes: number) {
+  return new Promise<unknown>((resolve, reject) => {
+    unzip(data, { filter: entry => (entry.name === 'manifest.json' && entry.originalSize <= 64 * 1024)
+      || (entry.name === 'chart.json' && entry.originalSize <= maxChartBytes) }, (error, files) => {
+      if (error) { reject(error); return }
+      try { resolve(unpackChartMetadata(files).chart) } catch (reason) { reject(reason) }
+    })
+  })
+}
+
 export function createChartPackage(chart: Chart, assets: ChartPackageAssets) {
   const files: Record<string, Uint8Array> = {}
   const manifest: ChartPackageManifest = { format: 'moonweave-chart', version: 1, chart: 'chart.json', assets: {} }
@@ -52,20 +71,16 @@ export function readChartPackage(data: Uint8Array) {
     unzip(data, (error, files) => {
       if (error) { reject(error); return }
       try {
-        const manifestBytes = files['manifest.json']
-        const chartBytes = files['chart.json']
-        if (!manifestBytes || !chartBytes) throw new Error('无效的 Moonweave 谱面包')
-        const manifest = JSON.parse(strFromU8(manifestBytes)) as Partial<ChartPackageManifest>
-        if (manifest.format !== 'moonweave-chart' || manifest.version !== 1 || !manifest.assets) throw new Error('不支持的 Moonweave 谱面包版本')
+        const { manifest, chart } = unpackChartMetadata(files)
         const assets: ChartPackageAssets = {}
         for (const kind of ['audio', 'background', 'cover'] as const) {
-          const entry = manifest.assets[kind]
+          const entry = manifest.assets?.[kind]
           if (!entry || typeof entry.path !== 'string' || typeof entry.name !== 'string') continue
           const assetData = files[entry.path]
           if (!assetData) throw new Error(`谱面包缺少 ${kind} 资源`)
           assets[kind] = { data: assetData, name: entry.name }
         }
-        resolve({ chart: JSON.parse(strFromU8(chartBytes)) as unknown, assets })
+        resolve({ chart, assets })
       } catch (reason) { reject(reason) }
     })
   })

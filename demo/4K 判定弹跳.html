@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>4K 判定弹跳</title>
+<style>
+:root{--bg:#0d0f1a;--fg:#e8ebff;--dim:#7b82a8;--line:#262a44;box-sizing:border-box;
+padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0f1a;--fg:#e8ebff;--dim:#7b82a8;--line:#262a44}}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;display:flex;flex-direction:column;overflow:hidden}
+canvas{flex:1;width:100%;min-height:0;display:block;touch-action:none}
+.bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;padding:10px 12px 14px;color:var(--dim)}
+button{font:inherit;color:var(--fg);background:#1a1e36;border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
+button:active{transform:scale(.96)}
+button.on{background:#ffd54a;color:#1a1400;border-color:#ffd54a}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="bar">
+  <span>键盘 D F J K 随机判定</span>
+  <button data-j="perfect">Perfect</button>
+  <button data-j="good">Good</button>
+  <button data-j="miss">Miss</button>
+  <button id="auto">密集连打</button>
+</div>
+<script>
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let W, H, dpr;
+function resize(){
+  dpr = Math.min(devicePixelRatio || 1, 3);
+  W = cv.clientWidth; H = cv.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+}
+addEventListener('resize', resize); resize();
+
+/* 判定参数:弹簧 s(t)=1+A·e^(-k·t)·cos(w·t) —— A 为起始偏移,k 阻尼,w 频率 */
+const J = {
+  perfect:{text:'PERFECT',color:'#ffd54a',glow:'#ff9f1c',A:-0.42,k:14,w:30,rise:-8},
+  good:   {text:'GOOD',   color:'#5ad1ff',glow:'#2a7de1',A:-0.3,k:15,w:27,rise:-3},
+  miss:   {text:'MISS',   color:'#ff4d6d',glow:'#b3123a',A:0.25, k:12,w:22,rise:0}
+};
+const HOLD = 0.2, FADE = 0.12;   // 停留 / 淡出(秒)
+const GHOST = 0.07;              // 旧判定被顶替时的快速淡出(秒)
+
+let cur = null, ghost = null;
+
+/* 计算某判定在 t 秒时的变换 */
+function pose(type, t){
+  const p = J[type];
+  const e = Math.exp(-p.k * t);
+  let s = 1 + p.A * e * Math.cos(p.w * t);
+  let x = 0, y = p.rise * (1 - e), r = 0;
+  if (type === 'miss'){
+    x = Math.sin(t * 45) * 4 * Math.exp(-t * 14);
+    y = 12 * (1 - Math.exp(-t * 9));
+    r = 0;
+  }
+  let a = Math.min(1, t / 0.025);
+  if (t > HOLD) a *= Math.max(0, 1 - (t - HOLD) / FADE);
+  return {type, s, x, y, r, a};
+}
+
+function judge(type){
+  const now = performance.now() / 1000;
+  /* 关键:把当前判定冻结为"幽灵",快速淡出;已有幽灵直接被替换,永远最多 2 层 */
+  if (cur){
+    const t = now - cur.t0;
+    const ps = pose(cur.type, t);
+    if (ps.a > 0.01) ghost = {...ps, t0: now};
+  }
+  cur = {type, t0: now, pulse: 1};
+}
+
+function drawText(ps, alpha, scaleMul = 1){
+  const p = J[ps.type];
+  const size = Math.min(W * 0.16, 64);
+  ctx.save();
+  ctx.translate(W / 2 + ps.x, H * 0.4 + ps.y);
+  ctx.rotate(ps.r);
+  ctx.scale(ps.s * scaleMul, ps.s * scaleMul);
+  ctx.globalAlpha = Math.max(0, alpha);
+  ctx.font = `900 italic ${size}px "Arial Black","Impact",sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = p.glow; ctx.shadowBlur = 24 * dpr;
+  ctx.lineWidth = size * 0.12; ctx.strokeStyle = 'rgba(10,8,30,.85)';
+  ctx.strokeText(p.text, 0, 0);
+  ctx.shadowBlur = 0;
+  const g = ctx.createLinearGradient(0, -size / 2, 0, size / 2);
+  g.addColorStop(0, '#fff'); g.addColorStop(0.45, p.color); g.addColorStop(1, p.color);
+  ctx.fillStyle = g;
+  ctx.fillText(p.text, 0, 0);
+  ctx.restore();
+}
+
+/* 4K 轨道背景 */
+const keys = ['d','f','j','k'], lit = [0,0,0,0];
+function drawLanes(dt){
+  const lw = Math.min(W / 4 - 6, 90), gap = 6, total = lw * 4 + gap * 3, x0 = (W - total) / 2;
+  const top = 0, hitY = H * 0.82;
+  for (let i = 0; i < 4; i++){
+    const x = x0 + i * (lw + gap);
+    ctx.fillStyle = '#141830'; ctx.fillRect(x, top, lw, H);
+    if (lit[i] > 0){
+      const g = ctx.createLinearGradient(0, hitY - 160, 0, hitY);
+      g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, `rgba(120,160,255,${0.45 * lit[i]})`);
+      ctx.fillStyle = g; ctx.fillRect(x, hitY - 160, lw, 160);
+      lit[i] = Math.max(0, lit[i] - dt * 6);
+    }
+    ctx.fillStyle = `rgba(255,255,255,${0.12 + 0.5 * lit[i]})`;
+    ctx.fillRect(x + 4, hitY - 3, lw - 8, 6);
+  }
+}
+
+let last = performance.now() / 1000;
+function frame(){
+  const now = performance.now() / 1000, dt = now - last; last = now;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  drawLanes(dt);
+
+  if (ghost){
+    const t = now - ghost.t0;
+    if (t >= GHOST) ghost = null;
+    else {
+      const k = t / GHOST;                       // 0→1
+      const ps = {...ghost, y: ghost.y - 14 * k}; // 淡出同时略微上飘,衔接更顺
+      drawText(ps, ghost.a * (1 - k) * (1 - k), 1 + 0.06 * k);
+    }
+  }
+  if (cur){
+    const ps = pose(cur.type, now - cur.t0);
+    if (ps.a <= 0 && now - cur.t0 > HOLD) cur = null;
+    else drawText(ps, ps.a);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* 输入 */
+const rnd = () => { const r = Math.random(); return r < 0.6 ? 'perfect' : r < 0.85 ? 'good' : 'miss'; };
+addEventListener('keydown', e => {
+  const i = keys.indexOf(e.key.toLowerCase());
+  if (i < 0 || e.repeat) return;
+  lit[i] = 1; judge(rnd());
+});
+document.querySelectorAll('button[data-j]').forEach(b => b.onclick = () => judge(b.dataset.j));
+let timer = null;
+const autoBtn = document.getElementById('auto');
+autoBtn.onclick = () => {
+  if (timer){ clearInterval(timer); timer = null; autoBtn.classList.remove('on'); return; }
+  autoBtn.classList.add('on');
+  timer = setInterval(() => { lit[Math.random() * 4 | 0] = 1; judge(rnd()); }, 85);
+};
+</script>
+</body>
+</html>

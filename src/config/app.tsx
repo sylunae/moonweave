@@ -1,11 +1,27 @@
 import { Library, Piano } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+export const earlyAccessCopy = {
+  title: { zh: '早期版本说明', en: 'Early access' },
+  description: {
+    zh: '织月制谱目前处于早期开发阶段，暂未提供可下载的应用版本。许多功能仍在制作中，使用时可能会遇到较多 Bug。',
+    en: 'Moonweave is in early development. A downloadable app is not yet available. Many features are still in progress, and bugs may be frequent.',
+  },
+  follow: { zh: '想获取最新资讯，可以在 Instagram 关注作者', en: 'For the latest updates, follow the creator on Instagram' },
+  language: { zh: '界面语言', en: 'App language' },
+  continue: { zh: '开始使用', en: 'Get started' },
+  instagram: { handle: '@sylunae', url: 'https://www.instagram.com/sylunae/' },
+} as const
+
+export const settingsCopy = {
+  title: { zh: '设置', en: 'Settings' },
+} as const
+
 export const playSettingsCopy = {
   trackBackgroundBlur: { zh: '轨道背景模糊', en: 'Track background blur' },
   judgmentDisplay: { zh: '判定显示位置', en: 'Judgment display position' },
   judgmentLane: { zh: '音符判定线', en: 'Judgment line' },
-  judgmentCenter: { zh: '连击数上方', en: 'Above combo' },
+  judgmentCenter: { zh: '舞台中央', en: 'Center of stage' },
 } as const
 
 export const particleAppearanceCopy = {
@@ -96,6 +112,8 @@ export const bpmDetectionCopy = {
 } as const
 
 export type RouteId = 'manage' | 'editor' | 'playtest'
+
+export const noteImportTitle = { zh: '导入音符', en: 'Import notes' }
 
 export const aiChartCopy = {
   title: { zh: 'AI 制谱', en: 'AI charting' },

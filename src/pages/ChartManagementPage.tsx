@@ -18,6 +18,7 @@ import { LibraryPreview } from '@/features/chart/LibraryPreview'
 import { LibraryForm } from '@/features/chart/LibraryForm'
 import { usePlatform } from '@/features/platform/PlatformProvider'
 import { appConfig } from '@/config/app'
+import type { ChartInfoMedia } from '@/shared/electron'
 
 export default function ChartManagementPage({ onSettings }: { onSettings(): void }) {
   const { text, locale, language } = useI18n()
@@ -35,10 +36,10 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
   const [filter, setFilter] = useState('all')
   const [sort, setSort] = useState('date')
   const [selection, setSelection] = useState(api.activeChartId)
-  const [tierChoice, setTierChoice] = useState<{id: string; tier: number} | null>(null)
+  const [tierChoice, setTierChoice] = useState<number | null>(null)
   const [limit, setLimit] = useState(60)
   const [mobileDetail, setMobileDetail] = useState(false)
-  const [form, setForm] = useState<'new' | 'edit' | null>(null)
+  const [form, setForm] = useState<'new' | { focusTier?: number } | null>(null)
   const [pendingDelete, setPendingDelete] = useState<{id: string; title: string} | null>(null)
   const deleting = Boolean(pendingDelete)
   const [loaded, setLoaded] = useState<{id: string; chart: Chart} | null>(null)
@@ -51,7 +52,7 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
   const rowPositions = useRef(new Map<string, number>())
   const lock = useRef(false)
   const needle = query.trim().toLowerCase()
-  const items = useMemo(() => api.charts.filter(c => (filter === 'all' || c.library.status === filter) && [c.title,c.artist,...c.library.tags].some(v => v.toLowerCase().includes(needle))).sort((a,b) => {
+  const items = useMemo(() => api.charts.filter(c => (filter === 'all' || c.library.status === filter) && [c.title,c.artist].some(v => v.toLowerCase().includes(needle))).sort((a,b) => {
     if (sort === 'title') return a.title.localeCompare(b.title,locale)
     if (sort === 'notes') return b.noteCount-a.noteCount
     if (sort === 'level') return Math.max(...b.library.levels)-Math.max(...a.library.levels)
@@ -62,8 +63,12 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
   const sceneColor = useCoverColor(item?.coverUrl)
   const id = item?.id
   const activeChart = id === api.activeChartId ? api.chart : loaded?.id === id ? loaded?.chart : undefined
-  const tier = tierChoice?.id === id && tierChoice && item?.library.levels[tierChoice.tier] ? tierChoice.tier : item?.library.tier ?? 1
-  const chart = useMemo(() => activeChart && chooseDifficulty(activeChart,tier),[activeChart,tier])
+  const initialTier = item?.library.tier
+  const tier = tierChoice ?? initialTier ?? 1
+  useEffect(() => {
+    if (tierChoice === null && initialTier !== undefined) setTierChoice(initialTier)
+  }, [initialTier, tierChoice])
+  const chart = useMemo(() => activeChart && chooseDifficulty(activeChart, tier), [activeChart, tier])
   const previewing = !!preview && preview.id === id && preview.tier === tier
   useEffect(closePreview, [id, tier, form, deleting, closePreview])
   const startPreview = (fraction: number) => { if (id && chart) setPreview({id, tier, fraction}) }
@@ -109,10 +114,13 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
   }
   const open = (route: 'editor' | 'playtest', target = id) => void run(async () => {
     if (!target) return
-    if (target === id && chart && chart !== activeChart && !await api.saveLibraryChart(target,chart)) return
-    if (await api.selectChart(target)) { if (route === 'playtest') setPlayId(target); else navigate(route) }
+    if (await api.selectChart(target, tier)) { if (route === 'playtest') setPlayId(target); else navigate(route) }
   })
-  const chooseTier = (n: number) => { if (item?.library.levels[n]) { setTierChoice({id:item.id,tier:n}); sound.play('tick') } }
+  const chooseTier = (n: number) => { setTierChoice(n); sound.play('tick') }
+  const clickTier = (next: number) => {
+    if (next === tier) setForm({ focusTier: next })
+    else chooseTier(next)
+  }
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (form || deleting || e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || document.querySelector('[role=dialog],[role=alertdialog],[role=menu],[role=listbox][data-state=open]')) return
@@ -133,12 +141,13 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
         setSelection(items[n].id); sound.play('tick')
         requestAnimationFrame(() => list.current?.querySelector<HTMLElement>('[aria-selected=true]')?.focus({preventScroll:true}))
       } else if (k === 'arrowleft' || k === 'arrowright') {
-        e.preventDefault(); const step = k === 'arrowleft' ? -1 : 1
-        for (let i=tier+step;i>=0 && i<4;i+=step) if (item.library.levels[i]) { chooseTier(i); break }
+        e.preventDefault()
+        const next = tier + (k === 'arrowleft' ? -1 : 1)
+        if (next >= 0 && next < tiers.length) chooseTier(next)
       } else if (k === 'enter' && (!target?.closest('button') || target.closest('.record-row'))) { e.preventDefault(); open('editor') }
-      else if (!e.repeat && chart) {
+      else if (!e.repeat && activeChart) {
         if (k === 't') open('playtest')
-        if (k === 'e') setForm('edit')
+        if (k === 'e') setForm({})
         if (k === 'delete') setPendingDelete({ id: item.id, title: item.title })
         if (k === 'escape') setMobileDetail(false)
       }
@@ -146,14 +155,13 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
     window.addEventListener('keydown',key)
     return () => window.removeEventListener('keydown',key)
   })
-  const save = async (next: Chart, audio: boolean) => {
+  const save = async (next: Chart, media: ChartInfoMedia) => {
     let savedId: string | undefined = id
     try {
-      if (form === 'new') savedId = await api.createChart(next) ?? undefined
-      else if (!id || !await api.saveLibraryChart(id,next)) return false
+      if (form === 'new') savedId = await api.createChart(next, media) ?? undefined
+      else if (!id || !await api.saveChartInfo(id, next, media)) return false
       if (!savedId) return false
-      reset(); setSelection(savedId); setLoaded({id:savedId,chart:next}); setMobileDetail(true)
-      if (audio && await api.selectChart(savedId)) await api.chooseAudio()
+      reset(); setSelection(savedId); setMobileDetail(true)
       showToast(text('谱面信息已保存','Chart information saved')); return true
     } catch (e) { showToast(String(e)); return false }
   }
@@ -161,7 +169,7 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
   return <div className="chart-management-page" style={{ "--scene-color": sceneColor, "--beat": `${60 / (chart?.bpm || 120)}s`, "--selection-accent": ['var(--success)','var(--brand)','var(--warning)','var(--danger)'][tier] } as React.CSSProperties} data-detail={mobileDetail && !!item}>
     <LibraryAtmosphere selection={`${id ?? ''}-${tier}`} />
     <header className="library-toolbar"><h1><i aria-hidden />{appConfig.navigation[0].items[0].label[language]}<small>{api.charts.length}</small></h1>
-      <GameSearch ref={search} value={query} placeholder={text('搜索标题、曲师、标签','Search titles, artists, tags')} onChange={e => { setQuery(e.target.value); setLimit(60); setMobileDetail(false); closePreview() }} />
+      <GameSearch ref={search} value={query} placeholder={text('搜索标题、曲师','Search titles and artists')} onChange={e => { setQuery(e.target.value); setLimit(60); setMobileDetail(false); closePreview() }} />
       <GameTabs label={text('状态筛选','Status filter')} value={filter} options={Object.entries(statuses).map(([value,label]) => ({value,label,count:value === 'all' ? api.charts.length : api.charts.filter(i => i.library.status === value).length}))} onChange={v => {setFilter(v); setLimit(60); setMobileDetail(false);closePreview()}} />
       <GameSelect label={text('排序','Sort')} value={sort} onValueChange={setSort} options={[
         ['date',text('最近编辑','Last edited')], ['title',text('标题','Title')],
@@ -177,7 +185,7 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
     </header>
     <div className="library-stage">
       <div className="chart-library-list" data-scroll-region ref={list} role="listbox" aria-label={text('谱面列表','Chart list')} onScroll={e => {const el=e.currentTarget; if(el.scrollTop+el.clientHeight>el.scrollHeight-240 && limit<items.length)setLimit(limit+60)}}>
-        {items.slice(0,visibleCount).map((c,i) => <ChartCard key={c.id} item={c} index={i} tier={i === index ? tier : c.library.levels.map(Boolean).lastIndexOf(true)} distance={Math.abs(i-index)} query={query.trim()} status={statuses[c.library.status]} onSelect={() => select(c.id)} onOpen={() => open('editor',c.id)} />)}
+        {items.slice(0,visibleCount).map((c,i) => <ChartCard key={c.id} item={c} index={i} tier={tier} distance={Math.abs(i-index)} query={query.trim()} status={statuses[c.library.status]} onSelect={() => select(c.id)} onOpen={() => open('editor',c.id)} />)}
       </div>
       {!item && <div className="library-empty"><Library/><h2>{!api.libraryReady ? text('正在读取谱面库…','Loading library…') : api.charts.length ? text('没有匹配的谱面','No matching charts') : text('还没有谱面','No charts yet')}</h2>{api.libraryReady && <GameButton onClick={() => api.charts.length ? reset() : setForm('new')}>{api.charts.length ? text('清除筛选','Clear filters') : text('新建谱面','New chart')}</GameButton>}</div>}
       {item && <section className="library-detail"><GameButton className="library-back" onClick={() => { closePreview(); setMobileDetail(false) }}><ArrowLeft/>{text('谱面列表','Charts')}</GameButton>
@@ -201,17 +209,17 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
             <span className="preview-badge" aria-hidden><span className="preview-eq"><i/><i/><i/></span>
               <span>{previewing ? text('试听中', 'Playing') : previewLabel}{previewing && <> <span ref={previewTime}/></>}</span>
             </span></button>
-          <div className="record-info"><em className={'record-status '+item.library.status}>{statuses[item.library.status]}</em><h2>{item.title}</h2><p>{item.artist || text('未知艺术家','Unknown artist')}{item.library.charter && ' · '+item.library.charter}</p><div>{item.library.tags.map((tag,i) => <button key={i} onClick={() => {setQuery(tag);setMobileDetail(false);closePreview()}}>{tag}</button>)}</div></div></div>
-          <div className="tier-strip">{tiers.map((name,i) => <button key={name} disabled={!item.library.levels[i]} aria-pressed={i === tier} onClick={() => chooseTier(i)}><small>{name}</small><b>{item.library.levels[i] || '—'}</b></button>)}</div>
+          <div className="record-info"><em className={'record-status '+item.library.status}>{statuses[item.library.status]}</em><h2>{item.title}</h2><p>{item.artist || text('未知艺术家','Unknown artist')}{item.library.charter && ' · '+item.library.charter}</p></div></div>
+          <div className="tier-strip">{tiers.map((name,i) => <button key={name} disabled={!activeChart} data-selected={i === tier} aria-pressed={i === tier} aria-haspopup={i === tier ? 'dialog' : undefined} onClick={() => clickTier(i)}><small>{name}</small><b>{item.library.levels[i] || '—'}</b></button>)}</div>
           <ChartStats chart={chart} /><DensityGraph chart={chart} tier={tier} onPreview={startPreview} playhead={previewing ? playhead : undefined} />
-          <p>{item.library.description}</p><small className="record-date">◇　{new Date(item.updatedAt).toLocaleString(locale)}　{ text('最近编辑','Last edited') }</small>
+          <small className="record-date">◇　{new Date(item.updatedAt).toLocaleString(locale)}　{ text('最近编辑','Last edited') }</small>
         </div><div className="record-actions"><GameButton className="primary open-editor" disabled={!chart} onClick={() => open('editor')}>{text('进入制谱器','Open editor')}<kbd>Enter</kbd></GameButton>
-          <GameButton disabled={!chart} onClick={() => open('playtest')}>{text('试玩','Play')}</GameButton><GameButton disabled={!activeChart} onClick={() => setForm('edit')}>{text('编辑信息','Edit info')}</GameButton>
+          <GameButton disabled={!chart} onClick={() => open('playtest')}>{text('试玩','Play')}</GameButton><GameButton disabled={!activeChart} onClick={() => setForm({})}>{text('编辑信息','Edit info')}</GameButton>
           <GameButton onClick={() => void run(async () => { const n=await api.duplicateChart(item.id); if(n){reset();select(n);showToast(text('已复制为草稿','Copied to drafts'))} })}>{text('复制','Copy')}</GameButton>
           <GameButton onClick={() => void run(async () => {await api.exportChart(item.id)})}>{text('导出','Export')}</GameButton><GameButton className="danger" onClick={() => setPendingDelete({ id: item.id, title: item.title })}>{text('删除','Delete')}</GameButton></div>
       </section>}
     </div><footer className="library-keys">{[['↑ ↓',text('切歌','Select')],['← →',text('难度','Difficulty')],['T',text('试玩','Play')],['E',text('编辑','Edit')],['Del',text('删除','Delete')]].map(([k,label]) => <span key={k}><kbd>{k}</kbd>{label}</span>)}</footer><ClickParticles/>
-    {form && (form === 'new' || activeChart) && <LibraryForm chart={form === 'new' ? normalizeChart(DEFAULT_CHART) : activeChart!} creating={form === 'new'} onClose={() => setForm(null)} onSave={save}/>}
+    {form && (form === 'new' || activeChart) && <LibraryForm chart={form === 'new' ? normalizeChart(DEFAULT_CHART) : activeChart!} coverUrl={form === 'new' ? undefined : item?.coverUrl} creating={form === 'new'} focusTier={form === 'new' ? undefined : form.focusTier} onClose={() => setForm(null)} onSave={save}/>}
     <AlertDialog open={deleting} onOpenChange={open => { if (!open) setPendingDelete(null) }}><AlertDialogContent><AlertDialogTitle>{text('删除谱面','Delete chart')}</AlertDialogTitle><AlertDialogDescription>{text('永久删除谱面及其保存的媒体？','Permanently delete this chart and its saved media?')}「{pendingDelete?.title}」</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>{text('取消','Cancel')}</AlertDialogCancel><HoldConfirm onConfirm={() => {setPendingDelete(null);if(pendingDelete)void run(async () => {await api.deleteChart(pendingDelete.id)})}}>{text('长按确认删除','Hold to delete')}</HoldConfirm></AlertDialogFooter></AlertDialogContent></AlertDialog>
   </div>
 }

@@ -25,6 +25,7 @@ export interface Preferences {
 }
 
 const STORAGE_KEY = 'moonweave.preferences'
+const EARLY_ACCESS_STORAGE_KEY = 'moonweave.early-access-shown'
 export const SIDEBAR_MIN = 220
 export const SIDEBAR_MAX = 440
 export const SIDEBAR_COLLAPSED = 70
@@ -43,7 +44,7 @@ export const defaultPreferences: Preferences = {
   playbackRate: 1,
   laneTilt: 45,
   timingWindow: 'standard',
-  judgmentDisplay: 'lane',
+  judgmentDisplay: 'center',
   judgmentLineHeight: 200,
   themePalettes: defaultThemePalettes,
   particleAppearanceId: null,
@@ -88,7 +89,7 @@ export function normalizePreferences(input: unknown): Preferences {
     playbackRate,
     laneTilt,
     timingWindow,
-    judgmentDisplay: value.judgmentDisplay === 'center' ? 'center' : defaultPreferences.judgmentDisplay,
+    judgmentDisplay: value.judgmentDisplay === 'lane' ? 'lane' : defaultPreferences.judgmentDisplay,
     judgmentLineHeight,
     themePalettes: normalizeThemePalettes(value.themePalettes),
     particleAppearanceId: typeof value.particleAppearanceId === 'string' && value.particleAppearanceId.length <= 64
@@ -115,6 +116,26 @@ export function migrateLegacyChartPreferences(current: Preferences, input: unkno
 function loadPreferences(): Preferences {
   try { return normalizePreferences(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')) }
   catch { return defaultPreferences }
+}
+
+export async function claimEarlyAccessNotice(): Promise<boolean> {
+  const claim = () => {
+    try {
+      if (localStorage.getItem(EARLY_ACCESS_STORAGE_KEY) !== null || localStorage.getItem(STORAGE_KEY) !== null) return false
+      localStorage.setItem(EARLY_ACCESS_STORAGE_KEY, '1')
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  try {
+    // Serialize simultaneous first visits from tabs that share this storage.
+    if (navigator.locks) return await navigator.locks.request(EARLY_ACCESS_STORAGE_KEY, claim)
+  } catch {
+    return claim()
+  }
+  return claim()
 }
 
 function resolveTheme(mode: ThemeMode, prefersDark: boolean) {

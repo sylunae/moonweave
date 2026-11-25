@@ -31,12 +31,19 @@ export interface ManagedChart {
   coverUrl: string
 }
 
+export interface ChartInfoMedia {
+  audio?: File
+  background?: File | null
+  cover?: File | null
+}
+
 export interface MoonweaveAPI {
   readBundledChartPackage(name: string): Promise<Uint8Array>
   listCharts(): Promise<ChartLibraryItem[]>
   readChart(id: string): Promise<ManagedChart | null>
   readAudioForAnalysis(id: string): Promise<Uint8Array | null>
   writeChart(id: string, chart: Chart): Promise<ChartLibraryItem>
+  writeChartInfo(id: string, chart: Chart, media: ChartInfoMedia): Promise<ManagedChart>
   duplicateChart(id: string): Promise<ChartLibraryItem>
   deleteChart(id: string): Promise<boolean>
   chooseAudio(id: string): Promise<{ audioPath: string; url: string; name: string } | null>

@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto'
-import { libraryMetadata, totalNotes } from '../../src/features/chart/libraryMetadata'
+import { libraryMetadata, managedLibraryMetadata, totalNotes } from '../../src/features/chart/libraryMetadata'
 import { normalizeEffects } from '../../src/features/chart/effects/scrollSpeed'
 import { app, BrowserWindow, dialog, ipcMain, protocol, shell } from 'electron'
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ChartLibraryItem, ManagedChart, TitlebarTheme } from '../../src/shared/electron'
 import { createChartPackage, readChartPackage } from '../../src/features/chart/chartPackage'
-import type { Chart } from '../../src/features/chart/types'
+import { normalizeManagedChart, type Chart } from '../../src/features/chart/types'
 import { readAnalysisAudio } from './analysisAudio'
 
 const TITLEBAR_HEIGHT = 42
@@ -41,7 +41,7 @@ function parseStoredChart(id: string): StoredChart | null {
 
 function summaryOf(record: StoredChart): ChartLibraryItem {
   const chart = record.chart
-  const library = libraryMetadata(chart.library)
+  const library = managedLibraryMetadata(chart.library)
   const coverPath = typeof chart.coverPath === 'string' ? chart.coverPath : ''
   const resolvedCover = coverPath ? path.join(coverDirectory(), path.basename(coverPath)) : ''
   return {
@@ -79,6 +79,65 @@ function writeStoredChart(id: string, chart: Record<string, unknown>) {
   writeFileSync(temporary, JSON.stringify(record, null, 2), 'utf8')
   renameSync(temporary, target)
   return record
+}
+
+function discardMedia(file: string) {
+  try { rmSync(file, { force: true }) } catch { /* Library deletion can retry cleanup. */ }
+}
+
+function isOwnedMedia(id: string, name: string) {
+  return path.basename(name) === name && name.startsWith(`${id}.`) && Object.hasOwn(CONTENT_TYPES, path.extname(name))
+}
+
+function writeChartInfo(id: string, chart: Record<string, unknown>, media: Record<string, unknown>) {
+  const previous = parseStoredChart(id)
+  if ((!previous && typeof media.audio !== 'string') || media.audio === null) throw new Error('请选择音频文件 / Select an audio file')
+  ensureLibrary()
+  const next = { ...chart }
+  const staged: string[] = []
+  const replaced: string[] = []
+  const fields = [
+    { source: media.audio, directory: audioDirectory(), extensions: AUDIO_EXTENSIONS, pathKey: 'audioPath', nameKey: 'audioName' },
+    { source: media.background, directory: backgroundDirectory(), extensions: new Set([...IMAGE_EXTENSIONS, ...VIDEO_EXTENSIONS]), pathKey: 'backgroundPath', nameKey: 'backgroundName' },
+    { source: media.cover, directory: coverDirectory(), extensions: IMAGE_EXTENSIONS, pathKey: 'coverPath', nameKey: 'coverName' },
+  ]
+  let record: StoredChart
+  try {
+    for (const { source, directory, extensions, pathKey, nameKey } of fields) {
+      const oldName = previous?.chart[pathKey]
+      next[pathKey] = oldName ?? ''
+      next[nameKey] = previous?.chart[nameKey] ?? ''
+      if (source === undefined) continue
+      if (typeof oldName === 'string' && isOwnedMedia(id, oldName)) replaced.push(path.join(directory, oldName))
+      if (source === null) {
+        next[pathKey] = next[nameKey] = ''
+        if (pathKey === 'backgroundPath') {
+          next.backgroundType = ''
+          next.backgroundVideoStartTime = 0
+        }
+        continue
+      }
+      if (typeof source !== 'string' || !path.isAbsolute(source)) throw new Error('媒体文件无效 / Invalid media file')
+      const extension = path.extname(source).toLowerCase()
+      if (!extensions.has(extension) || !statSync(source).isFile()) throw new Error('媒体格式不受支持 / Unsupported media format')
+      const name = `${id}.${randomUUID()}${extension}`
+      const target = path.join(directory, name)
+      staged.push(target)
+      copyFileSync(source, target)
+      next[pathKey] = name
+      next[nameKey] = path.basename(source)
+      if (pathKey === 'backgroundPath') {
+        next.backgroundType = VIDEO_EXTENSIONS.has(extension) ? 'video' : 'image'
+        if (next.backgroundType === 'image') next.backgroundVideoStartTime = 0
+      }
+    }
+    record = writeStoredChart(id, next)
+  } catch (error) {
+    staged.forEach(discardMedia)
+    throw error
+  }
+  replaced.forEach(discardMedia)
+  return managedChart(record)
 }
 
 function removeManagedAudio(id: string, except = '') {
@@ -234,6 +293,12 @@ function registerIpc(): void {
     if (!validId(id) || !chart || typeof chart !== 'object') throw new Error('谱面数据无效')
     return summaryOf(writeStoredChart(id, chart as Record<string, unknown>))
   })
+  ipcMain.handle('library:write-info', (_event, id: unknown, chart: unknown, media: unknown) => {
+    if (!validId(id) || !chart || typeof chart !== 'object' || Array.isArray(chart) || !media || typeof media !== 'object' || Array.isArray(media)) {
+      throw new Error('谱面数据无效 / Invalid chart data')
+    }
+    return writeChartInfo(id, chart as Record<string, unknown>, media as Record<string, unknown>)
+  })
   ipcMain.handle('library:duplicate', (_event, source: unknown) => {
     const record = validId(source) && parseStoredChart(source)
     if (!record) throw new Error('Chart not found')
@@ -245,7 +310,7 @@ function registerIpc(): void {
         const file = chart[key]
         if (typeof file !== 'string' || !file) continue
         const ext = path.extname(file)
-        if (file !== record.id + ext || !Object.hasOwn(CONTENT_TYPES, ext)) throw new Error('Invalid managed media')
+        if (!isOwnedMedia(record.id, file)) throw new Error('Invalid managed media')
         const name = id + ext
         copied.push(path.join(directory, name))
         copyFileSync(path.join(directory, file), path.join(directory, name))
@@ -253,7 +318,7 @@ function registerIpc(): void {
       }
       chart.title = String(chart.title ?? '') + ' (Copy)'
       chart.library = { ...libraryMetadata(chart.library), status: 'draft' }
-      return summaryOf(writeStoredChart(id, chart))
+      return summaryOf(writeStoredChart(id, { ...normalizeManagedChart(chart) }))
     } catch (error) {
       for (const file of copied) if (existsSync(file)) unlinkSync(file)
       throw error
@@ -329,7 +394,7 @@ function registerIpc(): void {
         chart.coverPath = storeCoverBytes(id, packaged.assets.cover.name, packaged.assets.cover.data)
         chart.coverName = packaged.assets.cover.name
       } else { chart.coverPath = ''; chart.coverName = '' }
-      return managedChart(writeStoredChart(id, chart))
+      return managedChart(writeStoredChart(id, { ...normalizeManagedChart(chart) }))
     }
     const chart = JSON.parse(readFileSync(sourceFile, 'utf8')) as Record<string, unknown>
     if (!chart || typeof chart !== 'object') throw new Error('谱面文件格式无效')
@@ -352,7 +417,7 @@ function registerIpc(): void {
     const sourceCover = coverCandidates.find((candidate) => { try { return Boolean(candidate) && statSync(candidate).isFile() } catch { return false } })
     chart.coverPath = sourceCover ? copyCoverIntoLibrary(id, sourceCover) : ''
     if (!sourceCover) chart.coverName = ''
-    return managedChart(writeStoredChart(id, chart))
+    return managedChart(writeStoredChart(id, { ...normalizeManagedChart(chart) }))
   })
   ipcMain.handle('library:export', async (event, input: unknown) => {
     if (!input || typeof input !== 'object') return null
