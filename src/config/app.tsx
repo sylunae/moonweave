@@ -5,6 +5,33 @@ export const playSettingsCopy = {
   trackBackgroundBlur: { zh: '轨道背景模糊', en: 'Track background blur' },
 } as const
 
+export const particleAppearanceCopy = {
+  title: { zh: '粒子特效', en: 'Particle effects' },
+  description: { zh: '设置游玩时点击和长按音符的特效。', en: 'Choose the effects for tap and hold notes during play.' },
+  selected: { zh: '当前外观', en: 'Active appearance' },
+  builtIn: { zh: '默认外观', en: 'Default appearance' },
+  add: { zh: '添加外观', en: 'Add appearance' },
+  rename: { zh: '重命名', en: 'Rename' },
+  remove: { zh: '删除外观', en: 'Delete appearance' },
+  name: { zh: '外观名称', en: 'Appearance name' },
+  tap: { zh: '点击特效', en: 'Tap effect' },
+  hold: { zh: '长按特效', en: 'Hold effect' },
+  formats: { zh: '支持 GIF 动图或按行排列的 4 × 4 PNG 精灵图，每张文件不超过 8 MB。', en: 'Use an animated GIF or a row-major 4 × 4 PNG sprite sheet. Each file can be up to 8 MB.' },
+  renameDescription: { zh: '为这套粒子特效设置新名称。', en: 'Give these particle effects a new name.' },
+  removeDescription: { zh: '将删除这套特效并切回默认外观。', en: 'These effects will be deleted and the default appearance will be restored.' },
+  save: { zh: '保存', en: 'Save' },
+  cancel: { zh: '取消', en: 'Cancel' },
+  retry: { zh: '重试', en: 'Retry' },
+  loading: { zh: '正在读取外观…', en: 'Loading appearances…' },
+  importing: { zh: '正在解析特效…', en: 'Processing effects…' },
+  loadFailed: { zh: '无法读取自定义外观。', en: 'Could not load custom appearances.' },
+  previewFailed: { zh: '无法加载这套特效，游玩时会使用默认外观。', en: 'These effects could not be loaded. Play will use the default appearance.' },
+  saveFailed: { zh: '无法保存更改，请重试。', en: 'Could not save your changes. Please try again.' },
+  invalid: { zh: '图片无法解析，请检查文件后重试。', en: 'Could not read this image. Check the file and try again.' },
+  format: { zh: '请选择 GIF 动图或正方形 4 × 4 PNG 精灵图。', en: 'Choose an animated GIF or a square 4 × 4 PNG sprite sheet.' },
+  limits: { zh: '图片超出导入限制。GIF 最长 15 秒、最多 120 帧、边长不超过 1024 像素。PNG 边长不超过 4096 像素。', en: 'Image exceeds import limits. GIFs can be up to 15 seconds, 120 frames and 1024 pixels per side. PNGs can be up to 4096 pixels per side.' },
+} as const
+
 export const improvisationCopy = {
   title: { zh: '即兴制谱', en: 'Improvise' },
   entry: { zh: '从当前位置演奏 · 记录敲击并向上退场', en: 'Play from here · Record taps moving upward' },

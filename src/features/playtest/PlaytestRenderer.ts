@@ -6,8 +6,6 @@ import type { BpmChange, ChartNote } from '@/features/chart/types'
 import { getPlaytestHorizon, getPlaytestTrackHalfWidth, JUDGMENT_LINE_Y, TRACK_TOP_SCALE_RANGE } from '@/features/playtest/playtestGeometry'
 
 const NOTE_STRIDE = 6
-const PARTICLE_STRIDE = 8
-const MAX_PARTICLES = 2048
 const HORIZON_MS = 1_400
 const MAX_BEAT_BUFFER_FLOATS = 1024
 const LANE_COLORS = [
@@ -22,7 +20,6 @@ export interface PlaytestStats {
   backend: 'WebGL2'
   renderScale: number
   notes: number
-  particles: number
   drawCalls: number
   frameTimeP95: number
   frameTimeMax: number
@@ -221,47 +218,6 @@ void main() {
   outColor = vec4(uColor, opacity * vCoverage);
 }`
 
-const PARTICLE_VERTEX = `#version 300 es
-precision highp float;
-layout(location=0) in vec2 aCorner;
-layout(location=1) in vec4 iParticleA;
-layout(location=2) in vec4 iParticleB;
-uniform float uTime;
-uniform float uAspect;
-out vec2 vUv;
-out float vAlpha;
-out float vColor;
-void main() {
-  float age = uTime - iParticleA.z;
-  float life = iParticleA.w;
-  float progress = clamp(age / life, 0.0, 1.0);
-  vec2 origin = iParticleA.xy;
-  vec2 velocity = iParticleB.xy;
-  float size = iParticleB.z * mix(0.65, 1.35, progress);
-  vec2 position = origin + velocity * age + vec2(0.0, -0.00000012 * age * age);
-  vec2 corner = (aCorner - 0.5) * size;
-  corner.x /= uAspect;
-  bool alive = age >= 0.0 && age <= life;
-  gl_Position = vec4(alive ? position + corner : vec2(2.0), 0.0, 1.0);
-  vUv = aCorner;
-  vAlpha = alive ? pow(1.0-progress, 1.65) : 0.0;
-  vColor = iParticleB.w;
-}`
-
-const PARTICLE_FRAGMENT = `#version 300 es
-precision highp float;
-in vec2 vUv;
-in float vAlpha;
-in float vColor;
-uniform sampler2D uTexture;
-uniform vec4 uColors[4];
-out vec4 outColor;
-void main() {
-  vec4 mask = texture(uTexture, vUv);
-  vec3 color = uColors[int(vColor + 0.5)].rgb;
-  outColor = vec4(color * (1.2 + mask.rgb), mask.a * vAlpha);
-}`
-
 function compileProgram(gl: WebGL2RenderingContext, vertex: string, fragment: string, uniforms: string[]): GLProgram {
   const compile = (type: number, source: string) => {
     const shader = gl.createShader(type)
@@ -304,7 +260,6 @@ export class PlaytestRenderer {
   private readonly noteProgram: GLProgram
   private readonly trackProgram: GLProgram
   private readonly glowProgram: GLProgram
-  private readonly particleProgram: GLProgram
   private readonly noteVao: WebGLVertexArrayObject
   private readonly trackVao: WebGLVertexArrayObject
   private readonly glowVao: WebGLVertexArrayObject
@@ -315,10 +270,7 @@ export class PlaytestRenderer {
     -1, 0, -1, 0.86, -1, 0.86, -1, 1,
     1, 0, 1, 0.86, 1, 0.86, 1, 1,
   ])
-  private readonly particleVao: WebGLVertexArrayObject
   private readonly noteInstances: WebGLBuffer
-  private readonly particleInstances: WebGLBuffer
-  private readonly particleData = new Float32Array(MAX_PARTICLES * PARTICLE_STRIDE)
   private readonly beatVertices = new Float32Array(MAX_BEAT_BUFFER_FLOATS)
   private readonly palette = new Float32Array(LANE_COLORS.flat())
   private readonly frameTimes = new Float32Array(512)
@@ -330,8 +282,6 @@ export class PlaytestRenderer {
   private readonly autoPlayedNotes = new Set<string>()
   private readonly resizeObserver: ResizeObserver
   private frame = 0
-  private particleCursor = 0
-  private activeParticles = 0
   private renderScale = 1
   private resizePending = true
   private lastStatsAt = performance.now()
@@ -340,8 +290,6 @@ export class PlaytestRenderer {
   private fastWindows = 0
   private readonly visibleCandidates: VisualNote[] = []
   private noteData = new Float32Array(0)
-  private particleDirtyStart = MAX_PARTICLES
-  private particleDirtyEnd = 0
   private viewportHeight = 1
   private lastDevicePixelRatio = 0
   private lastWindowWidth = 0
@@ -374,7 +322,6 @@ export class PlaytestRenderer {
     this.noteProgram = compileProgram(gl, NOTE_VERTEX, NOTE_FRAGMENT, ['uTime', 'uRealTime', 'uHorizon', 'uTilt', 'uTrackWidth', 'uViewportHeight', 'uColors', 'uRedColor'])
     this.trackProgram = compileProgram(gl, TRACK_VERTEX, TRACK_FRAGMENT, ['uTilt', 'uTrackWidth', 'uTrackGeometry', 'uColor'])
     this.glowProgram = compileProgram(gl, GLOW_VERTEX, GLOW_FRAGMENT, ['uTrackWidth', 'uColor'])
-    this.particleProgram = compileProgram(gl, PARTICLE_VERTEX, PARTICLE_FRAGMENT, ['uTime', 'uAspect', 'uTexture', 'uColors'])
     this.noteVao = this.createNoteVao()
     this.noteInstances = this.getInstanceBuffer(this.noteVao, 1)
     this.trackVao = this.createTrackVao()
@@ -384,9 +331,6 @@ export class PlaytestRenderer {
     const beatGeometry = this.createBeatVao()
     this.beatVao = beatGeometry.vao
     this.beatBuffer = beatGeometry.buffer
-    this.particleVao = this.createParticleVao()
-    this.particleInstances = this.getInstanceBuffer(this.particleVao, 1)
-    this.createParticleTexture()
     // Resizing clears the drawing buffer. Defer it to the next render so the
     // compositor can never receive a resized, not-yet-redrawn canvas.
     this.resizeObserver = new ResizeObserver(() => { this.resizePending = true })
@@ -525,50 +469,10 @@ export class PlaytestRenderer {
     return { vao, buffer }
   }
 
-  private createParticleVao() {
-    const gl = this.gl
-    const vao = gl.createVertexArray()
-    const instances = gl.createBuffer()
-    if (!vao || !instances) throw new Error('无法创建粒子实例缓冲区')
-    gl.bindVertexArray(vao)
-    this.createQuadBuffer()
-    gl.bindBuffer(gl.ARRAY_BUFFER, instances)
-    gl.bufferData(gl.ARRAY_BUFFER, this.particleData.byteLength, gl.DYNAMIC_DRAW)
-    for (let index = 0; index < 2; index++) {
-      const location = index + 1
-      gl.enableVertexAttribArray(location)
-      gl.vertexAttribPointer(location, 4, gl.FLOAT, false, PARTICLE_STRIDE * 4, index * 4 * 4)
-      gl.vertexAttribDivisor(location, 1)
-    }
-    gl.bindVertexArray(null)
-    ;(vao as WebGLVertexArrayObject & { instanceBuffer?: WebGLBuffer }).instanceBuffer = instances
-    return vao
-  }
-
   private getInstanceBuffer(vao: WebGLVertexArrayObject, _location: number) {
     const buffer = (vao as WebGLVertexArrayObject & { instanceBuffer?: WebGLBuffer }).instanceBuffer
     if (!buffer) throw new Error('实例缓冲区丢失')
     return buffer
-  }
-
-  private createParticleTexture() {
-    const gl = this.gl
-    const texture = gl.createTexture()
-    if (!texture) return
-    gl.activeTexture(gl.TEXTURE0)
-    gl.bindTexture(gl.TEXTURE_2D, texture)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]))
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-    const image = new Image()
-    image.onload = () => {
-      gl.bindTexture(gl.TEXTURE_2D, texture)
-      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true)
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
-    }
-    image.src = `${import.meta.env.BASE_URL}assets/particle/particle_arc.png`
   }
 
   private resize() {
@@ -744,29 +648,6 @@ export class PlaytestRenderer {
     this.drawCalls++
   }
 
-  private drawParticles(time: number) {
-    if (!this.activeParticles) return
-    const gl = this.gl
-    if (this.particleDirtyEnd > this.particleDirtyStart) {
-      const start = this.particleDirtyStart * PARTICLE_STRIDE
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.particleInstances)
-      gl.bufferSubData(gl.ARRAY_BUFFER, start * 4, this.particleData, start, (this.particleDirtyEnd - this.particleDirtyStart) * PARTICLE_STRIDE)
-      this.particleDirtyStart = MAX_PARTICLES
-      this.particleDirtyEnd = 0
-    }
-    const { program, uniforms } = this.particleProgram
-    gl.useProgram(program)
-    gl.bindVertexArray(this.particleVao)
-    gl.uniform1f(uniforms.uTime, time)
-    gl.uniform1f(uniforms.uAspect, this.options.canvas.width / this.options.canvas.height)
-    gl.uniform1i(uniforms.uTexture, 0)
-    this.setPalette(uniforms.uColors)
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, MAX_PARTICLES)
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-    this.drawCalls++
-  }
-
   private autoplay(time: number) {
     if (!this.options.autoplay || !this.options.getPlaying()) return
     const first = Math.max(0, lowerBound(this.notes, time - 34) - 2)
@@ -775,7 +656,6 @@ export class PlaytestRenderer {
       if (note.red || this.autoPlayedNotes.has(note.id)) continue
       this.autoPlayedNotes.add(note.id)
       this.hideNote(note.id)
-      this.triggerHit(note.lane, time, 1)
       this.options.onAutoplayHit?.(note.lane)
     }
   }
@@ -807,7 +687,6 @@ export class PlaytestRenderer {
     this.drawTrackBoundaries()
     this.drawBeats(time)
     this.drawNotes(time)
-    this.drawParticles(time)
     gl.bindVertexArray(null)
 
     this.statsFrames++
@@ -821,20 +700,13 @@ export class PlaytestRenderer {
       const longFrameThreshold = Math.max(medianFrameTime * 1.5, medianFrameTime + 3)
       const longFrames = sortedFrameTimes.filter((frameTime) => frameTime > longFrameThreshold).length
       const longFramePercent = sortedFrameTimes.length ? longFrames / sortedFrameTimes.length * 100 : 0
-      let liveParticles = 0
-      for (let index = 0; index < MAX_PARTICLES; index++) {
-        const bornAt = this.particleData[index * PARTICLE_STRIDE + 2]
-        const lifetime = this.particleData[index * PARTICLE_STRIDE + 3]
-        if (lifetime > 0 && time >= bornAt && time <= bornAt + lifetime) liveParticles++
-      }
-      this.activeParticles = liveParticles
       if (longFramePercent >= 12 || frameTimeMax >= 50) { this.slowWindows++; this.fastWindows = 0 }
       else if (longFramePercent <= 3) { this.fastWindows++; this.slowWindows = 0 }
       else { this.slowWindows = 0; this.fastWindows = 0 }
       const previousRenderScale = this.renderScale
       if (this.slowWindows >= 2 && this.renderScale > 0.72) { this.renderScale = Math.max(0.72, this.renderScale - 0.1); this.slowWindows = 0 }
       if (this.fastWindows >= 5 && this.renderScale < 1) { this.renderScale = Math.min(1, this.renderScale + 0.05); this.fastWindows = 0 }
-      this.options.onStats({ fps, backend: 'WebGL2', renderScale: this.renderScale, notes: this.visibleCount, particles: this.activeParticles, drawCalls: this.drawCalls, frameTimeP95, frameTimeMax, longFramePercent, clockStalls: this.clockStalls })
+      this.options.onStats({ fps, backend: 'WebGL2', renderScale: this.renderScale, notes: this.visibleCount, drawCalls: this.drawCalls, frameTimeP95, frameTimeMax, longFramePercent, clockStalls: this.clockStalls })
       if (this.renderScale !== previousRenderScale) this.resizePending = true
       this.statsFrames = 0
       this.frameTimeCount = 0
@@ -872,40 +744,7 @@ export class PlaytestRenderer {
     this.activeHolds.clear()
     this.pressedLanes.clear()
     this.autoPlayedNotes.clear()
-    this.activeParticles = 0
-    this.particleCursor = 0
-    this.particleDirtyStart = MAX_PARTICLES
-    this.particleDirtyEnd = 0
-    this.particleData.fill(0)
-    const gl = this.gl
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.particleInstances)
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.particleData)
     this.uploadVisibleNotes(time)
-  }
-
-  triggerHit(lane: number, time: number, intensity = 1) {
-    const qualityCount = this.renderScale < 0.82 ? 12 : 24
-    const count = Math.round(qualityCount * intensity)
-    const lanePosition = (lane + 0.5) / 4
-    const x = (lanePosition * 2 - 1) * getPlaytestTrackHalfWidth(this.options.laneTilt)
-    const y = -0.72
-    for (let index = 0; index < count; index++) {
-      const slot = this.particleCursor++ % MAX_PARTICLES
-      this.particleDirtyStart = Math.min(this.particleDirtyStart, slot)
-      this.particleDirtyEnd = Math.max(this.particleDirtyEnd, slot + 1)
-      const offset = slot * PARTICLE_STRIDE
-      const angle = (index / count) * Math.PI * 2 + Math.random() * 0.35
-      const speed = 0.00018 + Math.random() * 0.0004
-      this.particleData[offset] = x
-      this.particleData[offset + 1] = y
-      this.particleData[offset + 2] = time
-      this.particleData[offset + 3] = 360 + Math.random() * 260
-      this.particleData[offset + 4] = Math.cos(angle) * speed
-      this.particleData[offset + 5] = Math.abs(Math.sin(angle)) * speed + 0.00008
-      this.particleData[offset + 6] = 0.045 + Math.random() * 0.055
-      this.particleData[offset + 7] = lane
-    }
-    this.activeParticles = Math.min(MAX_PARTICLES, this.activeParticles + count)
   }
 
   destroy() {

@@ -4,17 +4,20 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { DEFAULT_CHART, type Chart, type ChartNote } from '@/features/chart/types'
 import PlaytestPage from '@/pages/PlaytestPage'
 
-const state = vi.hoisted(() => ({ editor: {} as Record<string, unknown>, options: {} as { getRecordedNotes(): ChartNote[] }, navigate: vi.fn() }))
+const state = vi.hoisted(() => ({ editor: {} as Record<string, unknown>, options: {} as { getRecordedNotes(): ChartNote[] }, navigate: vi.fn(), lanePressed: vi.fn() }))
+const particles = vi.hoisted(() => ({ id: null as string | null, readAssets: vi.fn() }))
+vi.mock('@/features/appearance/particleLibrary', () => ({ readParticleAssets: particles.readAssets }))
 vi.mock('@/features/chart/ChartProvider', () => ({ useChart: () => state.editor }))
 vi.mock('@/features/platform/PlatformProvider', () => ({ usePlatform: () => ({ session: null }) }))
 vi.mock('@/app/i18n', () => ({ useI18n: () => ({ text: (zh: string) => zh }) }))
 vi.mock('@/app/navigation', () => ({ navigate: (...args: unknown[]) => state.navigate(...args) }))
 vi.mock('@/app/preferences', () => ({ usePreferences: () => ({ preferences: {
   playbackRate: 1, timingWindow: 'normal', laneTilt: 0, noteScrollSpeed: 7, playKeys: ['d', 'f', 'j', 'k'],
+  particleAppearanceId: particles.id, reduceMotion: Boolean(particles.id),
 } }) }))
 vi.mock('@/features/playtest/PlaytestRenderer', () => ({ PlaytestRenderer: class {
   constructor(options: typeof state.options) { state.options = options }
-  reset() {} destroy() {} hideNote() {} triggerHit() {} setHoldActive() {} setHoldStarted() {} setLanePressed() {}
+  reset() {} destroy() {} hideNote() {} setHoldActive() {} setHoldStarted() {} setLanePressed = state.lanePressed
 } }))
 
 let audio: HTMLAudioElement
@@ -25,6 +28,8 @@ const commitEdit = vi.fn()
 const flush = vi.fn()
 
 beforeEach(() => {
+  particles.id = null
+  particles.readAssets.mockReset()
   frames = new Map()
   paused = true
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frames.set(++frameId, callback); return frameId })
@@ -34,6 +39,7 @@ beforeEach(() => {
   Object.defineProperty(audio, 'paused', { get: () => paused })
   audio.pause = vi.fn(() => { paused = true })
   audio.play = vi.fn(async () => { paused = false })
+  state.lanePressed.mockClear()
   state.navigate.mockClear()
   commitEdit.mockReset().mockImplementation((update: (chart: Chart) => Chart) => { state.editor.chart = update(state.editor.chart as Chart) })
   flush.mockReset().mockResolvedValue(true)
@@ -222,4 +228,97 @@ it('auto plays chords and hold ticks across skipped frames and red zones', async
   expect(toggle.getAttribute('aria-pressed')).toBe('true')
   fireEvent.click(toggle)
   expect(toggle.getAttribute('aria-pressed')).toBe('false')
+})
+
+
+it('lights tapped lanes together and releases them independently of a held lane', async () => {
+  chart([note('tap', 500, 1), note('chord', 500, 2), { ...note('hold', 500), kind: 'hold', endTime: 1500 }])
+  render(<PlaytestPage />)
+  fireEvent.click(screen.getByRole('button', { name: '自动演奏' }))
+  await start()
+  await frame(510)
+  const litKeys = () => [...document.querySelectorAll('.playtest-key-caps .pressed')].map((key) => key.textContent)
+  expect(litKeys()).toEqual(['d', 'f', 'j'])
+  expect(document.querySelector<HTMLElement>('.playtest-hit-effect')?.style.backgroundImage).toContain('/claude/tap_hit_4k.png')
+  expect(document.querySelector<HTMLElement>('.playtest-hold-effect')?.style.backgroundImage).toContain('/claude/hold_loop_4k.png')
+  expect(state.lanePressed).toHaveBeenCalledWith(1, true)
+  const holdSprite = document.querySelector<HTMLElement>('.playtest-hold-effect')!
+  fireEvent.animationIteration(holdSprite)
+  expect(document.querySelector('.playtest-hold-effect')).toBe(holdSprite)
+  await frame(650)
+  expect(litKeys()).toEqual(['d'])
+  expect(state.lanePressed).toHaveBeenCalledWith(1, false)
+  await frame(1500)
+  expect(litKeys()).toEqual([])
+  expect(document.querySelector('.playtest-hold-effect')).toBe(holdSprite)
+  expect(holdSprite.classList.contains('finishing')).toBe(true)
+  fireEvent.animationIteration(holdSprite)
+  expect(document.querySelector('.playtest-hold-effect')).toBe(holdSprite)
+  fireEvent.animationEnd(holdSprite)
+  expect(document.querySelector('.playtest-hold-effect')).toBeNull()
+})
+
+it('uses the selected appearance for tap and hold effects during play', async () => {
+  particles.id = 'custom-look'
+  const tapAtlas = new Blob(['tap']), holdAtlas = new Blob(['hold'])
+  particles.readAssets.mockResolvedValue({
+    tap: { image: tapAtlas, columns: 2, rows: 1, frameDurations: [200, 450] },
+    hold: { image: holdAtlas, columns: 2, rows: 2, frameDurations: [30, 40, 60] },
+  })
+  vi.stubGlobal('Image', class { decode = async () => {} })
+  const revoke = vi.fn()
+  vi.stubGlobal('URL', class extends URL {
+    static createObjectURL = (image: Blob) => image === tapAtlas ? 'blob:tap-atlas' : 'blob:hold-atlas'
+    static revokeObjectURL = revoke
+  })
+  chart([note('tap', 500, 1), { ...note('hold', 500), kind: 'hold', endTime: 1500 }])
+  const view = render(<PlaytestPage />)
+  await start()
+  move(500)
+  fireEvent.keyDown(window, { key: 'f' })
+  fireEvent.keyDown(window, { key: 'd' })
+
+  const hit = document.querySelector<HTMLElement>('.playtest-hit-effect')
+  const hold = document.querySelector<HTMLElement>('.playtest-hold-effect')
+  expect(particles.readAssets).toHaveBeenCalledWith('custom-look')
+  expect(hit?.style.backgroundImage).toContain('blob:tap-atlas')
+  expect(hit?.style.getPropertyValue('--playtest-sprite-duration')).toBe('650ms')
+  expect(hold?.style.backgroundImage).toContain('blob:hold-atlas')
+  view.unmount()
+  expect(revoke.mock.calls.flat()).toEqual(['blob:tap-atlas', 'blob:hold-atlas'])
+})
+
+it('shows Miss text without a sprite for a missed tap or hold head', async () => {
+  chart([note('tap', 500, 1), { ...note('hold', 1000), kind: 'hold', endTime: 2000 }])
+  render(<PlaytestPage />)
+  await start()
+  await frame(701)
+  expect(screen.getByText('Miss')).toBeTruthy()
+  expect(document.querySelector('.playtest-hit-effect')).toBeNull()
+
+  move(835)
+  fireEvent.keyDown(window, { key: 'd' })
+  expect(screen.getAllByText('Miss')).toHaveLength(2)
+  expect(document.querySelector('.playtest-hit-effect, .playtest-hold-effect')).toBeNull()
+  await frame(1500)
+  expect(document.querySelector('.playtest-hold-effect')).toBeTruthy()
+})
+
+it('keeps the hold sprite mounted across scoring ticks without spawning a tap sprite', async () => {
+  chart([{ ...note('hold', 500), kind: 'hold', endTime: 2000 }])
+  render(<PlaytestPage />)
+  await start()
+  move(500)
+  fireEvent.keyDown(window, { key: 'd' })
+  const hold = document.querySelector<HTMLElement>('.playtest-hold-effect')
+  expect(hold?.style.backgroundImage).toContain('/claude/hold_loop_4k.png')
+  expect(document.querySelector('.playtest-hit-effect')).toBeNull()
+
+  await frame(1000)
+  expect(Number(combo())).toBeGreaterThan(1)
+  expect(document.querySelector('.playtest-hold-effect')).toBe(hold)
+  expect(document.querySelector('.playtest-hit-effect')).toBeNull()
+
+  fireEvent.keyUp(window, { key: 'd' })
+  expect(document.querySelector('.playtest-hold-effect')).toBeNull()
 })

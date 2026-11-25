@@ -14,7 +14,7 @@ vi.mock('@/app/preferences', () => ({ usePreferences: () => ({ preferences: {
 } }) }))
 vi.mock('@/features/playtest/PlaytestRenderer', () => ({ PlaytestRenderer: class {
   constructor(options: typeof state.options) { state.options = options }
-  reset() {} destroy() {} hideNote() {} triggerHit() {} setHoldActive() {} setHoldStarted() {} setLanePressed() {}
+  reset() {} destroy() {} hideNote() {} setHoldActive() {} setHoldStarted() {} setLanePressed() {}
 } }))
 
 let audio: HTMLAudioElement

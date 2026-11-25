@@ -20,6 +20,7 @@ export interface Preferences {
   timingWindow: TimingWindow
   judgmentLineHeight: number
   themePalettes: ThemePalettes
+  particleAppearanceId: string | null
 }
 
 const STORAGE_KEY = 'moonweave.preferences'
@@ -43,6 +44,7 @@ export const defaultPreferences: Preferences = {
   timingWindow: 'standard',
   judgmentLineHeight: 200,
   themePalettes: defaultThemePalettes,
+  particleAppearanceId: null,
 }
 
 export function normalizePreferences(input: unknown): Preferences {
@@ -86,6 +88,8 @@ export function normalizePreferences(input: unknown): Preferences {
     timingWindow,
     judgmentLineHeight,
     themePalettes: normalizeThemePalettes(value.themePalettes),
+    particleAppearanceId: typeof value.particleAppearanceId === 'string' && value.particleAppearanceId.length <= 64
+      ? value.particleAppearanceId : null,
   }
 }
 

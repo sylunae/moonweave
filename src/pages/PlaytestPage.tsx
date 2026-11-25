@@ -2,12 +2,14 @@ import { autoPlayCopy, redZoneCopy, improvisationCopy as copy } from '@/config/a
 import { mergeRecording, recordingConflicts } from '@/features/chart/improvisation'
 import { correctImprovisedNotes } from '@/features/chart/improvisationCorrection'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { preload } from 'react-dom'
 import { ArrowLeft, Bot, Gauge, Pause, Play, RotateCcw, Sparkles } from 'lucide-react'
 import { navigate } from '@/app/navigation'
 import { useI18n } from '@/app/i18n'
 import { usePreferences } from '@/app/preferences'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { defaultHoldSprite, defaultTapSprite, ParticleSprite, redSprite, useParticleAppearance } from '@/features/appearance/ParticleSprite'
 import { useChart } from '@/features/chart/ChartProvider'
 import { usePlatform } from '@/features/platform/PlatformProvider'
 import type { ChartNote } from '@/features/chart/types'
@@ -18,12 +20,15 @@ import { PlaytestRenderer, type PlaytestStats } from '@/features/playtest/Playte
 import { getPlaytestLaneCenterPercent, getPlaytestTrackInsetPercent, JUDGMENT_LINE_Y } from '@/features/playtest/playtestGeometry'
 import { accuracyFromUnits, judgmentUnits, scoreFromUnits, type Judgment } from '@/features/playtest/scoring'
 
-const INITIAL_STATS: PlaytestStats = { fps: 0, backend: 'WebGL2', renderScale: 1, notes: 0, particles: 0, drawCalls: 0, frameTimeP95: 0, frameTimeMax: 0, longFramePercent: 0, clockStalls: 0 }
+const INITIAL_STATS: PlaytestStats = { fps: 0, backend: 'WebGL2', renderScale: 1, notes: 0, drawCalls: 0, frameTimeP95: 0, frameTimeMax: 0, longFramePercent: 0, clockStalls: 0 }
 const PREROLL_MS = 1000
+const AUTO_TAP_HIGHLIGHT_MS = 85
 type FeedbackResult = Judgment | 'Red'
-const effectTexture = (lane: number, result: FeedbackResult = 'Perfect') => `${import.meta.env.BASE_URL}assets/particle/${result === 'Miss' || result === 'Red' ? 'challenge_white' : lane === 0 || lane === 3 ? 'note_mirai_light' : 'note_light'}.png`
+type FeedbackSprite = 'tap' | 'red' | null
 
 export default function PlaytestPage() {
+  preload(defaultTapSprite, { as: 'image' })
+  preload(defaultHoldSprite, { as: 'image' })
   const { text } = useI18n()
   const editor = useChart()
   const platform = usePlatform()
@@ -45,6 +50,8 @@ export default function PlaytestPage() {
   const runStartTimeRef = useRef(Math.max(0, Math.min(currentTime, chart.duration)))
   const showToast = editor.showToast
   const { preferences } = usePreferences()
+  const particleAppearance = useParticleAppearance(preferences.particleAppearanceId)
+  const tapEffectDuration = particleAppearance?.tap.duration ?? 400
   const playbackRate = preferences.playbackRate
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const backgroundVideoRef = useRef<HTMLVideoElement>(null)
@@ -68,6 +75,7 @@ export default function PlaytestPage() {
 
   const playingRef = useRef(false)
   const timeRef = useRef(currentTime)
+  const autoTapUntilRef = useRef<number[]>([])
   const pressedRef = useRef(new Set<number>())
   const judgedRef = useRef(new Map<string, Judgment>())
   const holdStartsRef = useRef(new Map<string, Judgment>())
@@ -98,8 +106,8 @@ export default function PlaytestPage() {
   const [combo, setCombo] = useState(0)
   const [accuracy, setAccuracy] = useState(100)
   const [pressed, setPressed] = useState(new Set<number>())
-  const [activeHoldLanes, setActiveHoldLanes] = useState(new Set<number>())
-  const [feedback, setFeedback] = useState<Array<{ id: number; lane: number; result: FeedbackResult }>>([])
+  const [holdSprites, setHoldSprites] = useState(new Map<number, 'active' | 'finishing'>())
+  const [feedback, setFeedback] = useState<Array<{ id: number; lane: number; result: FeedbackResult; sprite: FeedbackSprite }>>([])
   const [completed, setCompleted] = useState(false)
 
   useEffect(() => {
@@ -114,18 +122,18 @@ export default function PlaytestPage() {
     return audio ? playbackClockRef.current.getTime(audio.currentTime * 1000) : timeRef.current
   }, [audioRef])
 
-  const emitFeedback = useCallback((lane: number, result: FeedbackResult) => {
+  const emitFeedback = useCallback((lane: number, result: FeedbackResult, sprite: FeedbackSprite) => {
     const id = ++feedbackIdRef.current
     const previousTimer = feedbackTimersRef.current.get(lane)
     if (previousTimer) window.clearTimeout(previousTimer)
-    setFeedback((items) => [...items.filter((item) => item.lane !== lane), { id, lane, result }])
+    setFeedback((items) => [...items.filter((item) => item.lane !== lane), { id, lane, result, sprite }])
     feedbackTimersRef.current.set(lane, window.setTimeout(() => {
       setFeedback((items) => items.filter((item) => item.id !== id))
       feedbackTimersRef.current.delete(lane)
-    }, 520))
-  }, [])
+    }, sprite === 'tap' ? Math.max(520, tapEffectDuration) : 520))
+  }, [tapEffectDuration])
 
-  const registerJudgment = useCallback((lane: number, result: Judgment) => {
+  const registerJudgment = useCallback((lane: number, result: Judgment, sprite: FeedbackSprite = null) => {
     const state = scoringRef.current
     state.judgedTicks++
     state.earnedUnits += judgmentUnits(result)
@@ -134,8 +142,7 @@ export default function PlaytestPage() {
     setScore(scoreFromUnits(state.earnedUnits, totalTicks))
     setAccuracy(accuracyFromUnits(state.earnedUnits, state.judgedTicks))
     setCombo(state.combo)
-    rendererRef.current?.triggerHit(lane, timeRef.current, result === 'Perfect' ? 1 : result === 'Good' ? 0.72 : 0.4)
-    emitFeedback(lane, result)
+    emitFeedback(lane, result, sprite)
   }, [emitFeedback, totalTicks])
 
   const checkRedZones = useCallback((now: number) => {
@@ -145,17 +152,58 @@ export default function PlaytestPage() {
     if (!hits) return
     const hadCombo = scoringRef.current.combo > 0
     if (hadCombo) { scoringRef.current.combo = 0; setCombo(0) }
-    if (fresh || hadCombo) for (let lane = 0; lane < 4; lane++) if (hits & (1 << lane)) emitFeedback(lane, 'Red')
+    if (fresh || hadCombo) for (let lane = 0; lane < 4; lane++) if (hits & (1 << lane)) emitFeedback(lane, 'Red', 'red')
   }, [emitFeedback, redTracker])
 
-  const updateActiveHoldLanes = useCallback(() => {
+  const updateActiveHoldLanes = useCallback((finishedLane?: number) => {
     const lanes = new Set<number>()
-    for (const id of holdStartsRef.current.keys()) {
+    for (const [id, startedAs] of holdStartsRef.current) {
       const note = noteById.get(id)
+      if (startedAs === 'Miss' && !holdTicksRef.current.get(id)) continue
       if (note && pressedRef.current.has(note.lane) && !droppedHoldsRef.current.has(id)) lanes.add(note.lane)
     }
-    setActiveHoldLanes((previous) => previous.size === lanes.size && [...lanes].every((lane) => previous.has(lane)) ? previous : lanes)
+    setHoldSprites((previous) => {
+      const next = new Map(previous)
+      for (const lane of lanes) next.set(lane, 'active')
+      for (const [lane, state] of previous) {
+        if (lanes.has(lane)) continue
+        if (state === 'finishing' || lane === finishedLane) next.set(lane, 'finishing')
+        else next.delete(lane)
+      }
+      return next.size === previous.size && [...next].every(([lane, state]) => previous.get(lane) === state) ? previous : next
+    })
   }, [noteById])
+
+  const finishHoldSprite = (lane: number) => {
+    setHoldSprites((previous) => {
+      if (previous.get(lane) !== 'finishing') return previous
+      const next = new Map(previous)
+      next.delete(lane)
+      return next
+    })
+  }
+
+  const syncAutoLanes = useCallback((mask: number) => {
+    let changed = false
+    for (let lane = 0; lane < 4; lane++) {
+      const active = Boolean(mask & (1 << lane))
+      if (pressedRef.current.has(lane) === active) continue
+      if (active) pressedRef.current.add(lane)
+      else pressedRef.current.delete(lane)
+      rendererRef.current?.setLanePressed(lane, active)
+      changed = true
+    }
+    if (changed) {
+      setPressed(new Set(pressedRef.current))
+      updateActiveHoldLanes()
+    }
+  }, [updateActiveHoldLanes])
+
+  const releaseAutoLanes = useCallback(() => {
+    if (!autoPlay) return
+    autoTapUntilRef.current = []
+    syncAutoLanes(0)
+  }, [autoPlay, syncAutoLanes])
 
   const syncBackgroundVideoTime = useCallback((chartTime: number) => {
     const video = backgroundVideoRef.current
@@ -184,9 +232,10 @@ export default function PlaytestPage() {
     judgedRef.current.clear(); holdStartsRef.current.clear(); holdTicksRef.current.clear(); droppedHoldsRef.current.clear()
     redTracker.reset(startTime); redContactRef.current = 0; fakeCursorRef.current = 0
     while (fakeCursorRef.current < fakeNotes.length && fakeNotes[fakeCursorRef.current].time < startTime) fakeCursorRef.current++
+    autoTapUntilRef.current = []
     pressedRef.current.clear(); missCursorRef.current = 0; scoringRef.current = { judgedTicks: 0, earnedUnits: 0, combo: 0 }; resultCountsRef.current = { Perfect: 0, Good: 0, Miss: 0 }
     feedbackTimersRef.current.forEach(window.clearTimeout); feedbackTimersRef.current.clear()
-    setFeedback([]); setPressed(new Set()); setActiveHoldLanes(new Set()); setScore(0); setAccuracy(100); setCombo(0); setCompleted(false)
+    setFeedback([]); setPressed(new Set()); setHoldSprites(new Map()); setScore(0); setAccuracy(100); setCombo(0); setCompleted(false)
     prerollTargetRef.current = startTime
     prerollTimeRef.current = startTime - PREROLL_MS
     needsPrerollRef.current = true
@@ -213,7 +262,7 @@ export default function PlaytestPage() {
       holdStartsRef.current.set(note.id, result); holdTicksRef.current.set(note.id, 0); droppedHoldsRef.current.delete(note.id)
       rendererRef.current?.setHoldActive(note.id, true); updateActiveHoldLanes()
     } else { judgedRef.current.set(note.id, result); rendererRef.current?.hideNote(note.id) }
-    registerJudgment(note.lane, result)
+    registerJudgment(note.lane, result, note.kind !== 'hold' && result !== 'Miss' ? 'tap' : null)
   }, [registerJudgment, updateActiveHoldLanes])
 
   const processFrame = useCallback((now: number) => {
@@ -229,7 +278,9 @@ export default function PlaytestPage() {
     if (autoPlay) {
       while (missCursorRef.current < notesByTime.length && notesByTime[missCursorRef.current].time <= now) {
         const note = notesByTime[missCursorRef.current++]
-        if (!fakeHeads.has(note.id)) judgeHead(note, 'Perfect')
+        if (fakeHeads.has(note.id)) continue
+        judgeHead(note, 'Perfect')
+        if (note.kind !== 'hold') autoTapUntilRef.current[note.lane] = now + AUTO_TAP_HIGHLIGHT_MS
       }
     }
     let autoHoldMask = 0
@@ -243,29 +294,27 @@ export default function PlaytestPage() {
         if (active) autoHoldMask |= 1 << note.lane
       }
       const ticks = holdTicksById.get(id) ?? []
-      let nextTickIndex = holdTicksRef.current.get(id) ?? 0
+      const firstTickIndex = holdTicksRef.current.get(id) ?? 0
+      let nextTickIndex = firstTickIndex
       while (nextTickIndex < ticks.length && ticks[nextTickIndex] <= now) {
         registerJudgment(note.lane, (autoPlay || (pressedRef.current.has(note.lane) && !droppedHoldsRef.current.has(id))) ? 'Perfect' : 'Miss')
         nextTickIndex += 1
       }
       holdTicksRef.current.set(id, nextTickIndex)
+      if (startedAs === 'Miss' && firstTickIndex === 0 && nextTickIndex > 0) updateActiveHoldLanes()
       if (now >= endTime) {
         judgedRef.current.set(id, startedAs)
         holdStartsRef.current.delete(id); holdTicksRef.current.delete(id); droppedHoldsRef.current.delete(id)
         rendererRef.current?.setHoldActive(id, false); rendererRef.current?.hideNote(id)
-        updateActiveHoldLanes()
+        updateActiveHoldLanes(note.lane)
       }
     }
     if (autoPlay) {
-      for (let lane = 0; lane < 4; lane++) {
-        const active = Boolean(autoHoldMask & (1 << lane))
-        if (pressedRef.current.has(lane) === active) continue
-        if (active) pressedRef.current.add(lane)
-        else pressedRef.current.delete(lane)
-        rendererRef.current?.setLanePressed(lane, active)
-        setPressed(new Set(pressedRef.current))
-        updateActiveHoldLanes()
-      }
+      let pressedMask = autoHoldMask
+      autoTapUntilRef.current.forEach((until, lane) => {
+        if (now < until && !redZones.contains(lane, now)) pressedMask |= 1 << lane
+      })
+      syncAutoLanes(pressedMask)
       return
     }
     while (missCursorRef.current < notesByTime.length && now - notesByTime[missCursorRef.current].time > windows[2]) {
@@ -282,7 +331,7 @@ export default function PlaytestPage() {
       }
     }
     checkRedZones(now)
-  }, [autoPlay, judgeHead, redZones, checkRedZones, fakeHeads, fakeNotes, holdTicksById, noteById, notesByTime, registerJudgment, updateActiveHoldLanes, windows])
+  }, [autoPlay, judgeHead, syncAutoLanes, redZones, checkRedZones, fakeHeads, fakeNotes, holdTicksById, noteById, notesByTime, registerJudgment, updateActiveHoldLanes, windows])
 
   useEffect(() => {
     if (!playing) return
@@ -305,6 +354,7 @@ export default function PlaytestPage() {
     const handleEnded = () => {
       const endedAt = audio.currentTime * 1000
       processFrame(endedAt)
+      releaseAutoLanes()
       playbackClockRef.current.stop(endedAt)
       timeRef.current = endedAt
       playingRef.current = false
@@ -315,7 +365,7 @@ export default function PlaytestPage() {
     }
     audio.addEventListener('ended', handleEnded)
     return () => audio.removeEventListener('ended', handleEnded)
-  }, [audioRef, formalSession, improvising, processFrame])
+  }, [audioRef, formalSession, improvising, processFrame, releaseAutoLanes])
 
   useEffect(() => {
     const video = backgroundVideoRef.current
@@ -369,6 +419,7 @@ export default function PlaytestPage() {
     if (playingRef.current) {
       if (prerollTimeRef.current !== null) { resetRun(prerollTargetRef.current); return }
       audio.pause()
+      releaseAutoLanes()
       const pausedAt = audio.currentTime * 1000
       playbackClockRef.current.stop(pausedAt)
       playingRef.current = false; setPlaying(false); setDisplayTime(pausedAt); return
@@ -401,7 +452,7 @@ export default function PlaytestPage() {
       void startAudio()
     }
     prerollFrameRef.current = requestAnimationFrame(advancePreroll)
-  }, [audioRef, audioUrl, playbackRate, resetRun, showToast, syncBackgroundVideoPlayback])
+  }, [audioRef, audioUrl, playbackRate, releaseAutoLanes, resetRun, showToast, syncBackgroundVideoPlayback])
 
   const restart = useCallback(() => resetRun(runStartTimeRef.current), [resetRun])
 
@@ -553,10 +604,28 @@ export default function PlaytestPage() {
         <Button variant="outline" size="icon" title={text('重新开始', 'Restart')} disabled={improvising} onClick={restart}><RotateCcw /></Button><Button variant="outline" size="icon" title={playing ? text('暂停', 'Pause') : text('播放', 'Play')} onClick={() => void togglePlayback()}>{playing ? <Pause /> : <Play />}</Button></div>
     </header>
     <aside className="playtest-score"><span>SCORE</span><strong>{score.toString().padStart(8, '0')}</strong><span>ACCURACY</span><strong>{accuracy.toFixed(2)}%</strong></aside>
-    <aside className="playtest-performance"><div><Gauge /><span><b>{stats.fps || '—'} FPS · P95 {stats.frameTimeP95.toFixed(1)} MS</b><small>MAX {stats.frameTimeMax.toFixed(1)} MS · {Math.round(stats.renderScale * 100)}% SCALE</small></span></div><div><Sparkles /><span><b>{stats.notes} NOTES · {stats.particles} FX</b><small>{stats.longFramePercent.toFixed(1)}% LONG · {stats.clockStalls} CLOCK STALLS</small></span></div></aside>
-    {feedback.map((effect) => <div key={`sprite-${effect.id}`} className={`legacy-hit-effect ${effect.result.toLowerCase()} ${effect.lane === 0 || effect.lane === 3 ? 'light' : 'conflict'}`} style={{ left: `${laneX(effect.lane)}%` }}><i style={{ backgroundImage: `url(${effectTexture(effect.lane, effect.result)})` }} /></div>)}
+    <aside className="playtest-performance"><div><Gauge /><span><b>{stats.fps || '—'} FPS · P95 {stats.frameTimeP95.toFixed(1)} MS</b><small>MAX {stats.frameTimeMax.toFixed(1)} MS · {Math.round(stats.renderScale * 100)}% SCALE</small></span></div><div><Sparkles /><span><b>{stats.notes} NOTES</b><small>{stats.longFramePercent.toFixed(1)}% LONG · {stats.clockStalls} CLOCK STALLS</small></span></div></aside>
+    {feedback.map((effect) => effect.sprite && <ParticleSprite
+      key={`sprite-${effect.id}`}
+      className={`playtest-hit-effect ${effect.result.toLowerCase()}`}
+      style={{ left: `${laneX(effect.lane)}%` }}
+      defaultSrc={effect.sprite === 'red' ? redSprite : defaultTapSprite}
+      atlas={effect.sprite === 'tap' ? particleAppearance?.tap : undefined}
+      reduceMotion={preferences.reduceMotion}
+    />)}
     {feedback.map((effect) => <div key={`judge-${effect.id}`} className={`playtest-judge-text ${effect.result.toLowerCase()}`} style={{ left: `${laneX(effect.lane)}%` }}>{effect.result === 'Red' ? text(redZoneCopy.hit.zh, redZoneCopy.hit.en) : effect.result}</div>)}
-    {[...activeHoldLanes].map((lane) => <i key={lane} className={`playtest-hold-effect ${lane === 0 || lane === 3 ? 'light' : 'conflict'}`} style={{ left: `${laneX(lane)}%`, backgroundImage: `url(${effectTexture(lane)})` }} />)}
+    {[...holdSprites].map(([lane, state]) => (
+      <ParticleSprite
+        key={lane}
+        className={state === 'finishing' ? 'playtest-hold-effect finishing' : 'playtest-hold-effect'}
+        style={{ left: `${laneX(lane)}%` }}
+        defaultSrc={defaultHoldSprite}
+        atlas={particleAppearance?.hold}
+        loop
+        reduceMotion={preferences.reduceMotion}
+        onAnimationEnd={state === 'finishing' ? () => finishHoldSprite(lane) : undefined}
+      />
+    ))}
     {combo > 0 && <div key={combo} className="playtest-combo"><b>{combo}</b><span>COMBO</span></div>}
     {!playing && !completed && !exitStep && <Button variant="outline" className="playtest-paused" onClick={() => void togglePlayback()}><Play fill="currentColor" /><b>{displayTime > 0 ? text('继续', 'Continue') : formalSession ? text('开始游玩', 'Start play') : text('开始试玩', 'Start playtest')}</b><span>SPACE</span></Button>}
     <div className="playtest-key-caps">{preferences.playKeys.map((key, lane) => <button key={`${key}-${lane}`} aria-label={text(`轨道 ${lane + 1}，按键 ${key}`, `Lane ${lane + 1}, key ${key}`)} className={pressed.has(lane) ? 'pressed' : ''} style={{ '--lane-x': `${laneX(lane)}%` } as React.CSSProperties} onContextMenu={(event) => event.preventDefault()} onPointerDown={(event) => pressTouchLane(event, lane)} onPointerUp={(event) => releaseTouchLane(event, lane)} onPointerCancel={(event) => releaseTouchLane(event, lane)} onLostPointerCapture={() => releaseLane(lane)}><span>{key}</span></button>)}</div>

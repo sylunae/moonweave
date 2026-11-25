@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useI18n } from '@/app/i18n'
 import { usePreferences, type ThemeMode, type TimingWindow } from '@/app/preferences'
 import { appConfig, playSettingsCopy } from '@/config/app'
+import { ParticleAppearanceSettings } from '@/features/appearance/ParticleAppearanceSettings'
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
 import { Input } from './ui/input'
@@ -37,10 +38,11 @@ export function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenCh
           </nav>
           <div className="settings-nav-footer"><span>{preferences.language === 'zh' ? appConfig.shortName : appConfig.englishName}</span><small>{appConfig.eyebrow}</small></div>
         </aside>
-        <main className="settings-content">
+        <main className="settings-content" data-scroll-region>
           {section === 'appearance' ? <>
             <header className="settings-content-header"><span className="eyebrow">APPEARANCE</span><h2>{text('外观', 'Appearance')}</h2><p>{text('这些设置会在 Web 与桌面端之间保持相同的视觉行为。', 'These settings keep the same visual behavior on the web and desktop apps.')}</p></header>
             <section className="settings-pane"><div className="settings-title"><span><Palette size={18} /></span><div><h3>{text('页面主题', 'Theme')}</h3><p>{text('使用系统主题，或固定为浅色与深色。', 'Follow the system theme or use a fixed light or dark theme.')}</p></div></div><div className="theme-options">{themeOptions.map(({ value, label, icon: Icon }) => <button key={value} className={preferences.theme === value ? 'active' : ''} onClick={() => setPreferences((current) => ({ ...current, theme: value }))}><Icon size={20} /><span>{label}</span></button>)}</div></section>
+            <ParticleAppearanceSettings />
             <ThemePaletteEditor />
             <section className="settings-pane setting-row"><div><strong>{text('减少动态效果', 'Reduce motion')}</strong><p>{text('关闭非必要动效，仍保留必要的状态反馈。', 'Disable nonessential animation while preserving useful state feedback.')}</p></div><Switch checked={preferences.reduceMotion} onCheckedChange={(checked) => setPreferences((current) => ({ ...current, reduceMotion: checked }))} aria-label={text('减少动态效果', 'Reduce motion')} /></section>
             <Button variant="outline" onClick={resetPreferences}><RotateCcw />{text('恢复默认设置', 'Restore defaults')}</Button>
