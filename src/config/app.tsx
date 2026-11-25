@@ -17,6 +17,29 @@ export const settingsCopy = {
   title: { zh: '设置', en: 'Settings' },
 } as const
 
+export const youtubeImportCopy = {
+  toggle: { zh: '从 YouTube 导入', en: 'Import from YouTube' },
+  link: { zh: 'YouTube 视频链接', en: 'YouTube video link' },
+  unsupported: { zh: 'YouTube 导入需要 Windows x64 桌面版。', en: 'YouTube import requires the Windows x64 desktop app.' },
+  install: { zh: '下载并安装插件', en: 'Download and install plugin' },
+  requirements: { zh: '首次导入需安装 yt-mp3 插件（yt-dlp 和 FFmpeg，约 53 MB）。', en: 'First-time import requires the yt-mp3 plugin (yt-dlp and FFmpeg, about 53 MB).' },
+  loading: { zh: '正在检查插件…', en: 'Checking plugin…' },
+  installing: { zh: '正在安装插件…', en: 'Installing plugin…' },
+  installFailed: { zh: '插件安装失败，请检查网络后重试。', en: 'Plugin installation failed. Check your connection and try again.' },
+  statusFailed: { zh: '无法检查插件状态。', en: 'Could not check plugin status.' },
+  retry: { zh: '重试', en: 'Retry' },
+  download: { zh: '导入音频与信息', en: 'Import audio and details' },
+  downloading: { zh: '正在读取视频信息并下载 MP3…', en: 'Reading video details and downloading MP3…' },
+  imported: { zh: '已填入导入信息，可以继续编辑。', en: 'Imported details are ready to edit.' },
+  errors: {
+    link: { zh: '请输入有效的 YouTube 视频链接。', en: 'Enter a valid YouTube video link.' },
+    tools: { zh: '请先安装 yt-mp3 插件。', en: 'Install the yt-mp3 plugin first.' },
+    busy: { zh: '另一项导入正在运行，请稍后重试。', en: 'Another import is running. Try again shortly.' },
+    duration: { zh: '请选择时长不超过一小时、已结束直播或已发布的视频。', en: 'Choose a published video or completed stream up to one hour long.' },
+    failed: { zh: '无法导入视频。请检查网络和视频是否可播放后重试。', en: 'Could not import the video. Check your connection and that the video plays, then try again.' },
+  },
+} as const
+
 export const playSettingsCopy = {
   trackBackgroundBlur: { zh: '轨道背景模糊', en: 'Track background blur' },
   judgmentDisplay: { zh: '判定显示位置', en: 'Judgment display position' },
@@ -114,6 +137,15 @@ export const bpmDetectionCopy = {
 export type RouteId = 'manage' | 'editor' | 'playtest'
 
 export const noteImportTitle = { zh: '导入音符', en: 'Import notes' }
+export const backgroundVideoPreviewCopy = {
+  title: { zh: '视频同步预览', en: 'Video sync preview' },
+  close: { zh: '关闭视频预览', en: 'Close video preview' },
+  muted: { zh: '视频静音', en: 'Video muted' },
+  waiting: { zh: '等待视频开始', en: 'Waiting for video to start' },
+  videoError: { zh: '无法播放背景视频', en: 'Unable to play background video' },
+  audioRequired: { zh: '请先选择谱面音频', en: 'Select chart audio first' },
+  position: { zh: '谱面播放位置', en: 'Chart playback position' },
+} as const
 
 export const aiChartCopy = {
   title: { zh: 'AI 制谱', en: 'AI charting' },

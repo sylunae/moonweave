@@ -9,6 +9,7 @@ import type { ChartLibraryItem, ManagedChart, TitlebarTheme } from '../../src/sh
 import { createChartPackage, readChartPackage } from '../../src/features/chart/chartPackage'
 import { normalizeManagedChart, type Chart } from '../../src/features/chart/types'
 import { readAnalysisAudio } from './analysisAudio'
+import { discardYoutubeImport, getYoutubeImport, registerYoutubeImport } from './youtubeImport'
 
 const TITLEBAR_HEIGHT = 42
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.ogg', '.m4a', '.flac'])
@@ -250,6 +251,12 @@ function createWindow(): void {
     webPreferences: { preload: fileURLToPath(new URL('../preload/index.cjs', import.meta.url)), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: true },
   })
   window.once('ready-to-show', () => window.show())
+  const contents = window.webContents
+  contents.on('did-start-navigation', (_event, _url, isInPlace, isMainFrame) => {
+    if (isMainFrame && !isInPlace) void discardYoutubeImport(contents)
+  })
+  contents.on('render-process-gone', () => void discardYoutubeImport(contents))
+  contents.once('destroyed', () => void discardYoutubeImport(contents))
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https://') || url.startsWith('http://')) void shell.openExternal(url)
     return { action: 'deny' }
@@ -259,6 +266,7 @@ function createWindow(): void {
 }
 
 function registerIpc(): void {
+  registerYoutubeImport()
   ipcMain.handle('library:read-analysis-audio', async (_event, id: unknown) => {
     if (!validId(id)) throw new Error('无效的谱面 ID')
     const record = parseStoredChart(id)
@@ -293,11 +301,20 @@ function registerIpc(): void {
     if (!validId(id) || !chart || typeof chart !== 'object') throw new Error('谱面数据无效')
     return summaryOf(writeStoredChart(id, chart as Record<string, unknown>))
   })
-  ipcMain.handle('library:write-info', (_event, id: unknown, chart: unknown, media: unknown) => {
+  ipcMain.handle('library:write-info', (event, id: unknown, chart: unknown, media: unknown) => {
     if (!validId(id) || !chart || typeof chart !== 'object' || Array.isArray(chart) || !media || typeof media !== 'object' || Array.isArray(media)) {
       throw new Error('谱面数据无效 / Invalid chart data')
     }
-    return writeChartInfo(id, chart as Record<string, unknown>, media as Record<string, unknown>)
+    const { youtubeImportId, ...files } = media as Record<string, unknown>
+    if (youtubeImportId !== undefined) {
+      const imported = getYoutubeImport(event.sender, youtubeImportId)
+      if (!imported || parseStoredChart(id)) throw new Error('YouTube 导入已失效，请重新导入 / Import expired. Import the video again.')
+      files.audio ??= imported.audio
+      if (files.cover === undefined) files.cover = imported.cover
+    }
+    const saved = writeChartInfo(id, chart as Record<string, unknown>, files)
+    if (typeof youtubeImportId === 'string') void discardYoutubeImport(event.sender, youtubeImportId)
+    return saved
   })
   ipcMain.handle('library:duplicate', (_event, source: unknown) => {
     const record = validId(source) && parseStoredChart(source)

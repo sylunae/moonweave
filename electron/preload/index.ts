@@ -24,6 +24,12 @@ const api: SylunaeShellAPI = Object.freeze({
 contextBridge.exposeInMainWorld('sylunae', api)
 
 contextBridge.exposeInMainWorld('moonweave', Object.freeze({
+  youtube: Object.freeze({
+    status: () => ipcRenderer.invoke('youtube:status'),
+    install: () => ipcRenderer.invoke('youtube:install'),
+    download: (id: string, url: string) => ipcRenderer.invoke('youtube:download', id, url),
+    discard: (id: string) => ipcRenderer.invoke('youtube:discard', id),
+  }),
   readBundledChartPackage: (name: string) => ipcRenderer.invoke('library:read-bundled-package', name),
   listCharts: () => ipcRenderer.invoke('library:list'),
   readChart: (id: string) => ipcRenderer.invoke('library:read', id),
@@ -34,6 +40,7 @@ contextBridge.exposeInMainWorld('moonweave', Object.freeze({
     audio: selectedPath(media.audio),
     background: selectedPath(media.background),
     cover: selectedPath(media.cover),
+    youtubeImportId: media.youtubeImportId,
   }),
   deleteChart: (id: string) => ipcRenderer.invoke('library:delete', id),
   chooseAudio: (id: string) => ipcRenderer.invoke('library:choose-audio', id),

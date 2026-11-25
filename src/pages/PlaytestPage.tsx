@@ -14,6 +14,7 @@ import { useChart } from '@/features/chart/ChartProvider'
 import { usePlatform } from '@/features/platform/PlatformProvider'
 import type { ChartNote } from '@/features/chart/types'
 import { holdTickTimes } from '@/features/chart/tempoMap'
+import { canPlayBackgroundVideo, syncBackgroundVideoTime as syncVideoTime } from '@/features/playtest/backgroundVideo'
 import { createRedZoneIndex, RED_HOLD_GRACE_MS, RedZoneTracker } from '@/features/playtest/redZones'
 import { PlaybackClock } from '@/features/playtest/PlaybackClock'
 import { PlaytestRenderer, type PlaytestStats } from '@/features/playtest/PlaytestRenderer'
@@ -219,12 +220,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
 
   const syncBackgroundVideoTime = useCallback((chartTime: number) => {
     const video = backgroundVideoRef.current
-    if (!video || video.readyState === 0) return
-    const requestedTime = Math.max(0, chartTime - chart.backgroundVideoStartTime) / 1000
-    const targetTime = Number.isFinite(video.duration) && video.duration > 0 ? requestedTime % video.duration : requestedTime
-    // Allow small decoder drift without continuously interrupting playback with seeks.
-    if (!video.seeking && Math.abs(video.currentTime - targetTime) > 0.15) video.currentTime = targetTime
-    video.playbackRate = audioRef.current?.playbackRate ?? 1
+    if (video) syncVideoTime(video, chartTime, chart.backgroundVideoStartTime, audioRef.current?.playbackRate ?? 1)
   }, [audioRef, chart.backgroundVideoStartTime])
 
   const syncBackgroundVideoPlayback = useCallback(() => {
@@ -233,8 +229,8 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     const audio = audioRef.current
     const chartTime = audio ? audio.currentTime * 1000 : timeRef.current
     syncBackgroundVideoTime(chartTime)
-    if (audio && playingRef.current && prerollTimeRef.current === null && !audio.paused && !audio.ended && !audio.seeking
-      && audio.readyState >= 3 && chartTime >= chart.backgroundVideoStartTime && !document.hidden) {
+    if (audio && playingRef.current && prerollTimeRef.current === null
+      && canPlayBackgroundVideo(audio, chartTime, chart.backgroundVideoStartTime)) {
       if (video.paused) void video.play().catch(() => undefined)
     } else video.pause()
   }, [audioRef, chart.backgroundVideoStartTime, syncBackgroundVideoTime])

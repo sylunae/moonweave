@@ -1,6 +1,6 @@
 import { EffectsModule, useEffectsEditor } from '@/features/chart/effects/EffectsModule'
 import { shiftChartOffset } from '@/features/chart/editHistory'
-import { aiChartCopy, editorEffects, improvisationCopy, noteImportTitle, redZoneCopy } from '@/config/app'
+import { aiChartCopy, backgroundVideoPreviewCopy, editorEffects, improvisationCopy, noteImportTitle, redZoneCopy } from '@/config/app'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft, BookOpen, ClipboardPaste, Copy, FlipHorizontal2, Gamepad2, Gauge, ImagePlus,
@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { BackgroundVideoPreview } from '@/features/chart/BackgroundVideoPreview'
 import { ChartEditor, type ChartEditorHandle } from '@/features/chart/ChartEditor'
 import { useChart } from '@/features/chart/ChartProvider'
 import { DifficultyLevelFields } from '@/features/chart/DifficultyLevelFields'
@@ -56,7 +57,7 @@ const playCopyConfirmation = () => {
 export default function ChartEditorPage() {
   const { text } = useI18n()
   const {
-    chart, setChart, setImprovising, commitEdit, activeChartId, storageStatus, coverUrl, currentTime, setCurrentTime, setPlaybackRate,
+    chart, setChart, setImprovising, commitEdit, activeChartId, storageStatus, audioRef, audioUrl, backgroundUrl, coverUrl, currentTime, setCurrentTime, setPlaybackRate,
     isPlaying, historyLength, futureLength, commitNotes, undo, redo, flushActiveChart, togglePlay,
     chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, showToast,
   } = useChart()
@@ -94,6 +95,7 @@ export default function ChartEditorPage() {
   const [bpmDraft, setBpmDraft] = useState(String(chart.bpm))
   const [offsetDraft, setOffsetDraft] = useState(String(chart.offset))
   const [backgroundVideoStartDraft, setBackgroundVideoStartDraft] = useState(String(chart.backgroundVideoStartTime))
+  const [videoPreviewChartId, setVideoPreviewChartId] = useState<string | null>(null)
   const regionNotes = useMemo(() => !region || region.end === null ? [] : notesInRegion(chart.notes, region.start, region.end).filter((note) => Boolean(note.red) === redMode), [chart.notes, redMode, region])
   const selectedNotes = useMemo(() => chart.notes.filter((note) => selectedIds.has(note.id) && Boolean(note.red) === redMode), [chart.notes, redMode, selectedIds])
   const regionStatus = useMemo(() => {
@@ -207,7 +209,8 @@ export default function ChartEditorPage() {
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement
-      if (target.closest('[role="dialog"]')) return
+      if (event.defaultPrevented || target.closest('[role="dialog"]')) return
+      if (event.code === 'Space' && target.closest('.video-preview button')) return
       const editing = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target.isContentEditable
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
         event.preventDefault()
@@ -266,19 +269,30 @@ export default function ChartEditorPage() {
         </div>
         <div className="playback-rate">{PLAYBACK_RATES.map((rate) => <GameButton key={rate} size="sm" aria-pressed={playbackRate === rate} onClick={() => { editorRef.current?.flushSeek(); setPlaybackRate(rate) }}>{rate}×</GameButton>)}</div>
       </aside>
-      <div className="editor-canvas">
-        <ChartEditor
-          ref={editorRef}
-          laneWidthPercent={laneWidth}
-          chart={chart} currentTime={currentTime} subdivision={subdivision} tool={tool} redMode={redMode} holdStart={holdStart}
-          selectedIds={selectedIds} region={region} isPlaying={isPlaying} onSeek={setCurrentTime}
-          onNotesChange={commitNotes} onHoldStart={setHoldStart} onSelectionChange={setSelectedIds}
-          onRegionLine={chooseRegionLine} onTempoLine={chooseTempoLine} onEffectLine={effectsEditor.onLine} onEffectEdit={effectsEditor.edit}
-          onRegionMove={(delta) => setRegion((current) => current && current.end !== null ? { start: current.start + delta, end: current.end + delta } : current)}
-          onZoomChange={(editorZoom) => setChart((current) => ({ ...current, settings: { ...current.settings, editorZoom } }))}
-          onSubdivisionChange={changeSubdivision}
-        />
-        {regionStatus && <div key={actionFeedback?.id} className="region-workflow-status" role="status" data-tone={regionStatus.tone} data-feedback={Boolean(actionFeedback)}><span><ScanSearch /></span><div><strong>{regionStatus.title}</strong><small>{regionStatus.detail}</small></div></div>}
+      <div className="editor-stage-layout">
+        <div className="editor-canvas">
+          <ChartEditor
+            ref={editorRef}
+            laneWidthPercent={laneWidth}
+            chart={chart} currentTime={currentTime} subdivision={subdivision} tool={tool} redMode={redMode} holdStart={holdStart}
+            selectedIds={selectedIds} region={region} isPlaying={isPlaying} onSeek={setCurrentTime}
+            onNotesChange={commitNotes} onHoldStart={setHoldStart} onSelectionChange={setSelectedIds}
+            onRegionLine={chooseRegionLine} onTempoLine={chooseTempoLine} onEffectLine={effectsEditor.onLine} onEffectEdit={effectsEditor.edit}
+            onRegionMove={(delta) => setRegion((current) => current && current.end !== null ? { start: current.start + delta, end: current.end + delta } : current)}
+            onZoomChange={(editorZoom) => setChart((current) => ({ ...current, settings: { ...current.settings, editorZoom } }))}
+            onSubdivisionChange={changeSubdivision}
+          />
+          {regionStatus && <div key={actionFeedback?.id} className="region-workflow-status" role="status" data-tone={regionStatus.tone} data-feedback={Boolean(actionFeedback)}><span><ScanSearch /></span><div><strong>{regionStatus.title}</strong><small>{regionStatus.detail}</small></div></div>}
+        </div>
+        {videoPreviewChartId === activeChartId && chart.backgroundType === 'video' && backgroundUrl && (
+          <BackgroundVideoPreview
+            key={backgroundUrl} src={backgroundUrl} audioRef={audioRef} hasAudio={Boolean(audioUrl)}
+            currentTime={currentTime} duration={chart.duration} startTime={chart.backgroundVideoStartTime} isPlaying={isPlaying}
+            onTogglePlay={() => void toggleEditorPlay()}
+            onSeek={(time) => { editorRef.current?.flushSeek(); setCurrentTime(time) }}
+            onClose={() => setVideoPreviewChartId(null)}
+          />
+        )}
       </div>
       <aside className={`editor-action-rail editor-action-rail-right${redMode ? ' red-placement' : ''}`} data-scroll-region aria-label={text('音符工具', 'Note tools')}>
         <GameButton className="editor-action red-mode-toggle" aria-label={text(redZoneCopy.mode.zh, redZoneCopy.mode.en)} aria-pressed={redMode} onClick={() => { setRedMode((value) => !value); resetToolContext(tool === 'hold' ? 'hold' : 'note'); setSelectedIds(new Set()); setRegion(null) }}><Sparkles /><b>{text(redZoneCopy.mode.zh, redZoneCopy.mode.en)}</b></GameButton>
@@ -310,10 +324,39 @@ export default function ChartEditorPage() {
                 return { ...current, library: { ...meta, levels: meta.levels.map((value, index) => index === tier ? level : value) } }
               })
             }} />
-            <button className="audio-drop" onClick={() => void chooseAudio()}><span className="audio-icon"><Upload /></span><span><strong>{chart.audioName || text('上传音频文件', 'Upload audio file')}</strong><small>{text('MP3、WAV、OGG、M4A 或 FLAC', 'MP3, WAV, OGG, M4A, or FLAC')}</small></span><b>{chart.audioName ? text('替换', 'Replace') : text('上传', 'Upload')}</b></button>
-            <div className="managed-media-row"><button className="audio-drop" onClick={() => void chooseBackground()}><span className="audio-icon"><ImagePlus /></span><span><strong>{chart.backgroundName || text('上传试玩背景', 'Upload playtest background')}</strong><small>{text('图片或 MP4 / WebM 视频', 'Image or MP4 / WebM video')}</small></span><b>{chart.backgroundName ? text('替换', 'Replace') : text('上传', 'Upload')}</b></button>{chart.backgroundName && <Button variant="outline" size="icon" title={text('移除背景', 'Remove background')} onClick={() => void removeBackground()}><X /></Button>}</div>
-            {chart.backgroundType === 'video' && <label className="video-start-setting"><span><strong>{text('视频起始偏移（ms）', 'Video start offset (ms)')}</strong><small>{text('正数延后开始，负数提前播放', 'Positive values delay playback; negative values start early')}</small></span><Input inputMode="numeric" value={backgroundVideoStartDraft} onChange={(event) => setBackgroundVideoStartDraft(event.target.value)} onBlur={() => { const value = Number(backgroundVideoStartDraft); if (!Number.isFinite(value)) { showToast(text('视频起始偏移必须是有效毫秒数', 'Video start offset must be a valid millisecond value')); setBackgroundVideoStartDraft(String(chart.backgroundVideoStartTime)); return } const backgroundVideoStartTime = Math.round(value); setBackgroundVideoStartDraft(String(backgroundVideoStartTime)); setChart((current) => ({ ...current, backgroundVideoStartTime })) }} /></label>}
-            <div className="managed-media-row"><button className="audio-drop" onClick={() => void chooseCover()}><span className="audio-icon cover-preview">{coverUrl ? <img src={coverUrl} alt="" /> : <ImagePlus />}</span><span><strong>{chart.coverName || text('上传曲目封面', 'Upload cover art')}</strong><small>{text('PNG、JPG、WebP 或 AVIF', 'PNG, JPG, WebP, or AVIF')}</small></span><b>{chart.coverName ? text('替换', 'Replace') : text('上传', 'Upload')}</b></button>{chart.coverName && <Button variant="outline" size="icon" title={text('移除封面', 'Remove cover')} onClick={() => void removeCover()}><X /></Button>}</div>
+            <div className="chart-media-card">
+              <button type="button" className="chart-media-picker" onClick={() => void chooseAudio()}>
+                <span className="audio-icon"><Upload /></span>
+                <span><strong>{chart.audioName || text('上传音频文件', 'Upload audio file')}</strong><small>{text('MP3、WAV、OGG、M4A 或 FLAC', 'MP3, WAV, OGG, M4A, or FLAC')}</small></span>
+                <b>{chart.audioName ? text('替换', 'Replace') : text('上传', 'Upload')}</b>
+              </button>
+            </div>
+            <div className="chart-media-card">
+              <button type="button" className="chart-media-picker" onClick={() => void chooseBackground()}>
+                <span className="audio-icon"><ImagePlus /></span>
+                <span><strong>{chart.backgroundName || text('上传试玩背景', 'Upload playtest background')}</strong><small>{text('图片或 MP4 / WebM 视频', 'Image or MP4 / WebM video')}</small></span>
+                <b>{chart.backgroundName ? text('替换', 'Replace') : text('上传', 'Upload')}</b>
+              </button>
+              {chart.backgroundName && <Button type="button" variant="outline" size="icon" title={text('移除背景', 'Remove background')} onClick={() => void removeBackground()}><X /></Button>}
+            </div>
+            {chart.backgroundType === 'video' && (
+              <div className="video-preview-setting">
+                <label className="video-start-setting"><span><strong>{text('视频起始偏移（ms）', 'Video start offset (ms)')}</strong><small>{text('正数延后开始，负数提前播放', 'Positive values delay playback; negative values start early')}</small></span><Input inputMode="numeric" value={backgroundVideoStartDraft} onChange={(event) => setBackgroundVideoStartDraft(event.target.value)} onBlur={() => { const value = Number(backgroundVideoStartDraft); if (!Number.isFinite(value)) { showToast(text('视频起始偏移必须是有效毫秒数', 'Video start offset must be a valid millisecond value')); setBackgroundVideoStartDraft(String(chart.backgroundVideoStartTime)); return } const backgroundVideoStartTime = Math.round(value); setBackgroundVideoStartDraft(String(backgroundVideoStartTime)); setChart((current) => ({ ...current, backgroundVideoStartTime })) }} /></label>
+                <Button type="button" variant="outline" disabled={!backgroundUrl} onClick={() => {
+                  editorRef.current?.flushSeek()
+                  setVideoPreviewChartId(activeChartId)
+                  setOpenSheet(null)
+                }}><Play />{text(backgroundVideoPreviewCopy.title.zh, backgroundVideoPreviewCopy.title.en)}</Button>
+              </div>
+            )}
+            <div className="chart-media-card">
+              <button type="button" className="chart-media-picker" onClick={() => void chooseCover()}>
+                <span className="audio-icon cover-preview">{coverUrl ? <img src={coverUrl} alt="" /> : <ImagePlus />}</span>
+                <span><strong>{chart.coverName || text('上传曲目封面', 'Upload cover art')}</strong><small>{text('PNG、JPG、WebP 或 AVIF', 'PNG, JPG, WebP, or AVIF')}</small></span>
+                <b>{chart.coverName ? text('替换', 'Replace') : text('上传', 'Upload')}</b>
+              </button>
+              {chart.coverName && <Button type="button" variant="outline" size="icon" title={text('移除封面', 'Remove cover')} onClick={() => void removeCover()}><X /></Button>}
+            </div>
           </section>
         </div>
       </SheetContent>

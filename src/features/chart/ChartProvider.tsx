@@ -334,7 +334,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
       }
     }), [queueWrite, updateSummary])
   const createChart = useCallback(async (initial: Chart, media: ChartInfoMedia) => {
-    if (!media.audio) return null
+    if (!media.audio && (!media.youtubeImportId || !window.moonweave?.youtube)) return null
     if (activeIdRef.current && !await flushActiveChart()) return null
     const id = crypto.randomUUID()
     const library = newChartMetadata(initial.library)

@@ -35,9 +35,30 @@ export interface ChartInfoMedia {
   audio?: File
   background?: File | null
   cover?: File | null
+  youtubeImportId?: string
+}
+
+export interface YoutubeChartImport {
+  title: string
+  artist: string
+  duration: number
+  audioName: string
+  cover?: Uint8Array
+}
+
+export type YoutubeImportResult =
+  | { ok: true; media: YoutubeChartImport }
+  | { ok: false; reason: 'link' | 'tools' | 'busy' | 'duration' | 'failed' }
+
+export interface YoutubeImportAPI {
+  status(): Promise<'unsupported' | 'installing' | 'ready' | 'missing'>
+  install(): Promise<void>
+  download(id: string, url: string): Promise<YoutubeImportResult>
+  discard(id: string): Promise<void>
 }
 
 export interface MoonweaveAPI {
+  youtube?: YoutubeImportAPI
   readBundledChartPackage(name: string): Promise<Uint8Array>
   listCharts(): Promise<ChartLibraryItem[]>
   readChart(id: string): Promise<ManagedChart | null>
