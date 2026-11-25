@@ -3,8 +3,8 @@ import { shiftChartOffset } from '@/features/chart/editHistory'
 import { aiChartCopy, editorEffects, improvisationCopy, noteImportTitle, redZoneCopy } from '@/config/app'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  BookOpen, ClipboardPaste, Copy, FlipHorizontal2, Gamepad2, Gauge, ImagePlus,
-  LogOut, Music2, Pause, Play, Plus, Redo2, ScanSearch, SlidersHorizontal, Trash2,
+  ArrowLeft, BookOpen, ClipboardPaste, Copy, FlipHorizontal2, Gamepad2, Gauge, ImagePlus,
+  Music2, Pause, Play, Plus, Redo2, ScanSearch, SlidersHorizontal, Trash2,
   Undo2, Upload, X, Sparkles, FileJson, FileUp,
 } from 'lucide-react'
 import { navigate } from '@/app/navigation'
@@ -12,6 +12,7 @@ import { useI18n } from '@/app/i18n'
 import { usePreferences } from '@/app/preferences'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { GameButton } from '@/components/ui/game-controls'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Slider } from '@/components/ui/slider'
@@ -21,7 +22,7 @@ import { useChart } from '@/features/chart/ChartProvider'
 import { DifficultyLevelFields } from '@/features/chart/DifficultyLevelFields'
 import { libraryMetadata, tiers } from '@/features/chart/libraryMetadata'
 import { adjacentBeatLine, bpmAtTime, retimeInitialBpm, snapToBeatLine } from '@/features/chart/tempoMap'
-import type { ChartNote, ToolMode } from '@/features/chart/types'
+import { EDITOR_LANE_WIDTH, type ChartNote, type ToolMode } from '@/features/chart/types'
 
 const SUBDIVISIONS = [2, 3, 4, 6, 8, 12, 16, 24, 32] as const
 const AiChartDialog = lazy(() => import('@/features/chart/ai/AiChartDialog'))
@@ -86,6 +87,8 @@ export default function ChartEditorPage() {
   const feedbackTimerRef = useRef(0)
   const feedbackIdRef = useRef(0)
   const [openSheet, setOpenSheet] = useState<'info' | 'tempo' | 'settings' | 'playtest' | null>(null)
+  const [laneWidthPreview, setLaneWidthPreview] = useState<number | null>(null)
+  const laneWidth = laneWidthPreview ?? chart.settings.editorLaneWidthPercent ?? EDITOR_LANE_WIDTH.default
   const [tempoTime, setTempoTime] = useState<number | null>(null)
   const [tempoDraft, setTempoDraft] = useState('')
   const [bpmDraft, setBpmDraft] = useState(String(chart.bpm))
@@ -227,55 +230,61 @@ export default function ChartEditorPage() {
     return () => window.removeEventListener('keydown', keydown)
   }, [chart, clipboard, copySelection, currentTime, deleteSelection, flushActiveChart, pasteAtCurrentBeat, playbackRate, redo, selectedIds.size, selectedNotes.length, setCurrentTime, showToast, subdivision, text, toggleEditorPlay, undo])
 
-  if (!activeChartId) return <div className="editor-empty page-enter"><BookOpen /><h1>{text('未选择谱面', 'No chart selected')}</h1><Button onClick={() => navigate('manage')}>{text('前往我的谱面', 'Go to My Charts')}</Button></div>
+  if (!activeChartId) return <div className="editor-page page-enter">
+    <div className="editor-workspace">
+      <div className="library-empty"><BookOpen /><h1>{text('未选择谱面', 'No chart selected')}</h1><GameButton className="primary" onClick={() => navigate('manage')}>{text('前往我的谱面', 'Go to My Charts')}</GameButton></div>
+    </div>
+  </div>
 
   return <div className="editor-page page-enter">
+    <header className="game-page-toolbar editor-toolbar">
+      <Tooltip><TooltipTrigger asChild><GameButton size="icon-lg" aria-label={text('退出编辑器', 'Exit editor')} onClick={() => void flushActiveChart().finally(() => navigate('manage'))}><ArrowLeft /></GameButton></TooltipTrigger><TooltipContent side="bottom">{text('退出编辑器', 'Exit editor')}</TooltipContent></Tooltip>
+      <h1><i aria-hidden /><span>{chart.title || text('未命名谱面', 'Untitled')}</span></h1>
+      <GameButton className="primary" onClick={() => setOpenSheet('playtest')}><Gamepad2 />{text('谱面试玩', 'Playtest')}</GameButton>
+      <div role="group" className="editor-utility-actions" data-scroll-region aria-label={text('编辑器工具栏', 'Editor toolbar')}>
+        <Tooltip><TooltipTrigger asChild><GameButton size="icon-lg" onClick={() => { editorRef.current?.flushSeek(); setNoteImportOpen(true) }} aria-label={text(noteImportTitle.zh, noteImportTitle.en)}><FileUp /></GameButton></TooltipTrigger><TooltipContent side="bottom" sideOffset={9}>{text(noteImportTitle.zh, noteImportTitle.en)}</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger asChild><GameButton size="icon-lg" onClick={() => { editorRef.current?.flushSeek(); setAiOpen(true) }} aria-label={text(aiChartCopy.title.zh, aiChartCopy.title.en)}><FileJson /></GameButton></TooltipTrigger><TooltipContent side="bottom" sideOffset={9}>{text(aiChartCopy.title.zh, aiChartCopy.title.en)}</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger asChild><GameButton size="icon-lg" onClick={() => setOpenSheet('info')} aria-label={text('谱面信息', 'Chart info')}><BookOpen /></GameButton></TooltipTrigger><TooltipContent side="bottom" sideOffset={9}>{text('谱面信息', 'Chart info')}</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger asChild><GameButton size="icon-lg" onClick={() => setOpenSheet('tempo')} aria-label={text('BPM 变化', 'BPM changes')}><Gauge /></GameButton></TooltipTrigger><TooltipContent side="bottom" sideOffset={9}>{text('BPM 变化', 'BPM changes')}</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger asChild><GameButton size="icon-lg" onClick={() => effectsEditor.setOpen(true)} aria-label={text(editorEffects.title.zh, editorEffects.title.en)}><Sparkles /></GameButton></TooltipTrigger><TooltipContent side="bottom" sideOffset={9}>{text(editorEffects.title.zh, editorEffects.title.en)}</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger asChild><GameButton size="icon-lg" onClick={() => setOpenSheet('settings')} aria-label={text('谱面设置', 'Chart settings')}><SlidersHorizontal /></GameButton></TooltipTrigger><TooltipContent side="bottom" sideOffset={9}>{text('谱面设置', 'Chart settings')}</TooltipContent></Tooltip>
+      </div>
+    </header>
     <div className="editor-workspace">
-      <ChartEditor
-        ref={editorRef}
-        chart={chart} currentTime={currentTime} subdivision={subdivision} tool={tool} redMode={redMode} holdStart={holdStart}
-        selectedIds={selectedIds} region={region} isPlaying={isPlaying} onSeek={setCurrentTime}
-        onNotesChange={commitNotes} onHoldStart={setHoldStart} onSelectionChange={setSelectedIds}
-        onRegionLine={chooseRegionLine} onTempoLine={chooseTempoLine} onEffectLine={effectsEditor.onLine} onEffectEdit={effectsEditor.edit}
-        onRegionMove={(delta) => setRegion((current) => current && current.end !== null ? { start: current.start + delta, end: current.end + delta } : current)}
-        onZoomChange={(editorZoom) => setChart((current) => ({ ...current, settings: { ...current.settings, editorZoom } }))}
-        onSubdivisionChange={changeSubdivision}
-      />
-
-      <aside className="editor-action-rail editor-action-rail-left" aria-label={text('常用编辑操作', 'Common editing actions')}>
-        <button className="editor-action primary" onClick={() => void toggleEditorPlay()}><span>{isPlaying ? <Pause /> : <Play />}</span><b>{isPlaying ? text('暂停', 'Pause') : text('播放', 'Play')}</b></button>
-        <button className={`editor-action${tool === 'region' ? ' active' : ''}`} aria-pressed={tool === 'region'} onClick={() => toggleActionTool('region')}><span><ScanSearch /></span><b>{text('区域', 'Region')}</b></button>
-        <button className={`editor-action danger${tool === 'delete' ? ' active' : ''}`} aria-pressed={tool === 'delete'} onClick={() => toggleActionTool('delete')}><span><Trash2 /></span><b>{text('删除', 'Delete')}</b></button>
+      <aside className="editor-action-rail editor-action-rail-left" data-scroll-region aria-label={text('常用编辑操作', 'Common editing actions')}>
+        <GameButton className="editor-action primary" onClick={() => void toggleEditorPlay()}>{isPlaying ? <Pause /> : <Play />}<b>{isPlaying ? text('暂停', 'Pause') : text('播放', 'Play')}</b></GameButton>
+        <GameButton className="editor-action" aria-pressed={tool === 'region'} onClick={() => toggleActionTool('region')}><ScanSearch /><b>{text('区域', 'Region')}</b></GameButton>
+        <GameButton className="editor-action danger" aria-pressed={tool === 'delete'} onClick={() => toggleActionTool('delete')}><Trash2 /><b>{text('删除', 'Delete')}</b></GameButton>
         <div className="editor-compact-actions">
-          <Tooltip><TooltipTrigger asChild><span><button disabled={!selectedNotes.length} onClick={copySelection} aria-label={text('复制选中音符', 'Copy selected notes')}><Copy /></button></span></TooltipTrigger><TooltipContent side="right" sideOffset={9}>{selectedNotes.length ? text(`复制选中的 ${selectedNotes.length} 个音符`, `Copy ${selectedNotes.length} selected notes`) : text('请选择要复制的音符', 'Select notes to copy')}</TooltipContent></Tooltip>
-          <Tooltip><TooltipTrigger asChild><span><button disabled={!clipboard?.notes.length} onClick={pasteAtCurrentBeat} aria-label={text('粘贴到当前判定线', 'Paste at the current judgment line')}><ClipboardPaste /></button></span></TooltipTrigger><TooltipContent side="right" sideOffset={9}>{clipboard?.notes.length ? text(`粘贴 ${clipboard.notes.length} 个音符到当前判定线`, `Paste ${clipboard.notes.length} notes at the current judgment line`) : text('复制音符后可粘贴', 'Copy notes before pasting')}</TooltipContent></Tooltip>
-          <Tooltip><TooltipTrigger asChild><span><button disabled={!selectedNotes.length} onClick={mirrorSelection} aria-label={text('镜像选中音符', 'Mirror selected notes')}><FlipHorizontal2 /></button></span></TooltipTrigger><TooltipContent side="right" sideOffset={9}>{selectedNotes.length ? text(`镜像选中的 ${selectedNotes.length} 个音符`, `Mirror ${selectedNotes.length} selected notes`) : text('请选择要镜像的音符', 'Select notes to mirror')}</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><span><GameButton size="icon-lg" disabled={!selectedNotes.length} onClick={copySelection} aria-label={text('复制选中音符', 'Copy selected notes')}><Copy /></GameButton></span></TooltipTrigger><TooltipContent side="top" sideOffset={9}>{selectedNotes.length ? text(`复制选中的 ${selectedNotes.length} 个音符`, `Copy ${selectedNotes.length} selected notes`) : text('请选择要复制的音符', 'Select notes to copy')}</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><span><GameButton size="icon-lg" disabled={!clipboard?.notes.length} onClick={pasteAtCurrentBeat} aria-label={text('粘贴到当前判定线', 'Paste at the current judgment line')}><ClipboardPaste /></GameButton></span></TooltipTrigger><TooltipContent side="top" sideOffset={9}>{clipboard?.notes.length ? text(`粘贴 ${clipboard.notes.length} 个音符到当前判定线`, `Paste ${clipboard.notes.length} notes at the current judgment line`) : text('复制音符后可粘贴', 'Copy notes before pasting')}</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><span><GameButton size="icon-lg" disabled={!selectedNotes.length} onClick={mirrorSelection} aria-label={text('镜像选中音符', 'Mirror selected notes')}><FlipHorizontal2 /></GameButton></span></TooltipTrigger><TooltipContent side="top" sideOffset={9}>{selectedNotes.length ? text(`镜像选中的 ${selectedNotes.length} 个音符`, `Mirror ${selectedNotes.length} selected notes`) : text('请选择要镜像的音符', 'Select notes to mirror')}</TooltipContent></Tooltip>
         </div>
-        {/* <small className="region-action-explain">{selectedNotes.length ? `已选中 ${selectedNotes.length} 个音符，可复制或镜像` : clipboard ? `粘贴板中有 ${clipboard.notes.length} 个音符` : '选择音符或区域后即可复制、镜像'}</small> */}
         <div className="editor-compact-actions">
-          <Tooltip><TooltipTrigger asChild><span><button disabled={!historyLength} onClick={undo} aria-label={text('撤回', 'Undo')}><Undo2 /></button></span></TooltipTrigger><TooltipContent side="right" sideOffset={9}>{text('撤回', 'Undo')}</TooltipContent></Tooltip>
-          <Tooltip><TooltipTrigger asChild><span><button disabled={!futureLength} onClick={redo} aria-label={text('重做', 'Redo')}><Redo2 /></button></span></TooltipTrigger><TooltipContent side="right" sideOffset={9}>{text('重做', 'Redo')}</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><span><GameButton size="icon-lg" disabled={!historyLength} onClick={undo} aria-label={text('撤回', 'Undo')}><Undo2 /></GameButton></span></TooltipTrigger><TooltipContent side="top" sideOffset={9}>{text('撤回', 'Undo')}</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><span><GameButton size="icon-lg" disabled={!futureLength} onClick={redo} aria-label={text('重做', 'Redo')}><Redo2 /></GameButton></span></TooltipTrigger><TooltipContent side="top" sideOffset={9}>{text('重做', 'Redo')}</TooltipContent></Tooltip>
         </div>
-        <div className="playback-rate">{PLAYBACK_RATES.map((rate) => <button key={rate} className={playbackRate === rate ? 'active' : ''} onClick={() => { editorRef.current?.flushSeek(); setPlaybackRate(rate) }}>{rate}×</button>)}</div>
+        <div className="playback-rate">{PLAYBACK_RATES.map((rate) => <GameButton key={rate} size="sm" aria-pressed={playbackRate === rate} onClick={() => { editorRef.current?.flushSeek(); setPlaybackRate(rate) }}>{rate}×</GameButton>)}</div>
       </aside>
-
-      <aside className={`editor-action-rail editor-action-rail-right${redMode ? ' red-placement' : ''}`} aria-label={text('音符工具', 'Note tools')}>
-        <button className={`editor-action red-mode-toggle${redMode ? ' active' : ''}`} aria-label={text(redZoneCopy.mode.zh, redZoneCopy.mode.en)} aria-pressed={redMode} onClick={() => { setRedMode((value) => !value); resetToolContext(tool === 'hold' ? 'hold' : 'note'); setSelectedIds(new Set()); setRegion(null) }}><span><Sparkles /></span><b>{text(redZoneCopy.mode.zh, redZoneCopy.mode.en)}</b></button>
-        <button className={`editor-action${tool === 'note' ? ' active' : ''}`} onClick={() => resetToolContext('note')}><span className="note-glyph tap" /><b>NOTE</b></button>
-        <button className={`editor-action${tool === 'hold' ? ' active' : ''}`} onClick={() => resetToolContext('hold')}><span className="note-glyph hold" /><b>HOLD</b></button>
+      <div className="editor-canvas">
+        <ChartEditor
+          ref={editorRef}
+          laneWidthPercent={laneWidth}
+          chart={chart} currentTime={currentTime} subdivision={subdivision} tool={tool} redMode={redMode} holdStart={holdStart}
+          selectedIds={selectedIds} region={region} isPlaying={isPlaying} onSeek={setCurrentTime}
+          onNotesChange={commitNotes} onHoldStart={setHoldStart} onSelectionChange={setSelectedIds}
+          onRegionLine={chooseRegionLine} onTempoLine={chooseTempoLine} onEffectLine={effectsEditor.onLine} onEffectEdit={effectsEditor.edit}
+          onRegionMove={(delta) => setRegion((current) => current && current.end !== null ? { start: current.start + delta, end: current.end + delta } : current)}
+          onZoomChange={(editorZoom) => setChart((current) => ({ ...current, settings: { ...current.settings, editorZoom } }))}
+          onSubdivisionChange={changeSubdivision}
+        />
+        {regionStatus && <div key={actionFeedback?.id} className="region-workflow-status" role="status" data-tone={regionStatus.tone} data-feedback={Boolean(actionFeedback)}><span><ScanSearch /></span><div><strong>{regionStatus.title}</strong><small>{regionStatus.detail}</small></div></div>}
+      </div>
+      <aside className={`editor-action-rail editor-action-rail-right${redMode ? ' red-placement' : ''}`} data-scroll-region aria-label={text('音符工具', 'Note tools')}>
+        <GameButton className="editor-action red-mode-toggle" aria-label={text(redZoneCopy.mode.zh, redZoneCopy.mode.en)} aria-pressed={redMode} onClick={() => { setRedMode((value) => !value); resetToolContext(tool === 'hold' ? 'hold' : 'note'); setSelectedIds(new Set()); setRegion(null) }}><Sparkles /><b>{text(redZoneCopy.mode.zh, redZoneCopy.mode.en)}</b></GameButton>
+        <GameButton className="editor-action" aria-pressed={tool === 'note'} onClick={() => resetToolContext('note')}><span className="note-glyph tap" /><b>NOTE</b></GameButton>
+        <GameButton className="editor-action" aria-pressed={tool === 'hold'} onClick={() => resetToolContext('hold')}><span className="note-glyph hold" /><b>HOLD</b></GameButton>
       </aside>
-
-      <aside className="editor-utility-dock intro" aria-label={text('编辑器工具栏', 'Editor toolbar')}>
-        <Tooltip><TooltipTrigger asChild><button onClick={() => { editorRef.current?.flushSeek(); setNoteImportOpen(true) }} aria-label={text(noteImportTitle.zh, noteImportTitle.en)}><span className="editor-dock-label">{text(noteImportTitle.zh, noteImportTitle.en)}</span><FileUp /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text(noteImportTitle.zh, noteImportTitle.en)}</TooltipContent></Tooltip>
-        <Tooltip><TooltipTrigger asChild><button onClick={() => { editorRef.current?.flushSeek(); setAiOpen(true) }} aria-label={text(aiChartCopy.title.zh, aiChartCopy.title.en)}><span className="editor-dock-label">{text(aiChartCopy.title.zh, aiChartCopy.title.en)}</span><FileJson /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text(aiChartCopy.title.zh, aiChartCopy.title.en)}</TooltipContent></Tooltip>
-        <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('info')} aria-label={text('谱面信息', 'Chart info')}><span className="editor-dock-label">{text('谱面信息', 'Chart info')}</span><BookOpen /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('谱面信息', 'Chart info')}</TooltipContent></Tooltip>
-        <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('tempo')} aria-label={text('BPM 变化', 'BPM changes')}><span className="editor-dock-label">{text('BPM 变化', 'BPM changes')}</span><Gauge /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('BPM 变化', 'BPM changes')}</TooltipContent></Tooltip>
-        <Tooltip><TooltipTrigger asChild><button onClick={() => effectsEditor.setOpen(true)} aria-label={text(editorEffects.title.zh, editorEffects.title.en)}><span className="editor-dock-label">{text(editorEffects.title.zh, editorEffects.title.en)}</span><Sparkles /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text(editorEffects.title.zh, editorEffects.title.en)}</TooltipContent></Tooltip>
-        <Tooltip><TooltipTrigger asChild><button onClick={() => setOpenSheet('settings')} aria-label={text('谱面设置', 'Chart settings')}><span className="editor-dock-label">{text('谱面设置', 'Chart settings')}</span><SlidersHorizontal /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('谱面设置', 'Chart settings')}</TooltipContent></Tooltip>
-        <Tooltip><TooltipTrigger asChild><button onClick={() => void flushActiveChart().finally(() => navigate('manage'))} aria-label={text('退出编辑器', 'Exit editor')}><span className="editor-dock-label">{text('退出编辑器', 'Exit editor')}</span><LogOut /></button></TooltipTrigger><TooltipContent side="left" sideOffset={9}>{text('退出编辑器', 'Exit editor')}</TooltipContent></Tooltip>
-      </aside>
-      <Button className="editor-playtest-cta" onClick={() => setOpenSheet('playtest')}><Gamepad2 />{text('谱面试玩', 'Playtest')}</Button>
-      {regionStatus && <div key={actionFeedback?.id} className="region-workflow-status" data-tone={regionStatus.tone} data-feedback={Boolean(actionFeedback)}><span><ScanSearch /></span><div><strong>{regionStatus.title}</strong><small>{regionStatus.detail}</small></div></div>}
     </div>
 
     <EffectsModule editor={effectsEditor} />
@@ -285,7 +294,7 @@ export default function ChartEditorPage() {
     <Sheet open={openSheet === 'info'} onOpenChange={(open) => setOpenSheet(open ? 'info' : null)}>
       <SheetContent className="editor-sheet">
         <SheetHeader><SheetTitle>{text('谱面信息', 'Chart info')} · {tiers[libraryMetadata(chart.library).tier]}</SheetTitle><SheetDescription>{storageStatus === 'saving' ? text('正在保存到内部谱面库', 'Saving to the local chart library') : storageStatus === 'error' ? text('内部保存失败', 'Local save failed') : text('已自动保存到内部谱面库', 'Autosaved to the local chart library')}</SheetDescription></SheetHeader>
-        <div className="editor-sheet-scroll">
+        <div className="editor-sheet-scroll" data-scroll-region>
           <section className="sheet-section">
             <div className="sheet-section-heading"><span><Music2 /></span><div><h3>{text('歌曲信息', 'Song info')}</h3><p>{text('修改初始 BPM 时会保持音符相对节拍位置。', 'Changing the initial BPM preserves each note’s relative beat position.')}</p></div></div>
             <div className="config-form">
@@ -313,24 +322,46 @@ export default function ChartEditorPage() {
     <Sheet open={openSheet === 'tempo'} onOpenChange={(open) => setOpenSheet(open ? 'tempo' : null)}>
       <SheetContent className="editor-sheet">
         <SheetHeader><SheetTitle>{text('BPM 变化', 'BPM changes')}</SheetTitle><SheetDescription>{text('在任意节拍线上设置从该位置开始生效的 BPM。', 'Set a BPM on any beat line that takes effect from that point.')}</SheetDescription></SheetHeader>
-        <div className="editor-sheet-scroll">
+        <div className="editor-sheet-scroll" data-scroll-region>
           <section className="sheet-section">
             <div className="sheet-section-heading"><span><Gauge /></span><div><h3>{text('BPM 时间轴', 'Tempo timeline')}</h3><p>{chart.bpmChanges.length ? text(`已有 ${chart.bpmChanges.length} 个 BPM 变化点`, `${chart.bpmChanges.length} BPM changes`) : text('当前谱面使用固定 BPM', 'This chart uses a fixed BPM')}</p></div></div>
             <Button className="tempo-add-button" onClick={() => { setOpenSheet(null); resetToolContext('tempo') }}><Plus />{text('选择节拍线添加 BPM 变化', 'Choose a beat line to add a BPM change')}</Button>
-            <div className="tempo-change-list">{chart.bpmChanges.length ? chart.bpmChanges.map((change) => <div key={change.time}><button onClick={() => { setCurrentTime(change.time); setOpenSheet(null); chooseTempoLine(change.time) }}><time>{formatTime(change.time)}</time><strong>{change.bpm} BPM</strong></button><Button variant="ghost" size="icon-sm" title={text('删除 BPM 变化点', 'Delete BPM change')} onClick={() => deleteTempoChange(change.time)}><Trash2 /></Button></div>) : <p>{text('点击上方按钮，再选择轨道中的目标节拍线。', 'Click the button above, then choose the target beat line in the lanes.')}</p>}</div>
+            <div className="tempo-change-list" data-scroll-region>{chart.bpmChanges.length ? chart.bpmChanges.map((change) => <div key={change.time}><button onClick={() => { setCurrentTime(change.time); setOpenSheet(null); chooseTempoLine(change.time) }}><time>{formatTime(change.time)}</time><strong>{change.bpm} BPM</strong></button><Button variant="ghost" size="icon-sm" title={text('删除 BPM 变化点', 'Delete BPM change')} onClick={() => deleteTempoChange(change.time)}><Trash2 /></Button></div>) : <p>{text('点击上方按钮，再选择轨道中的目标节拍线。', 'Click the button above, then choose the target beat line in the lanes.')}</p>}</div>
           </section>
         </div>
       </SheetContent>
     </Sheet>
 
-    <Sheet open={openSheet === 'settings'} onOpenChange={(open) => setOpenSheet(open ? 'settings' : null)}>
+    <Sheet open={openSheet === 'settings'} onOpenChange={(open) => {
+      if (!open) setLaneWidthPreview(null)
+      setOpenSheet(open ? 'settings' : null)
+    }}>
       <SheetContent className="editor-sheet">
         <SheetHeader><SheetTitle>{text('谱面设置', 'Chart settings')}</SheetTitle><SheetDescription>{text('调整当前编辑器的时间轴显示与操作偏好。', 'Adjust the current editor timeline and interaction preferences.')}</SheetDescription></SheetHeader>
-        <div className="editor-sheet-scroll">
+        <div className="editor-sheet-scroll" data-scroll-region>
           <section className="sheet-section">
             <div className="sheet-section-heading"><span><SlidersHorizontal /></span><div><h3>{text('时间轴布局', 'Timeline layout')}</h3><p>{text('只影响编辑区域，不改变谱面内容与试玩画面。', 'Only affects the editor and does not change chart content or playtesting.')}</p></div></div>
             <label className="slider-setting"><span><strong>{text('判定线高度', 'Judgment line height')}</strong><small>{text('判定线距离编辑区域底部的位置', 'Distance of the judgment line from the bottom of the editor')}</small></span><div><Slider min={100} max={360} step={10} value={[preferences.judgmentLineHeight]} onValueChange={([judgmentLineHeight]) => setPreferences((current) => ({ ...current, judgmentLineHeight }))} /><output>{preferences.judgmentLineHeight}px</output></div></label>
-            <label className="slider-setting"><span><strong>{text('轨道缩放', 'Lane zoom')}</strong><small>{text('也可以按住 Ctrl 并滚动轨道', 'You can also hold Ctrl and scroll over the lanes')}</small></span><div><Slider min={90} max={1320} step={10} value={[chart.settings.editorZoom]} onValueChange={([editorZoom]) => setChart((current) => ({ ...current, settings: { ...current.settings, editorZoom } }))} /><output>{Math.round(chart.settings.editorZoom / 2.3)}%</output></div></label>
+            <label className="slider-setting"><span><strong>{text('时间轴缩放', 'Timeline zoom')}</strong><small>{text('也可以按住 Ctrl 并滚动轨道', 'You can also hold Ctrl and scroll over the lanes')}</small></span><div><Slider min={90} max={1320} step={10} value={[chart.settings.editorZoom]} onValueChange={([editorZoom]) => setChart((current) => ({ ...current, settings: { ...current.settings, editorZoom } }))} /><output>{Math.round(chart.settings.editorZoom / 2.3)}%</output></div></label>
+            <div className="slider-setting">
+              <span><strong>{text('轨道宽度', 'Lane width')}</strong></span>
+              <div>
+                <Slider
+                  thumbLabel={text('轨道宽度', 'Lane width')}
+                  min={EDITOR_LANE_WIDTH.min}
+                  max={EDITOR_LANE_WIDTH.max}
+                  step={EDITOR_LANE_WIDTH.step}
+                  value={[laneWidth]}
+                  onValueChange={([width]) => setLaneWidthPreview(width)}
+                  onValueCommit={([editorLaneWidthPercent]) => {
+                    setChart((current) => current.settings.editorLaneWidthPercent === editorLaneWidthPercent
+                      ? current
+                      : { ...current, settings: { ...current.settings, editorLaneWidthPercent } })
+                  }}
+                />
+                <output>{laneWidth}%</output>
+              </div>
+            </div>
           </section>
           <section className="sheet-section">
             <div className="sheet-section-heading"><span><Play /></span><div><h3>{text('当前状态', 'Current status')}</h3><p>{text(`${chart.notes.length} 个音符`, `${chart.notes.length} notes`)} · {formatTime(currentTime)} / {formatTime(chart.duration)}</p></div></div>
@@ -342,7 +373,7 @@ export default function ChartEditorPage() {
     <Sheet open={openSheet === 'playtest'} onOpenChange={(open) => setOpenSheet(open ? 'playtest' : null)}>
       <SheetContent className="editor-sheet playtest-entry-sheet">
         <SheetHeader><SheetTitle>{text('谱面试玩', 'Playtest')}</SheetTitle><SheetDescription>{text('选择这次试玩的开始位置。', 'Choose where to begin this playtest.')}</SheetDescription></SheetHeader>
-        <div className="playtest-entry-options">
+        <div className="playtest-entry-options editor-sheet-scroll" data-scroll-region>
           <button onClick={() => void startPlaytest(false, true)}><span><Sparkles /></span><div><strong>{text(improvisationCopy.title.zh, improvisationCopy.title.en)}</strong><small>{text(improvisationCopy.entry.zh, improvisationCopy.entry.en)}</small></div></button>
           <button onClick={() => void startPlaytest(false)}><span><Play /></span><div><strong>{text('从当前位置开始', 'Start at current position')}</strong><small>{formatTime(currentTime)} · {text('跳过此前音符', 'Skip earlier notes')}</small></div></button>
           <button onClick={() => void startPlaytest(true)}><span><Gamepad2 /></span><div><strong>{text('从头开始', 'Start from beginning')}</strong><small>00:00.000 · {text('完整试玩整份谱面', 'Play the full chart')}</small></div></button>

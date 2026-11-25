@@ -5,7 +5,10 @@ import { noteImportIssue, readNoteSource } from '@/features/chart/noteImport'
 
 describe('Moonweave chart packages', () => {
   it('round-trips chart data and every managed asset', async () => {
-    const chart = normalizeChart({ ...DEFAULT_CHART, title: 'Packaged song', audioName: 'song.ogg', backgroundName: 'stage.webm', coverName: 'cover.webp' })
+    const chart = normalizeChart({
+      ...DEFAULT_CHART, title: 'Packaged song', audioName: 'song.ogg', backgroundName: 'stage.webm', coverName: 'cover.webp',
+      settings: { editorZoom: 340, editorLaneWidthPercent: 75 },
+    })
     const bytes = await createChartPackage(chart, {
       audio: { name: 'song.ogg', data: new Uint8Array([1, 2, 3]) },
       background: { name: 'stage.webm', data: new Uint8Array([4, 5]) },
@@ -18,9 +21,18 @@ describe('Moonweave chart packages', () => {
     expect(restored.audioPath).toBe('assets/audio.ogg')
     expect(restored.backgroundPath).toBe('assets/background.webm')
     expect(restored.coverPath).toBe('assets/cover.webp')
+    expect(restored.settings).toEqual({ editorZoom: 340, editorLaneWidthPercent: 75 })
     expect([...unpacked.assets.audio!.data]).toEqual([1, 2, 3])
     expect([...unpacked.assets.background!.data]).toEqual([4, 5])
     expect([...unpacked.assets.cover!.data]).toEqual([6, 7, 8])
+  })
+
+  it('defaults legacy charts to full lane width and clamps imported values', () => {
+    expect(normalizeChart({ settings: { editorZoom: 340 } }).settings).toEqual({
+      editorZoom: 340, editorLaneWidthPercent: 100,
+    })
+    expect(normalizeChart({ settings: { editorLaneWidthPercent: 0 } }).settings.editorLaneWidthPercent).toBe(50)
+    expect(normalizeChart({ settings: { editorLaneWidthPercent: 140 } }).settings.editorLaneWidthPercent).toBe(100)
   })
 
   it('rejects archives without a Moonweave manifest', async () => {

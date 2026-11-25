@@ -1,6 +1,8 @@
 export interface ThemePalette {
   previewStage: string
   previewNote: string
+  editorNoteBlue: string
+  editorNotePurple: string
   bg: string
   surface: string
   surface2: string
@@ -29,6 +31,8 @@ export interface ThemePalettes {
 export const themeColorFields: Array<{ key: keyof ThemePalette; label: string }> = [
   { key: 'previewStage', label: '试听轨道背景' },
   { key: 'previewNote', label: '试听音符与光晕' },
+  { key: 'editorNoteBlue', label: '制谱蓝色音符' },
+  { key: 'editorNotePurple', label: '制谱紫色音符' },
   { key: 'bg', label: '页面背景' },
   { key: 'surface', label: '主要容器' },
   { key: 'surface2', label: '次级容器' },
@@ -51,6 +55,7 @@ export const themeColorFields: Array<{ key: keyof ThemePalette; label: string }>
 
 export const themeColorLabelsEn: Record<keyof ThemePalette, string> = {
   previewStage: 'Preview track background', previewNote: 'Preview notes and glare',
+  editorNoteBlue: 'Blue editor notes', editorNotePurple: 'Purple editor notes',
   bg: 'Page background', surface: 'Primary surface', surface2: 'Secondary surface', surface3: 'Accent surface', warning: 'Warning and drafts', sidebarBg: 'Settings navigation',
   text: 'Primary text', mutedText: 'Secondary text', faint: 'Faint text', line: 'Borders and dividers', brand: 'Brand color',
   redZone: 'Red zone notes', accentSoft: 'Soft accent', accentDeep: 'Deep accent', danger: 'Danger state', dangerSoft: 'Danger background', success: 'Success state', successSoft: 'Success background',
@@ -58,6 +63,7 @@ export const themeColorLabelsEn: Record<keyof ThemePalette, string> = {
 
 export const themeCssVariables: Record<keyof ThemePalette, string> = {
   previewStage: '--preview-stage', previewNote: '--preview-note',
+  editorNoteBlue: '--editor-note-blue', editorNotePurple: '--editor-note-purple',
   bg: '--bg', surface: '--surface', surface2: '--surface-2', surface3: '--surface-3', warning: '--warning', sidebarBg: '--sidebar-bg',
   text: '--text', mutedText: '--muted-text', faint: '--faint', line: '--line', brand: '--brand',
   redZone: '--red-zone', accentSoft: '--accent-soft', accentDeep: '--accent-deep', danger: '--danger', dangerSoft: '--danger-soft',
@@ -67,6 +73,7 @@ export const themeCssVariables: Record<keyof ThemePalette, string> = {
 export const defaultThemePalettes: ThemePalettes = {
   light: {
     previewStage: '#040610', previewNote: '#ffffff',
+    editorNoteBlue: '#31d7ff', editorNotePurple: '#b788ff',
     bg: '#eef2ff', surface: '#ffffff', surface2: '#e5e9f7', surface3: '#d9deef', warning: '#966319', sidebarBg: '#e7ebf8',
     text: '#101522', mutedText: '#596176', faint: '#747b93', line: '#c9d0e4', brand: '#0786a5',
     accentSoft: '#d7f7ff', accentDeep: '#075b70', redZone: '#a81d35', danger: '#bd285d', dangerSoft: '#ffe1eb',
@@ -74,6 +81,7 @@ export const defaultThemePalettes: ThemePalettes = {
   },
   dark: {
     previewStage: '#040610', previewNote: '#ffffff',
+    editorNoteBlue: '#31d7ff', editorNotePurple: '#b788ff',
     bg: '#070911', surface: '#0d101b', surface2: '#111522', surface3: '#171b29', warning: '#f4be67', sidebarBg: '#090c15',
     text: '#eef2ff', mutedText: '#747b93', faint: '#525a70', line: '#252a3a', brand: '#28d7ff',
     accentSoft: '#102733', accentDeep: '#8aeaff', redZone: '#b82540', danger: '#ff568f', dangerSoft: '#311521',

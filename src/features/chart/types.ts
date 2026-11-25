@@ -17,7 +17,10 @@ export interface ChartNote {
 
 export interface ChartSettings {
   editorZoom: number
+  editorLaneWidthPercent?: number
 }
+
+export const EDITOR_LANE_WIDTH = { min: 50, max: 100, default: 100, step: 5 } as const
 
 export interface BpmChange {
   time: number
@@ -68,7 +71,7 @@ export const DEFAULT_CHART: Chart = {
   duration: 120000,
   notes: [],
   aiImportHistory: [],
-  settings: { editorZoom: 230 },
+  settings: { editorZoom: 230, editorLaneWidthPercent: EDITOR_LANE_WIDTH.default },
 }
 
 export function normalizeChart(input: unknown): Chart {
@@ -87,6 +90,7 @@ export function normalizeChart(input: unknown): Chart {
     return { ...rest, lane: Math.round(note.lane), ...(red === true ? { red: true } : {}) }
   }) : []
   const settings: Partial<ChartSettings> = value.settings && typeof value.settings === 'object' ? value.settings : {}
+  const laneWidth = settings.editorLaneWidthPercent
   const bpmChanges = Array.isArray(value.bpmChanges)
     ? [...new Map(value.bpmChanges.flatMap((change) => {
       if (!change || typeof change !== 'object') return []
@@ -124,6 +128,9 @@ export function normalizeChart(input: unknown): Chart {
     aiImportHistory: Array.isArray(value.aiImportHistory) ? value.aiImportHistory.filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 128).slice(-200) : [],
     settings: {
       editorZoom: Number.isFinite(settings.editorZoom) ? Math.max(90, Math.min(1320, settings.editorZoom!)) : DEFAULT_CHART.settings.editorZoom,
+      editorLaneWidthPercent: typeof laneWidth === 'number' && Number.isFinite(laneWidth)
+        ? Math.max(EDITOR_LANE_WIDTH.min, Math.min(EDITOR_LANE_WIDTH.max, Math.round(laneWidth)))
+        : EDITOR_LANE_WIDTH.default,
     },
   }
 }

@@ -168,7 +168,7 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
   const visibleCount = Math.max(limit,index+1)
   return <div className="chart-management-page" style={{ "--scene-color": sceneColor, "--beat": `${60 / (chart?.bpm || 120)}s`, "--selection-accent": ['var(--success)','var(--brand)','var(--warning)','var(--danger)'][tier] } as React.CSSProperties} data-detail={mobileDetail && !!item}>
     <LibraryAtmosphere selection={`${id ?? ''}-${tier}`} />
-    <header className="library-toolbar"><h1><i aria-hidden />{appConfig.navigation[0].items[0].label[language]}<small>{api.charts.length}</small></h1>
+    <header className="game-page-toolbar"><h1><i aria-hidden />{appConfig.navigation[0].items[0].label[language]}<small>{api.charts.length}</small></h1>
       <GameSearch ref={search} value={query} placeholder={text('搜索标题、曲师','Search titles and artists')} onChange={e => { setQuery(e.target.value); setLimit(60); setMobileDetail(false); closePreview() }} />
       <GameTabs label={text('状态筛选','Status filter')} value={filter} options={Object.entries(statuses).map(([value,label]) => ({value,label,count:value === 'all' ? api.charts.length : api.charts.filter(i => i.library.status === value).length}))} onChange={v => {setFilter(v); setLimit(60); setMobileDetail(false);closePreview()}} />
       <GameSelect label={text('排序','Sort')} value={sort} onValueChange={setSort} options={[
