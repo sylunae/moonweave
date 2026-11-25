@@ -46,7 +46,7 @@ npm run package:win
 - Electron 窗口与 IPC：`electron/main/index.ts`
 - SEO 与网页 metadata：`index.html`
 - 桌面打包 metadata：`package.json` 的 `build`
-- 图标：`public/moonweave-logo.png` 与 `build/icon.png`（使用同一份 Moonweave PNG）
+- 图标：`public/moonweave-logo-v2.png` 与 `build/icon.png`（使用同一份 Moonweave PNG）
 
 添加新的 shadcn/ui 组件：
 

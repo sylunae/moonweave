@@ -6,5 +6,5 @@
   "display": "standalone",
   "background_color": "#070911",
   "theme_color": "#070911",
-  "icons": [{ "src": "./moonweave-logo.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" }]
+  "icons": [{ "src": "./moonweave-logo-v2.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" }]
 }
