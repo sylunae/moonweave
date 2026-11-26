@@ -9,6 +9,7 @@ import { useMobileBack } from '@/app/mobileBack'
 import { useI18n } from '@/app/i18n'
 import { usePreferences } from '@/app/preferences'
 import { Button } from '@/components/ui/button'
+import { PageLoader } from '@/components/PageLoader'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { compactTapSprite, defaultHoldSprite, defaultTapSprite, mobileHoldSprite, mobileTapSprite, ParticleSprite, redSprite, useParticleAppearance } from '@/features/appearance/ParticleSprite'
 import { useChart } from '@/features/chart/ChartProvider'
@@ -31,6 +32,7 @@ const AUTO_TAP_HIGHLIGHT_MS = 85
 type FeedbackResult = Judgment | 'Red'
 type FeedbackSprite = 'tap' | 'red' | null
 type FeedbackTiming = 'Early' | 'Late'
+type AudioReadyState = 'buffered' | 'media' | 'error'
 type PlaytestFeedback = {
   id: number
   lane: number
@@ -68,19 +70,50 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   const showToast = editor.showToast
   const { preferences } = usePreferences()
   const { portrait, mobileWeb, canChooseTrackMode } = usePlaytestViewport()
+  const playbackRate = preferences.playbackRate
   const canBufferAudio = mobileWeb && typeof AudioContext !== 'undefined' && typeof OfflineAudioContext !== 'undefined'
+  const [preparedAudio, setPreparedAudio] = useState<{ url: string; rate: number; status: AudioReadyState }>()
+  const audioStatus = mobileWeb && audioUrl
+    ? preparedAudio?.url === audioUrl && preparedAudio.rate === playbackRate ? preparedAudio.status : 'loading'
+    : 'media'
+  const canStart = audioStatus === 'buffered' || audioStatus === 'media'
   useEffect(() => {
     const audio = audioRef.current
-    if (!canBufferAudio || !audio || !audioUrl) return
+    if (!mobileWeb || !audio || !audioUrl) return
     const controller = new AbortController()
-    const prepare = () => bufferedAudio.prepare(audioUrl, audio.duration, controller.signal)
-    if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) prepare()
-    else audio.addEventListener('loadedmetadata', prepare, { once: true })
+    let decoding = false
+    let settled = false
+    let tryBuffer = canBufferAudio && playbackRate === 1
+    const finish = (status: AudioReadyState) => {
+      if (controller.signal.aborted || settled) return
+      settled = true
+      setPreparedAudio({ url: audioUrl, rate: playbackRate, status })
+    }
+    const check = () => {
+      if (controller.signal.aborted || settled) return
+      if (audio.error) { finish('error'); return }
+      if (decoding || audio.readyState < HTMLMediaElement.HAVE_METADATA) return
+      if (tryBuffer && canBufferDuration(audio.duration)) {
+        decoding = true
+        void bufferedAudio.prepare(audioUrl, audio.duration, controller.signal).then((ready) => {
+          decoding = false
+          if (ready) finish('buffered')
+          else { tryBuffer = false; check() }
+        })
+      } else if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) finish('media')
+    }
+    const fail = () => finish('error')
+    audio.addEventListener('loadedmetadata', check)
+    audio.addEventListener('canplay', check)
+    audio.addEventListener('error', fail)
+    check()
     return () => {
       controller.abort()
-      audio.removeEventListener('loadedmetadata', prepare)
+      audio.removeEventListener('loadedmetadata', check)
+      audio.removeEventListener('canplay', check)
+      audio.removeEventListener('error', fail)
     }
-  }, [audioRef, audioUrl, bufferedAudio, canBufferAudio])
+  }, [audioRef, audioUrl, bufferedAudio, canBufferAudio, mobileWeb, playbackRate])
   useEffect(() => () => bufferedAudio.dispose(), [bufferedAudio])
   const spriteDpr = window.devicePixelRatio || 1
   // The largest tap and hold effects are about 352 and 272 CSS pixels.
@@ -104,7 +137,6 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   const particleAppearance = useParticleAppearance(preferences.particleAppearanceId)
   const tapEffectDuration = particleAppearance?.tap.duration ?? 400
   const centeredJudgment = preferences.judgmentDisplay === 'center'
-  const playbackRate = preferences.playbackRate
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const progressRef = useRef<HTMLElement>(null)
   const backgroundVideoRef = useRef<HTMLVideoElement>(null)
@@ -559,17 +591,17 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   }, [getAudio, releaseAutoLanes, resetRun, syncBackgroundVideoPlayback, updateProgress])
 
   const startPlayback = useCallback(async () => {
-    if (exitOpenRef.current || settingsOpen) return
+    if (exitOpenRef.current || settingsOpen || !canStart) return
     const audio = audioRef.current
     if (!audioUrl || !audio) { showToast(text('请先在编辑器的谱面信息中选择可用音频', 'Select usable audio in the editor’s Chart Info first')); return }
     if (playingRef.current) return
-    const tryBuffered = canBufferAudio && playbackRate === 1 && (audio.readyState < HTMLMediaElement.HAVE_METADATA || canBufferDuration(audio.duration))
+    const tryBuffered = audioStatus === 'buffered'
     if (tryBuffered) bufferedAudio.unlock()
     const playbackEpoch = needsPrerollRef.current ? prerollEpochRef.current + 1 : prerollEpochRef.current
     const startAudio = async () => {
       if (playbackEpoch !== prerollEpochRef.current || exitOpenRef.current) return
       try {
-        const ready = tryBuffered && await bufferedAudio.ready()
+        const ready = tryBuffered && await bufferedAudio.waitForOutput()
         if (playbackEpoch !== prerollEpochRef.current || exitOpenRef.current) return
         const position = getAudio()?.currentTime ?? audio.currentTime
         openingTrace?.mark('play-requested', position * 1000)
@@ -625,7 +657,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       void startAudio()
     }
     prerollFrameRef.current = requestAnimationFrame(advancePreroll)
-  }, [audioRef, audioUrl, bufferedAudio, canBufferAudio, chart.backgroundType, getAudio, hasCustomBackground, notes, openingTrace, playbackRate, preferences.trackBackgroundBlur, settingsOpen, showToast, syncBackgroundVideoPlayback, text])
+  }, [audioRef, audioStatus, audioUrl, bufferedAudio, canStart, chart.backgroundType, getAudio, hasCustomBackground, notes, openingTrace, playbackRate, preferences.trackBackgroundBlur, settingsOpen, showToast, syncBackgroundVideoPlayback, text])
 
   const restart = useCallback(() => resetRun(runStartTimeRef.current), [resetRun])
 
@@ -869,10 +901,12 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       <section className="playtest-ready" aria-label={chart.title}>
         <strong>{chart.title}</strong>
         {(chart.artist || chart.audioName) && <small>{chart.artist || chart.audioName}</small>}
-        <Button onClick={() => void startPlayback()}>
+        {audioStatus === 'loading' ? <PageLoader label={text(playPauseCopy.preparingAudio.zh, playPauseCopy.preparingAudio.en)} />
+          : audioStatus === 'error' ? <p role="alert">{text(playPauseCopy.audioUnavailable.zh, playPauseCopy.audioUnavailable.en)}</p>
+          : <Button onClick={() => void startPlayback()}>
           <Play fill="currentColor" />
           {displayTime > 0 ? text(playPauseCopy.resume.zh, playPauseCopy.resume.en) : formalSession ? text('开始游玩', 'Start play') : text('开始试玩', 'Start playtest')}
-        </Button>
+        </Button>}
       </section>
     )}
     <div className="playtest-key-caps">{preferences.playKeys.map((key, lane) => <button
@@ -900,8 +934,8 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
         }}>
         <DialogHeader><DialogTitle>{text(playPauseCopy.pause.zh, playPauseCopy.pause.en)}</DialogTitle><DialogDescription>{chart.title}</DialogDescription></DialogHeader>
         <div className="playtest-pause-actions" data-scroll-region>
-          <Button onClick={resume}><Play />{text(playPauseCopy.resume.zh, playPauseCopy.resume.en)}</Button>
-          <Button variant="outline" disabled={improvising && recordedRef.current.length > 0} onClick={restartFromBeginning}><RotateCcw />{text(playPauseCopy.restart.zh, playPauseCopy.restart.en)}</Button>
+          <Button disabled={!canStart} onClick={resume}><Play />{text(playPauseCopy.resume.zh, playPauseCopy.resume.en)}</Button>
+          <Button variant="outline" disabled={!canStart || improvising && recordedRef.current.length > 0} onClick={restartFromBeginning}><RotateCcw />{text(playPauseCopy.restart.zh, playPauseCopy.restart.en)}</Button>
           {onSettings && <Button variant="outline" onClick={onSettings}><Settings />{settingsLabel}</Button>}
           {!formalSession && !improvising && <Button variant={autoPlay ? 'secondary' : 'outline'} aria-pressed={autoPlay} onClick={() => setAutoSelected(!autoPlay)}><Bot />{text(autoPlayCopy.zh, autoPlayCopy.en)}</Button>}
           {openingTrace && <Button variant="outline" onClick={() => openingTrace.download()}>{text(playPauseCopy.openingTrace.zh, playPauseCopy.openingTrace.en)}</Button>}

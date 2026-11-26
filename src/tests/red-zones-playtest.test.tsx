@@ -361,6 +361,7 @@ it('keeps the compact mobile hold sprite mounted across scoring ticks without sp
     addEventListener() {},
     removeEventListener() {},
   }))
+  Object.defineProperty(audio, 'readyState', { value: HTMLMediaElement.HAVE_FUTURE_DATA })
   chart([{ ...note('hold', 500), kind: 'hold', endTime: 2000 }])
   render(<PlaytestPage />)
   await start()

@@ -11,7 +11,7 @@ export const canBufferDuration = (duration: number) => Number.isFinite(duration)
 // HTMLMediaElement.currentTime. Each start creates a fresh one-shot source.
 export class BufferedPlaytestAudio extends EventTarget {
   private context?: AudioContext
-  private preparation?: Promise<void>
+  private preparation?: Promise<boolean>
   private preparationSignal?: AbortSignal
   private resuming?: Promise<void>
   private buffer?: AudioBuffer
@@ -48,11 +48,13 @@ export class BufferedPlaytestAudio extends EventTarget {
     this.finished = false
   }
 
-  prepare(url: string, duration: number, signal: AbortSignal) {
-    if (signal.aborted || this.buffer || !canBufferDuration(duration)) return
+  prepare(url: string, duration: number, signal: AbortSignal): Promise<boolean> {
+    if (signal.aborted || !canBufferDuration(duration)) return Promise.resolve(false)
+    if (this.buffer) return Promise.resolve(true)
     if (this.preparation) {
-      if (this.preparationSignal?.aborted) void this.preparation.then(() => this.prepare(url, duration, signal))
-      return
+      return this.preparationSignal?.aborted
+        ? this.preparation.then(() => this.prepare(url, duration, signal))
+        : this.preparation
     }
     this.preparationSignal = signal
     this.preparation = (async () => {
@@ -61,10 +63,12 @@ export class BufferedPlaytestAudio extends EventTarget {
       const buffer = await new OfflineAudioContext(2, 1, 48_000).decodeAudioData(data)
       signal.throwIfAborted()
       if (buffer.duration <= MAX_DURATION_SECONDS && buffer.length * buffer.numberOfChannels * 4 <= MAX_DECODED_BYTES) this.buffer = buffer
-    })().catch(() => undefined).finally(() => {
+      return Boolean(this.buffer)
+    })().catch(() => false).finally(() => {
       this.preparation = undefined
       this.preparationSignal = undefined
     })
+    return this.preparation
   }
 
   unlock() {
@@ -74,12 +78,12 @@ export class BufferedPlaytestAudio extends EventTarget {
     } catch { /* The media element remains available. */ }
   }
 
-  async ready() {
-    if (this.preparation || this.context?.state !== 'running' && this.resuming) {
+  async waitForOutput() {
+    if (this.context?.state !== 'running' && this.resuming) {
       let timeout: number | undefined
       try {
         await Promise.race([
-          Promise.all([this.preparation, this.resuming]),
+          this.resuming,
           new Promise<void>((resolve) => { timeout = window.setTimeout(resolve, READY_WAIT_MS) }),
         ])
       } finally {

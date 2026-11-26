@@ -69,7 +69,7 @@ it('keeps the opening frame at the preroll target until audio startup finishes',
   expect(state.renderTime()).toBeCloseTo(25016)
 })
 
-it('uses the mobile audio output clock even while the media element is frozen', async () => {
+it('waits for mobile audio decoding before starting and follows its output clock', async () => {
   vi.stubGlobal('sylunae', undefined)
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: query.includes('(pointer: coarse)'), addEventListener() {}, removeEventListener() {},
@@ -77,7 +77,10 @@ it('uses the mobile audio output clock even while the media element is frozen', 
   Object.defineProperties(audio, { duration: { value: 60 }, readyState: { value: 4 } })
   const start = vi.fn()
   const stop = vi.fn()
-  const decode = vi.fn(async () => ({ duration: 60, length: 2_880_000, numberOfChannels: 2 }))
+  const buffer = { duration: 60, length: 2_880_000, numberOfChannels: 2 }
+  let finishDecoding!: (value: typeof buffer) => void
+  const decoding = new Promise<typeof buffer>((resolve) => { finishDecoding = resolve })
+  const decode = vi.fn(() => decoding)
   let contextTime = 10
   let output = 10
   vi.stubGlobal('OfflineAudioContext', class { decodeAudioData = decode })
@@ -91,6 +94,13 @@ it('uses the mobile audio output clock even while the media element is frozen', 
   state.readEncodedAudio.mockResolvedValueOnce(new ArrayBuffer(1))
   render(<PlaytestPage />)
   await waitFor(() => expect(decode).toHaveBeenCalledOnce())
+  expect(screen.getByRole('status').textContent).toContain('正在准备游玩音频')
+  fireEvent.keyDown(window, { code: 'Space' })
+  expect(frames.size).toBe(0)
+  expect(start).not.toHaveBeenCalled()
+  expect(audio.play).not.toHaveBeenCalled()
+  await act(async () => finishDecoding(buffer))
+  expect(screen.queryByRole('status')).toBeNull()
   fireEvent.keyDown(window, { code: 'Space' })
   await act(async () => {
     const pending = [...frames.values()]; frames.clear(); pending.forEach((callback) => callback(1100))
@@ -105,6 +115,21 @@ it('uses the mobile audio output clock even while the media element is frozen', 
   expect(stop).toHaveBeenCalledOnce()
   contextTime = output = 11
   expect(state.renderTime()).toBeCloseTo(25200)
+})
+
+it('waits for native mobile audio to become playable if decoding is unavailable', () => {
+  vi.stubGlobal('sylunae', undefined)
+  vi.stubGlobal('AudioContext', undefined)
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query.includes('(pointer: coarse)'), addEventListener() {}, removeEventListener() {},
+  }))
+  let readyState: number = HTMLMediaElement.HAVE_METADATA
+  Object.defineProperty(audio, 'readyState', { get: () => readyState })
+  render(<PlaytestPage />)
+  expect(screen.getByRole('status')).toBeTruthy()
+  readyState = HTMLMediaElement.HAVE_FUTURE_DATA
+  fireEvent.canPlay(audio)
+  expect(screen.queryByRole('status')).toBeNull()
 })
 
 it.each(['paused', 'preroll', 'playing'])('restarts from the beginning after %s and ignores later editor time updates', async (phase) => {

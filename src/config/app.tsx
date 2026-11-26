@@ -246,6 +246,8 @@ export const playPauseCopy = {
   leave: { zh: '退出游玩', en: 'Leave play' },
   backToEditor: { zh: '返回编辑器', en: 'Back to editor' },
   openingTrace: { zh: '下载开场诊断', en: 'Download opening trace' },
+  preparingAudio: { zh: '正在准备游玩音频…', en: 'Preparing play audio…' },
+  audioUnavailable: { zh: '歌曲音频无法加载', en: 'Could not load song audio' },
 } as const
 
 export const autoPlayCopy = { zh: '自动演奏', en: 'Auto Play' } as const
