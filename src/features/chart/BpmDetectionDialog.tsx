@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useI18n } from '@/app/i18n'
+import { isTouchWeb } from '@/app/mobileBack'
 import { bpmDetectionCopy } from '@/config/app'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,7 +39,7 @@ export function BpmDetectionDialog({ url, onApply, onUnavailable }: {
         <DialogTitle>{copy(estimate?.reliable ? 'title' : 'uncertainTitle')}</DialogTitle>
         <DialogDescription>{!estimate?.reliable && <>{copy('uncertain')}<br /></>}{copy('description')}</DialogDescription>
       </DialogHeader>
-      <label><span>{copy('label')}</span><Input autoFocus inputMode="decimal" value={draft} aria-invalid={!valid} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') apply() }} /></label>
+      <label><span>{copy('label')}</span><Input autoFocus={!isTouchWeb()} inputMode="decimal" value={draft} aria-invalid={!valid} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') apply() }} /></label>
       <div className="flex gap-2">
         <Button variant="outline" disabled={!valid || bpm / 2 < 20} onClick={() => scale(0.5)}>÷2 {copy('half')}</Button>
         <Button variant="outline" disabled={!valid || bpm * 2 > 400} onClick={() => scale(2)}>×2 {copy('double')}</Button>

@@ -7,7 +7,7 @@ afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
 it.each([500, 1200])('presents a complete frame when adapting resolution or resizing at viewport width %s', (windowWidth) => {
   vi.spyOn(performance, 'now').mockReturnValue(0)
   vi.stubGlobal('innerWidth', windowWidth)
-  vi.stubGlobal('devicePixelRatio', 2)
+  vi.stubGlobal('devicePixelRatio', windowWidth <= 760 ? 2 : 1.25)
   let frame: FrameRequestCallback = () => {}
   let notifyResize = () => {}
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frame = callback; return 1 })
@@ -45,6 +45,7 @@ it.each([500, 1200])('presents a complete frame when adapting resolution or resi
     frame(16)
     expect(hasFrame).toBe(true)
     const initialWidth = width
+    expect(initialWidth).toBe(Math.round(windowWidth * (windowWidth <= 760 ? 1.5 : 1.25) * 0.9))
     frame(1016); expect(hasFrame).toBe(true)
     frame(2016); expect(hasFrame).toBe(true)
     expect(stats.at(-1)?.renderScale).toBeCloseTo(0.8)

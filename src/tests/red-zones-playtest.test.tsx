@@ -52,7 +52,13 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
 async function start() {
-  fireEvent.keyDown(window, { code: 'Space' })
+  const resume = screen.queryByRole('button', { name: '继续' })
+  if (resume) fireEvent.click(resume)
+  else fireEvent.keyDown(window, { code: 'Space' })
+  await advancePreroll()
+}
+
+async function advancePreroll() {
   await act(async () => {
     const pending = [...frames.values()]
     frames.clear()
@@ -151,9 +157,9 @@ it('clears red contacts on restart and does not judge input while paused', async
   fireEvent.keyDown(window, { code: 'Space' }); move(1500); fireEvent.keyDown(window, { key: 'd' })
   expect(combo()).toBe('1'); expect(screen.queryByText('踩中红区')).toBeNull()
   fireEvent.keyUp(window, { key: 'd' })
-  fireEvent.click(screen.getByTitle('重新开始'))
   vi.mocked(performance.now).mockReturnValue(0)
-  await start(); tap(0.5, 'f'); move(1500); fireEvent.keyDown(window, { key: 'd' })
+  fireEvent.click(screen.getByRole('button', { name: '重头开始' }))
+  await advancePreroll(); tap(0.5, 'f'); move(1500); fireEvent.keyDown(window, { key: 'd' })
   expect(combo()).toBe('0'); expect(screen.getByText('踩中红区')).toBeTruthy()
 })
 
@@ -212,8 +218,8 @@ it('auto plays chords and hold ticks across skipped frames and red zones', async
   chart([note('tap', 500, 1), { ...note('hold', 500), kind: 'hold', endTime: 2500 },
     redHold(1000, 1500), note('fake', 1200)])
   render(<PlaytestPage />)
-  const toggle = screen.getByRole('button', { name: '自动演奏' })
-  fireEvent.click(toggle)
+  fireEvent.click(screen.getByRole('button', { name: '暂停' }))
+  fireEvent.click(screen.getByRole('button', { name: '自动演奏' }))
   await start()
   tap(0.45, 'f')
   expect(combo()).toBe('0')
@@ -226,23 +232,29 @@ it('auto plays chords and hold ticks across skipped frames and red zones', async
   await frame(2600)
   expect(combo()).toBe('5')
   expect(score()).toBe('10000000')
-  fireEvent.click(screen.getByTitle('重新开始'))
+  fireEvent.click(screen.getByRole('button', { name: '暂停' }))
+  const toggle = screen.getByRole('button', { name: '自动演奏' })
   expect(toggle.getAttribute('aria-pressed')).toBe('true')
   fireEvent.click(toggle)
   expect(toggle.getAttribute('aria-pressed')).toBe('false')
 })
 
 
-it('lights tapped lanes together and releases them independently of a held lane', async () => {
+it.each([
+  [1.25, 'tap_hit_2048.png', 'hold_loop_1536.png'],
+  [2, 'tap_hit_4k.png', 'hold_loop_4k.png'],
+] as const)('lights tapped lanes independently of a held lane at DPR %s', async (dpr, tapAtlas, holdAtlas) => {
+  vi.stubGlobal('devicePixelRatio', dpr)
   chart([note('tap', 500, 1), note('chord', 500, 2), { ...note('hold', 500), kind: 'hold', endTime: 1500 }])
   render(<PlaytestPage />)
+  fireEvent.click(screen.getByRole('button', { name: '暂停' }))
   fireEvent.click(screen.getByRole('button', { name: '自动演奏' }))
   await start()
   await frame(510)
   const litKeys = () => [...document.querySelectorAll('.playtest-key-caps .pressed')].map((key) => key.textContent)
   expect(litKeys()).toEqual(['d', 'f', 'j'])
-  expect(document.querySelector<HTMLElement>('.playtest-hit-effect')?.style.backgroundImage).toContain('/claude/tap_hit_4k.png')
-  expect(document.querySelector('.playtest-hold-effect img')?.getAttribute('src')).toContain('/claude/hold_loop_4k.png')
+  expect(document.querySelector('.playtest-hit-effect img')?.getAttribute('src')).toContain(`/claude/${tapAtlas}`)
+  expect(document.querySelector('.playtest-hold-effect img')?.getAttribute('src')).toContain(`/claude/${holdAtlas}`)
   expect(state.lanePressed).toHaveBeenCalledWith(1, true)
   const holdSprite = document.querySelector<HTMLElement>('.playtest-hold-effect')!
   await frame(650)
@@ -279,7 +291,7 @@ it('uses the selected appearance for tap and hold effects during play', async ()
   const hit = document.querySelector<HTMLElement>('.playtest-hit-effect')
   const hold = document.querySelector<HTMLImageElement>('.playtest-hold-effect img')
   expect(particles.readAssets).toHaveBeenCalledWith('custom-look')
-  expect(hit?.style.backgroundImage).toContain('blob:tap-atlas')
+  expect(hit?.querySelector('img')?.getAttribute('src')).toBe('blob:tap-atlas')
   expect(hit?.style.getPropertyValue('--playtest-sprite-duration')).toBe('650ms')
   expect(hold?.getAttribute('src')).toBe('blob:hold-atlas')
   expect(hold?.style.width).toBe('200%')

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, FileUp, Library, Plus, Volume2, VolumeX } from 'lucide-react'
 import { navigate } from '@/app/navigation'
+import { useMobileBack } from '@/app/mobileBack'
 import { useI18n } from '@/app/i18n'
 import { useSound } from '@/app/sound'
 import { PlayerMenu } from '@/components/PlayerMenu'
@@ -33,6 +34,7 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
     setPlayId('')
   }, [playId, api.activeChartId, api.chart, api.audioUrl, api.backgroundUrl, platform])
   const [query, setQuery] = useState('')
+  const [searchFocused, setSearchFocused] = useState(false)
   const [filter, setFilter] = useState('all')
   const [sort, setSort] = useState('date')
   const [selection, setSelection] = useState(api.activeChartId)
@@ -70,6 +72,9 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
   }, [initialTier, tierChoice])
   const chart = useMemo(() => activeChart && chooseDifficulty(activeChart, tier), [activeChart, tier])
   const previewing = !!preview && preview.id === id && preview.tier === tier
+  useMobileBack(Boolean(mobileDetail && item && window.matchMedia?.('(max-width: 760px)').matches), () => setMobileDetail(false))
+  useMobileBack(previewing, closePreview)
+  useMobileBack(searchFocused, () => search.current?.blur())
   useEffect(closePreview, [id, tier, form, deleting, closePreview])
   const startPreview = (fraction: number) => { if (id && chart) setPreview({id, tier, fraction}) }
   const previewLabel = previewing ? text('退出预览', 'Exit preview') : text('试听预览', 'Preview chart')
@@ -173,7 +178,7 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
   return <div className="chart-management-page" style={{ "--scene-color": sceneColor, "--beat": `${60 / (chart?.bpm || 120)}s`, "--selection-accent": ['var(--success)','var(--brand)','var(--warning)','var(--danger)'][tier] } as React.CSSProperties} data-detail={mobileDetail && !!item} data-previewing={previewing}>
     <LibraryAtmosphere selection={`${id ?? ''}-${tier}`} />
     <header className="game-page-toolbar"><h1><i aria-hidden />{appConfig.navigation[0].items[0].label[language]}<small>{api.charts.length}</small></h1>
-      <GameSearch ref={search} value={query} placeholder={text('搜索标题、曲师','Search titles and artists')} onChange={e => { setQuery(e.target.value); setLimit(60); setMobileDetail(false); closePreview() }} />
+      <GameSearch ref={search} value={query} placeholder={text('搜索标题、曲师','Search titles and artists')} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} onChange={e => { setQuery(e.target.value); setLimit(60); setMobileDetail(false); closePreview() }} />
       <GameTabs label={text('状态筛选','Status filter')} value={filter} options={Object.entries(statuses).map(([value,label]) => ({value,label,count:value === 'all' ? api.charts.length : api.charts.filter(i => i.library.status === value).length}))} onChange={v => {setFilter(v); setLimit(60); setMobileDetail(false);closePreview()}} />
       <GameSelect label={text('排序','Sort')} value={sort} onValueChange={setSort} options={[
         ['date',text('最近编辑','Last edited')], ['title',text('标题','Title')],

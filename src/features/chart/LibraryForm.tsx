@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useI18n } from '@/app/i18n'
+import { isTouchWeb } from '@/app/mobileBack'
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { GameButton } from '@/components/ui/game-controls'
@@ -111,7 +112,7 @@ export function LibraryForm({ chart, coverUrl, creating, focusTier, onClose, onS
     <DialogTitle>{creating ? text('新建谱面', 'New chart') : text('编辑谱面信息', 'Edit chart information')}</DialogTitle>
     <form onSubmit={submit}><fieldset disabled={saving || downloading} className="library-fields" data-scroll-region>
       {creating && <YoutubeImportFields onImported={applyYoutubeImport} onDownloading={setDownloading} />}
-      <label className="wide">{text('标题', 'Title')}<Input name="title" required maxLength={100} value={title} onChange={event => setTitle(event.target.value)} autoFocus={focusTier === undefined} /></label>
+      <label className="wide">{text('标题', 'Title')}<Input name="title" required maxLength={100} value={title} onChange={event => setTitle(event.target.value)} autoFocus={focusTier === undefined && !isTouchWeb()} /></label>
       <label>{text('曲师', 'Artist')}<Input name="artist" value={artist} onChange={event => setArtist(event.target.value)} /></label>
       <label>{text('制谱人', 'Charter')}<Input name="charter" defaultValue={meta.charter} /></label>
       <label>{text('初始 BPM', 'Initial BPM')}<Input type="number" name="bpm" min="20" max="400" step="any" defaultValue={chart.bpm} required /></label>

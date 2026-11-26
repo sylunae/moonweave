@@ -1,20 +1,23 @@
-import { autoPlayCopy, redZoneCopy, settingsCopy, improvisationCopy as copy } from '@/config/app'
+import { autoPlayCopy, playPauseCopy, redZoneCopy, settingsCopy, improvisationCopy as copy } from '@/config/app'
 import { mergeRecording, recordingConflicts } from '@/features/chart/improvisation'
 import { correctImprovisedNotes } from '@/features/chart/improvisationCorrection'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { preload } from 'react-dom'
 import { ArrowLeft, Bot, Gauge, Pause, Play, RotateCcw, Settings, Sparkles } from 'lucide-react'
 import { navigate } from '@/app/navigation'
+import { useMobileBack } from '@/app/mobileBack'
 import { useI18n } from '@/app/i18n'
 import { usePreferences } from '@/app/preferences'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { defaultHoldSprite, defaultTapSprite, mobileHoldSprite, ParticleSprite, redSprite, useParticleAppearance } from '@/features/appearance/ParticleSprite'
+import { compactTapSprite, defaultHoldSprite, defaultTapSprite, mobileHoldSprite, mobileTapSprite, ParticleSprite, redSprite, useParticleAppearance } from '@/features/appearance/ParticleSprite'
 import { useChart } from '@/features/chart/ChartProvider'
 import { usePlatform } from '@/features/platform/PlatformProvider'
 import type { ChartNote } from '@/features/chart/types'
 import { holdTickTimes } from '@/features/chart/tempoMap'
 import { canPlayBackgroundVideo, syncBackgroundVideoTime as syncVideoTime } from '@/features/playtest/backgroundVideo'
+import { BufferedPlaytestAudio, canBufferDuration } from '@/features/playtest/bufferedAudio'
+import { PlaytestOpeningTrace } from '@/features/playtest/openingTrace'
 import { createRedZoneIndex, RED_HOLD_GRACE_MS, RedZoneTracker } from '@/features/playtest/redZones'
 import { PlaybackClock } from '@/features/playtest/PlaybackClock'
 import { PlaytestRenderer, type PlaytestStats } from '@/features/playtest/PlaytestRenderer'
@@ -37,7 +40,6 @@ type PlaytestFeedback = {
 }
 
 export default function PlaytestPage({ onSettings, settingsOpen = false }: { onSettings?: () => void; settingsOpen?: boolean }) {
-  preload(defaultTapSprite, { as: 'image' })
   const { text } = useI18n()
   const settingsLabel = text(settingsCopy.title.zh, settingsCopy.title.en)
   const editor = useChart()
@@ -56,13 +58,46 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   const audioUrl = formalSession?.audioUrl ?? editor.audioUrl
   const backgroundUrl = formalSession?.backgroundUrl ?? editor.backgroundUrl
   const audioRef = formalSession ? formalAudioRef : editor.audioRef
+  const bufferedAudio = useMemo(() => new BufferedPlaytestAudio(), [audioUrl])
+  const getAudio = useCallback(() => bufferedAudio.active ? bufferedAudio : audioRef.current, [audioRef, bufferedAudio])
+  const openingTrace = useMemo(() => import.meta.env.DEV && new URLSearchParams(location.search).get('playtestTrace') === '1'
+    ? new PlaytestOpeningTrace(getAudio)
+    : null, [getAudio])
   const currentTime = formalSession ? 0 : editor.currentTime
   const runStartTimeRef = useRef(Math.max(0, Math.min(currentTime, chart.duration)))
   const showToast = editor.showToast
   const { preferences } = usePreferences()
   const { portrait, mobileWeb, canChooseTrackMode } = usePlaytestViewport()
-  const holdSpriteSrc = mobileWeb ? mobileHoldSprite : defaultHoldSprite
+  const canBufferAudio = mobileWeb && typeof AudioContext !== 'undefined' && typeof OfflineAudioContext !== 'undefined'
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!canBufferAudio || !audio || !audioUrl) return
+    const controller = new AbortController()
+    const prepare = () => bufferedAudio.prepare(audioUrl, audio.duration, controller.signal)
+    if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) prepare()
+    else audio.addEventListener('loadedmetadata', prepare, { once: true })
+    return () => {
+      controller.abort()
+      audio.removeEventListener('loadedmetadata', prepare)
+    }
+  }, [audioRef, audioUrl, bufferedAudio, canBufferAudio])
+  useEffect(() => () => bufferedAudio.dispose(), [bufferedAudio])
+  const spriteDpr = window.devicePixelRatio || 1
+  // The largest tap and hold effects are about 352 and 272 CSS pixels.
+  const tapSpriteSrc = mobileWeb ? mobileTapSprite : spriteDpr <= 1.45 ? compactTapSprite : defaultTapSprite
+  const holdSpriteSrc = mobileWeb || spriteDpr <= 1.4 ? mobileHoldSprite : defaultHoldSprite
+  preload(tapSpriteSrc, { as: 'image' })
   preload(holdSpriteSrc, { as: 'image' })
+  useEffect(() => {
+    if (typeof Image.prototype.decode !== 'function') return
+    const images = [tapSpriteSrc, holdSpriteSrc].map((src) => {
+      const image = new Image()
+      image.src = src
+      void image.decode?.().catch(() => undefined)
+      return image
+    })
+    return () => images.forEach((image) => { image.removeAttribute('src') })
+  }, [tapSpriteSrc, holdSpriteSrc])
   const trackLayout = resolvePlaytestTrackLayout(portrait, canChooseTrackMode, preferences.trackMode)
   const laneTilt = trackLayout === 'tilted' ? Math.max(1, preferences.laneTilt) : 0
   const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }))
@@ -71,6 +106,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   const centeredJudgment = preferences.judgmentDisplay === 'center'
   const playbackRate = preferences.playbackRate
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const progressRef = useRef<HTMLElement>(null)
   const backgroundVideoRef = useRef<HTMLVideoElement>(null)
   const rendererRef = useRef<PlaytestRenderer | null>(null)
   const notes = chart.notes
@@ -117,7 +153,11 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   const [autoSelected, setAutoSelected] = useState(false)
   const autoPlay = autoSelected && !formalSession && !improvising
   const [playing, setPlaying] = useState(false)
+  const [pauseOpen, setPauseOpen] = useState(false)
+  const pauseTriggerRef = useRef<HTMLButtonElement>(null)
   const [displayTime, setDisplayTime] = useState(currentTime)
+  const videoActiveRef = useRef(currentTime >= chart.backgroundVideoStartTime)
+  const [videoBackgroundActive, setVideoBackgroundActive] = useState(videoActiveRef.current)
   const [stats, setStats] = useState(INITIAL_STATS)
   const [score, setScore] = useState(0)
   const [combo, setCombo] = useState(0)
@@ -136,11 +176,13 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
 
   const getRenderTime = useCallback(() => {
     if (prerollTimeRef.current !== null) return prerollTimeRef.current
-    const audio = audioRef.current
+    const audio = getAudio()
+    if (audio === bufferedAudio) return audio.currentTime * 1000
     return audio ? playbackClockRef.current.getTime(audio.currentTime * 1000) : timeRef.current
-  }, [audioRef])
+  }, [bufferedAudio, getAudio])
 
   const emitFeedback = useCallback((lane: number, result: FeedbackResult, sprite: FeedbackSprite, timing?: FeedbackTiming) => {
+    openingTrace?.mark('feedback', { lane, result, sprite })
     const id = ++feedbackIdRef.current
     const previousTimer = feedbackTimersRef.current.get(lane)
     if (previousTimer) window.clearTimeout(previousTimer)
@@ -150,7 +192,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       setFeedback((items) => items.filter((item) => item.id !== id))
       feedbackTimersRef.current.delete(lane)
     }, sprite === 'tap' ? Math.max(520, tapEffectDuration) : 520))
-  }, [tapEffectDuration])
+  }, [openingTrace, tapEffectDuration])
 
   const registerJudgment = useCallback((lane: number, result: Judgment, sprite: FeedbackSprite = null, timing?: FeedbackTiming) => {
     const state = scoringRef.current
@@ -226,20 +268,30 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
 
   const syncBackgroundVideoTime = useCallback((chartTime: number) => {
     const video = backgroundVideoRef.current
-    if (video) syncVideoTime(video, chartTime, chart.backgroundVideoStartTime, audioRef.current?.playbackRate ?? 1)
-  }, [audioRef, chart.backgroundVideoStartTime])
+    if (video) syncVideoTime(video, chartTime, chart.backgroundVideoStartTime, getAudio()?.playbackRate ?? 1)
+  }, [chart.backgroundVideoStartTime, getAudio])
 
   const syncBackgroundVideoPlayback = useCallback(() => {
     const video = backgroundVideoRef.current
     if (!video) return
-    const audio = audioRef.current
+    const audio = getAudio()
     const chartTime = audio ? audio.currentTime * 1000 : timeRef.current
     syncBackgroundVideoTime(chartTime)
     if (audio && playingRef.current && prerollTimeRef.current === null
       && canPlayBackgroundVideo(audio, chartTime, chart.backgroundVideoStartTime)) {
       if (video.paused) void video.play().catch(() => undefined)
-    } else video.pause()
-  }, [audioRef, chart.backgroundVideoStartTime, syncBackgroundVideoTime])
+    } else if (!video.paused) video.pause()
+  }, [chart.backgroundVideoStartTime, getAudio, syncBackgroundVideoTime])
+
+  const updateProgress = useCallback((time: number) => {
+    const fraction = Math.max(0, Math.min(1, time / Math.max(1, duration)))
+    if (progressRef.current) progressRef.current.style.transform = `scaleX(${fraction})`
+    if (!hasVideoBackground) return
+    const active = time >= chart.backgroundVideoStartTime
+    if (active === videoActiveRef.current) return
+    videoActiveRef.current = active
+    setVideoBackgroundActive(active)
+  }, [chart.backgroundVideoStartTime, duration, hasVideoBackground])
 
   const resetRun = useCallback((startTime = 0) => {
     prerollEpochRef.current += 1; cancelAnimationFrame(prerollFrameRef.current)
@@ -264,20 +316,22 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     timeRef.current = startTime
     playbackClockRef.current.reset(startTime)
     setDisplayTime(startTime)
-    const audio = audioRef.current
+    updateProgress(startTime)
+    const audio = getAudio()
     if (audio) { audio.pause(); audio.currentTime = startTime / 1000 }
     backgroundVideoRef.current?.pause()
     syncBackgroundVideoTime(startTime)
     playingRef.current = false; setPlaying(false)
-  }, [audioRef, fakeHeads, fakeNotes, holdTicksById, notesByTime, redTracker, syncBackgroundVideoTime])
+  }, [fakeHeads, fakeNotes, getAudio, holdTicksById, notesByTime, redTracker, syncBackgroundVideoTime, updateProgress])
 
   const judgeHead = useCallback((note: ChartNote, result: Judgment, timing?: FeedbackTiming) => {
+    openingTrace?.mark('note-head', { kind: note.kind, lane: note.lane, noteMs: note.time, result })
     if (note.kind === 'hold') {
       holdStartsRef.current.set(note.id, result); holdTicksRef.current.set(note.id, 0); droppedHoldsRef.current.delete(note.id)
       rendererRef.current?.setHoldActive(note.id, true); updateActiveHoldLanes()
     } else { judgedRef.current.set(note.id, result); rendererRef.current?.hideNote(note.id) }
     registerJudgment(note.lane, result, note.kind !== 'hold' && result !== 'Miss' ? 'tap' : null, timing)
-  }, [registerJudgment, updateActiveHoldLanes])
+  }, [openingTrace, registerJudgment, updateActiveHoldLanes])
 
   const processFrame = useCallback((now: number) => {
     timeRef.current = now
@@ -350,23 +404,27 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   useEffect(() => {
     if (!playing) return
     const tick = (timestamp: number) => {
-      const audio = audioRef.current
-      syncBackgroundVideoPlayback()
-      if (!audio || audio.paused) { rafRef.current = requestAnimationFrame(tick); return }
+      const audio = getAudio()
+      if (!audio || audio.paused || prerollTimeRef.current !== null) { rafRef.current = requestAnimationFrame(tick); return }
       const now = getRenderTime()
       processFrame(now)
-      if (timestamp - lastUiUpdateRef.current > 70) { setDisplayTime(now); lastUiUpdateRef.current = timestamp }
+      if (timestamp - lastUiUpdateRef.current > 70) {
+        updateProgress(now)
+        syncBackgroundVideoPlayback()
+        lastUiUpdateRef.current = timestamp
+      }
       rafRef.current = requestAnimationFrame(tick)
     }
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [audioRef, getRenderTime, playing, processFrame, syncBackgroundVideoPlayback])
+  }, [getAudio, getRenderTime, playing, processFrame, syncBackgroundVideoPlayback, updateProgress])
 
   useEffect(() => {
     const audio = audioRef.current
-    if (!audio) return
-    const handleEnded = () => {
-      const endedAt = audio.currentTime * 1000
+    const handleEnded = (event: Event) => {
+      const endedAudio = getAudio()
+      if (!endedAudio || event.currentTarget !== endedAudio) return
+      const endedAt = endedAudio.currentTime * 1000
       processFrame(endedAt)
       releaseAutoLanes()
       playbackClockRef.current.stop(endedAt)
@@ -374,12 +432,17 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       playingRef.current = false
       setPlaying(false)
       setDisplayTime(endedAt)
+      updateProgress(endedAt)
       if (improvising) { setRecordingEnded(true); exitOpenRef.current = true; setExitStep('save') }
       else if (formalSession) setCompleted(true)
     }
-    audio.addEventListener('ended', handleEnded)
-    return () => audio.removeEventListener('ended', handleEnded)
-  }, [audioRef, formalSession, improvising, processFrame, releaseAutoLanes])
+    audio?.addEventListener('ended', handleEnded)
+    bufferedAudio.addEventListener('ended', handleEnded)
+    return () => {
+      audio?.removeEventListener('ended', handleEnded)
+      bufferedAudio.removeEventListener('ended', handleEnded)
+    }
+  }, [audioRef, bufferedAudio, formalSession, getAudio, improvising, processFrame, releaseAutoLanes, updateProgress])
 
   useEffect(() => {
     const video = backgroundVideoRef.current
@@ -391,16 +454,59 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     video.addEventListener('loadedmetadata', syncBackgroundVideoPlayback)
     video.addEventListener('canplay', syncBackgroundVideoPlayback)
     video.addEventListener('seeked', syncBackgroundVideoPlayback)
-    for (const event of events) audio?.addEventListener(event, syncBackgroundVideoPlayback)
+    for (const event of events) {
+      audio?.addEventListener(event, syncBackgroundVideoPlayback)
+      bufferedAudio.addEventListener(event, syncBackgroundVideoPlayback)
+    }
     return () => {
       document.removeEventListener('visibilitychange', syncBackgroundVideoPlayback)
       video.removeEventListener('loadedmetadata', syncBackgroundVideoPlayback)
       video.removeEventListener('canplay', syncBackgroundVideoPlayback)
       video.removeEventListener('seeked', syncBackgroundVideoPlayback)
-      for (const event of events) audio?.removeEventListener(event, syncBackgroundVideoPlayback)
+      for (const event of events) {
+        audio?.removeEventListener(event, syncBackgroundVideoPlayback)
+        bufferedAudio.removeEventListener(event, syncBackgroundVideoPlayback)
+      }
       video.pause()
     }
-  }, [audioRef, backgroundUrl, playing, syncBackgroundVideoPlayback])
+  }, [audioRef, backgroundUrl, bufferedAudio, syncBackgroundVideoPlayback])
+
+  useEffect(() => {
+    if (!openingTrace) return
+    const canvas = canvasRef.current
+    const audio = audioRef.current
+    const video = backgroundVideoRef.current
+    const viewport = window.visualViewport
+    const markViewport = () => openingTrace.mark('viewport', {
+      width: window.innerWidth, height: window.innerHeight,
+      visualWidth: viewport?.width, visualHeight: viewport?.height,
+      fullscreen: Boolean(document.fullscreenElement),
+    })
+    const markVisibility = () => openingTrace.mark('visibility', document.visibilityState)
+    const markContext = (event: Event) => openingTrace.mark(event.type)
+    const markMedia = (event: Event) => {
+      const media = event.currentTarget as HTMLMediaElement
+      openingTrace.mark(`${media.tagName.toLowerCase()}-${event.type}`, {
+        timeMs: media.currentTime * 1000, readyState: media.readyState,
+      })
+    }
+    const mediaEvents = ['playing', 'waiting', 'seeking', 'seeked', 'stalled', 'error']
+    const media = [audio, video]
+    for (const element of media) for (const event of mediaEvents) element?.addEventListener(event, markMedia)
+    canvas?.addEventListener('webglcontextlost', markContext)
+    canvas?.addEventListener('webglcontextrestored', markContext)
+    viewport?.addEventListener('resize', markViewport)
+    document.addEventListener('fullscreenchange', markViewport)
+    document.addEventListener('visibilitychange', markVisibility)
+    return () => {
+      for (const element of media) for (const event of mediaEvents) element?.removeEventListener(event, markMedia)
+      canvas?.removeEventListener('webglcontextlost', markContext)
+      canvas?.removeEventListener('webglcontextrestored', markContext)
+      viewport?.removeEventListener('resize', markViewport)
+      document.removeEventListener('fullscreenchange', markViewport)
+      document.removeEventListener('visibilitychange', markVisibility)
+    }
+  }, [audioRef, backgroundUrl, openingTrace])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -413,6 +519,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       getRecordedNotes: () => recordedRef.current,
       transparentBackground: hasCustomBackground,
       initialRenderScale: hasVideoBackground ? 0.9 : 1,
+      openingTrace,
       onStats: setStats,
       onViewportResize: (width, height) => setViewport((current) => current.width === width && current.height === height ? current : { width, height }),
     })
@@ -425,11 +532,11 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     for (const lane of pressedRef.current) renderer.setLanePressed(lane, true)
     rendererRef.current = renderer
     return () => { rendererRef.current = null; renderer.destroy() }
-  }, [chart.bpm, chart.bpmChanges, chart.effects, chart.duration, chart.offset, getRenderTime, hasCustomBackground, hasVideoBackground, laneTilt, noteById, notes, preferences.noteScrollSpeed, trackLayout])
+  }, [chart.bpm, chart.bpmChanges, chart.effects, chart.duration, chart.offset, getRenderTime, hasCustomBackground, hasVideoBackground, laneTilt, noteById, notes, openingTrace, preferences.noteScrollSpeed, trackLayout])
 
   useEffect(() => {
     resetRun(runStartTimeRef.current)
-    return () => { playingRef.current = false; prerollEpochRef.current += 1; cancelAnimationFrame(prerollFrameRef.current); cancelAnimationFrame(rafRef.current); audioRef.current?.pause(); feedbackTimersRef.current.forEach(window.clearTimeout) }
+    return () => { playingRef.current = false; prerollEpochRef.current += 1; cancelAnimationFrame(prerollFrameRef.current); cancelAnimationFrame(rafRef.current); getAudio()?.pause(); feedbackTimersRef.current.forEach(window.clearTimeout) }
   // This initializes a run when the playtest mounts; editor time changes are intentionally ignored afterward.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -438,7 +545,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     if (needsPrerollRef.current) return
     if (prerollTimeRef.current !== null) { resetRun(prerollTargetRef.current); return }
     prerollEpochRef.current += 1
-    const audio = audioRef.current
+    const audio = getAudio()
     const pausedAt = audio ? audio.currentTime * 1000 : timeRef.current
     audio?.pause()
     releaseAutoLanes()
@@ -447,25 +554,44 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     playingRef.current = false
     setPlaying(false)
     setDisplayTime(pausedAt)
-  }, [audioRef, releaseAutoLanes, resetRun])
+    updateProgress(pausedAt)
+    syncBackgroundVideoPlayback()
+  }, [getAudio, releaseAutoLanes, resetRun, syncBackgroundVideoPlayback, updateProgress])
 
-  const togglePlayback = useCallback(async () => {
+  const startPlayback = useCallback(async () => {
     if (exitOpenRef.current || settingsOpen) return
     const audio = audioRef.current
     if (!audioUrl || !audio) { showToast(text('请先在编辑器的谱面信息中选择可用音频', 'Select usable audio in the editor’s Chart Info first')); return }
-    if (playingRef.current) {
-      pausePlayback()
-      return
-    }
+    if (playingRef.current) return
+    const tryBuffered = canBufferAudio && playbackRate === 1 && (audio.readyState < HTMLMediaElement.HAVE_METADATA || canBufferDuration(audio.duration))
+    if (tryBuffered) bufferedAudio.unlock()
     const playbackEpoch = needsPrerollRef.current ? prerollEpochRef.current + 1 : prerollEpochRef.current
     const startAudio = async () => {
       if (playbackEpoch !== prerollEpochRef.current || exitOpenRef.current) return
-      prerollTimeRef.current = null
-      audio.playbackRate = playbackRate
       try {
-        await audio.play()
+        const ready = tryBuffered && await bufferedAudio.ready()
         if (playbackEpoch !== prerollEpochRef.current || exitOpenRef.current) return
-        playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate)
+        const position = getAudio()?.currentTime ?? audio.currentTime
+        openingTrace?.mark('play-requested', position * 1000)
+        if (ready && bufferedAudio.playFrom(position)) {
+          openingTrace?.mark('audio-clock', 'web-audio')
+        } else {
+          if (bufferedAudio.active) {
+            bufferedAudio.pause()
+            bufferedAudio.active = false
+            audio.currentTime = position
+          }
+          audio.playbackRate = playbackRate
+          openingTrace?.mark('audio-clock', 'media-element')
+          await audio.play()
+        }
+        if (playbackEpoch !== prerollEpochRef.current || exitOpenRef.current) return
+        const leavingPreroll = prerollTimeRef.current !== null
+        const startedAudio = getAudio()
+        if (!startedAudio) return
+        openingTrace?.mark('play-resolved', startedAudio.currentTime * 1000)
+        if (startedAudio !== bufferedAudio) playbackClockRef.current.start(audio.currentTime * 1000, performance.now(), audio.playbackRate, { waitForProgress: leavingPreroll })
+        prerollTimeRef.current = null
         playingRef.current = true; setPlaying(true)
         syncBackgroundVideoPlayback()
       }
@@ -474,26 +600,37 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
         playingRef.current = false; setPlaying(false); showToast(text('音频无法播放，请重新选择文件', 'Audio could not be played; select the file again'))
       }
     }
-    if (!needsPrerollRef.current) { await startAudio(); return }
+    if (!needsPrerollRef.current) {
+      playingRef.current = true
+      setPlaying(true)
+      await startAudio()
+      return
+    }
     needsPrerollRef.current = false
     const targetTime = prerollTargetRef.current
+    openingTrace?.start({
+      startMs: targetTime,
+      firstNoteMs: notes.find((note) => note.time >= targetTime)?.time ?? null,
+      background: hasCustomBackground ? chart.backgroundType ?? null : null,
+      trackBlur: preferences.trackBackgroundBlur,
+    })
     const epoch = ++prerollEpochRef.current
     const startedAt = performance.now()
     playingRef.current = true; setPlaying(true)
     const advancePreroll = (timestamp: number) => {
       if (epoch !== prerollEpochRef.current || !playingRef.current) return
-      const elapsed = Math.min(PREROLL_MS, timestamp - startedAt)
+      const elapsed = Math.max(0, Math.min(PREROLL_MS, timestamp - startedAt))
       prerollTimeRef.current = targetTime - PREROLL_MS + elapsed
       if (elapsed < PREROLL_MS) { prerollFrameRef.current = requestAnimationFrame(advancePreroll); return }
       void startAudio()
     }
     prerollFrameRef.current = requestAnimationFrame(advancePreroll)
-  }, [audioRef, audioUrl, pausePlayback, playbackRate, settingsOpen, showToast, syncBackgroundVideoPlayback, text])
+  }, [audioRef, audioUrl, bufferedAudio, canBufferAudio, chart.backgroundType, getAudio, hasCustomBackground, notes, openingTrace, playbackRate, preferences.trackBackgroundBlur, settingsOpen, showToast, syncBackgroundVideoPlayback, text])
 
   const restart = useCallback(() => resetRun(runStartTimeRef.current), [resetRun])
 
   const hitLane = useCallback((lane: number) => {
-    if (!playingRef.current || exitOpenRef.current || prerollTimeRef.current !== null || audioRef.current?.paused) return
+    if (!playingRef.current || exitOpenRef.current || prerollTimeRef.current !== null || getAudio()?.paused) return
     const now = getRenderTime(); timeRef.current = now
     if (improvising && now >= 0 && now <= duration) {
       const tap: ChartNote = { id: crypto.randomUUID(), lane, time: now, kind: 'note' }
@@ -521,20 +658,21 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     const result: Judgment = closest <= windows[0] ? 'Perfect' : closest <= windows[1] ? 'Good' : 'Miss'
     const timing = result === 'Perfect' ? undefined : now < candidate.time ? 'Early' : 'Late'
     judgeHead(candidate, result, timing)
-  }, [audioRef, duration, getRenderTime, improvising, noteById, notesByLane, redDanger, judgeHead, updateActiveHoldLanes, windows])
+  }, [duration, getAudio, getRenderTime, improvising, noteById, notesByLane, redDanger, judgeHead, updateActiveHoldLanes, windows])
 
   const pressLane = useCallback((lane: number) => {
-    if (autoPlay || settingsOpen || pressedRef.current.has(lane)) return
-    const judging = playingRef.current && !exitOpenRef.current && prerollTimeRef.current === null && !audioRef.current?.paused
+    if (autoPlay || pauseOpen || settingsOpen || pressedRef.current.has(lane)) return
+    const judging = playingRef.current && !exitOpenRef.current && prerollTimeRef.current === null && !getAudio()?.paused
     const now = getRenderTime()
+    openingTrace?.mark('lane-down', { lane, chartMs: now, judging })
     if (judging) processFrame(now) // Advance with the old key state before this transition.
     pressedRef.current = new Set(pressedRef.current).add(lane); setPressed(new Set(pressedRef.current)); rendererRef.current?.setLanePressed(lane, true); hitLane(lane); updateActiveHoldLanes()
     if (judging) checkRedZones(now)
-  }, [autoPlay, audioRef, checkRedZones, getRenderTime, hitLane, processFrame, settingsOpen, updateActiveHoldLanes])
+  }, [autoPlay, checkRedZones, getAudio, getRenderTime, hitLane, openingTrace, pauseOpen, processFrame, settingsOpen, updateActiveHoldLanes])
 
   const releaseLane = useCallback((lane: number) => {
     if (autoPlay || !pressedRef.current.has(lane)) return
-    if (playingRef.current && !exitOpenRef.current && prerollTimeRef.current === null && !audioRef.current?.paused) processFrame(getRenderTime())
+    if (playingRef.current && !exitOpenRef.current && prerollTimeRef.current === null && !getAudio()?.paused) processFrame(getRenderTime())
     redContactRef.current &= ~(1 << lane)
     const next = new Set(pressedRef.current); next.delete(lane); pressedRef.current = next; setPressed(next); rendererRef.current?.setLanePressed(lane, false)
     let active: ChartNote | undefined
@@ -544,7 +682,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     }
     if (active) { droppedHoldsRef.current.add(active.id); rendererRef.current?.setHoldActive(active.id, false) }
     updateActiveHoldLanes()
-  }, [autoPlay, audioRef, getRenderTime, noteById, processFrame, updateActiveHoldLanes])
+  }, [autoPlay, getAudio, getRenderTime, noteById, processFrame, updateActiveHoldLanes])
 
   const pressTouchLane = useCallback((event: React.PointerEvent<HTMLButtonElement>, lane: number) => {
     if (event.button !== 0) return
@@ -559,25 +697,46 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   }, [releaseLane])
 
   const finishLeaving = useCallback(() => {
-    audioRef.current?.pause()
+    getAudio()?.pause()
     if (formalSession) { platform.leavePlay(); navigate(formalSession.returnRoute) }
     else { editor.setImprovising(false); editor.setCurrentTime(timeRef.current); navigate('editor') }
-  }, [audioRef, editor, formalSession, platform])
+  }, [editor, formalSession, getAudio, platform])
 
   const leave = useCallback(() => {
     if (!improvising || !recordedRef.current.length) { finishLeaving(); return }
     prerollEpochRef.current += 1
     cancelAnimationFrame(prerollFrameRef.current)
-    const now = audioRef.current?.currentTime ? audioRef.current.currentTime * 1000 : timeRef.current
-    audioRef.current?.pause()
+    const audio = getAudio()
+    const now = audio ? audio.currentTime * 1000 : timeRef.current
+    audio?.pause()
     playbackClockRef.current.stop(now)
     timeRef.current = now
     playingRef.current = false
     setPlaying(false)
     setDisplayTime(now)
+    updateProgress(now)
     exitOpenRef.current = true
     setExitStep('save')
-  }, [audioRef, finishLeaving, improvising])
+  }, [finishLeaving, getAudio, improvising, updateProgress])
+  const openPause = useCallback(() => {
+    if (pauseOpen || settingsOpen || exitOpenRef.current) return
+    pausePlayback()
+    for (const lane of pressedRef.current) releaseLane(lane)
+    setPauseOpen(true)
+  }, [pauseOpen, pausePlayback, releaseLane, settingsOpen])
+  useMobileBack(true, openPause, false, true)
+
+  const resume = () => {
+    setPauseOpen(false)
+    if (!completed) void startPlayback()
+  }
+
+  const restartFromBeginning = () => {
+    if (improvising && recordedRef.current.length) return
+    setPauseOpen(false)
+    resetRun(0)
+    void startPlayback()
+  }
 
   const saveRecording = async (overwrite?: boolean) => {
     if (saving) return
@@ -603,17 +762,37 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     const keyMap = new Map(preferences.playKeys.map((key, lane) => [key.toLowerCase(), lane]))
     const down = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.repeat || exitOpenRef.current || settingsOpen) return
-      if (event.code === 'Escape') { event.preventDefault(); leave(); return }
+      if (event.code === 'Escape' || event.code === 'Backspace' || event.key === 'BrowserBack' ||
+          (event.altKey && event.code === 'ArrowLeft')) {
+        event.preventDefault()
+        openPause()
+        return
+      }
+      if (pauseOpen || completed) return
       if (event.code === 'Space') {
         if (event.target instanceof HTMLElement && event.target.closest('button[aria-haspopup="dialog"]')) return
-        event.preventDefault(); void togglePlayback(); return
+        event.preventDefault()
+        if (playingRef.current) openPause()
+        else void startPlayback()
+        return
       }
       const lane = keyMap.get(event.key.toLowerCase()); if (lane !== undefined) { event.preventDefault(); pressLane(lane) }
     }
     const up = (event: KeyboardEvent) => { const lane = keyMap.get(event.key.toLowerCase()); if (lane !== undefined) releaseLane(lane) }
-    window.addEventListener('keydown', down); window.addEventListener('keyup', up)
-    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
-  }, [leave, preferences.playKeys, pressLane, releaseLane, settingsOpen, togglePlayback])
+    const mouseBack = (event: MouseEvent) => {
+      if (event.button !== 3 || settingsOpen || exitOpenRef.current) return
+      event.preventDefault()
+      openPause()
+    }
+    window.addEventListener('keydown', down)
+    window.addEventListener('keyup', up)
+    window.addEventListener('auxclick', mouseBack)
+    return () => {
+      window.removeEventListener('keydown', down)
+      window.removeEventListener('keyup', up)
+      window.removeEventListener('auxclick', mouseBack)
+    }
+  }, [completed, openPause, pauseOpen, preferences.playKeys, pressLane, releaseLane, settingsOpen, startPlayback])
 
   useEffect(() => {
     const releaseAll = () => { for (const lane of pressedRef.current) releaseLane(lane) }
@@ -627,7 +806,6 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   const trackInset = laneEdge(0, JUDGMENT_LINE_Y)
   const trackTopInset = laneEdge(0, 0)
   const trackBottomInset = laneEdge(0, 1)
-  const videoBackgroundActive = displayTime >= chart.backgroundVideoStartTime
   const judgmentFeedback = centeredJudgment ? feedback.filter(({ id }) => id === latestFeedbackId) : feedback
   const judgments = judgmentFeedback.map((effect) => <div
     key={effect.id}
@@ -656,17 +834,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     <canvas ref={canvasRef} className="playtest-canvas" aria-label={text('WebGL2 谱面试玩画面', 'WebGL2 chart playtest')} />
     <div className="playtest-vignette" /><div className="playtest-judgment-line" />
     <header className="playtest-header">
-      <Button variant="outline" onClick={leave}><ArrowLeft />{formalSession ? text('退出游玩', 'Leave play') : text('返回编辑器', 'Back to editor')}</Button>
-      <div className="playtest-title"><span className="eyebrow">MOONWEAVE · {improvising ? text(copy.title.zh, copy.title.en) : formalSession ? 'OFFICIAL PLAY' : 'PLAYTEST'}</span><strong>{chart.title}</strong><small>{chart.artist || chart.audioName}</small></div>
-      <div className="playtest-header-actions">
-        {!formalSession && !improvising && <Button variant="outline" size="icon" aria-label={text(autoPlayCopy.zh, autoPlayCopy.en)} title={text(autoPlayCopy.zh, autoPlayCopy.en)} aria-pressed={autoPlay} disabled={playing || !needsPrerollRef.current} onClick={() => { resetRun(runStartTimeRef.current); setAutoSelected(!autoPlay) }}><Bot /></Button>}
-        {onSettings && <Button variant="outline" size="icon" aria-label={settingsLabel} aria-haspopup="dialog" title={settingsLabel} onClick={(event) => {
-          pausePlayback()
-          for (const lane of pressedRef.current) releaseLane(lane)
-          event.currentTarget.focus()
-          onSettings()
-        }}><Settings /></Button>}
-        <Button variant="outline" size="icon" title={text('重新开始', 'Restart')} disabled={improvising} onClick={restart}><RotateCcw /></Button><Button variant="outline" size="icon" title={playing ? text('暂停', 'Pause') : text('播放', 'Play')} onClick={() => void togglePlayback()}>{playing ? <Pause /> : <Play />}</Button></div>
+      <Button ref={pauseTriggerRef} variant="outline" size="icon" aria-label={text(playPauseCopy.pause.zh, playPauseCopy.pause.en)} aria-haspopup="dialog" aria-expanded={pauseOpen && !settingsOpen && !exitStep} onClick={openPause}><Pause /></Button>
     </header>
     <aside className="playtest-score"><span>SCORE</span><strong>{score.toString().padStart(8, '0')}</strong><span>ACCURACY</span><strong>{accuracy.toFixed(2)}%</strong></aside>
     <aside className="playtest-performance"><div><Gauge /><span><b>{stats.fps || '—'} FPS · P95 {stats.frameTimeP95.toFixed(1)} MS</b><small>MAX {stats.frameTimeMax.toFixed(1)} MS · {Math.round(stats.renderScale * 100)}% SCALE</small></span></div><div><Sparkles /><span><b>{stats.notes} NOTES</b><small>{stats.longFramePercent.toFixed(1)}% LONG · {stats.clockStalls} CLOCK STALLS</small></span></div></aside>
@@ -674,8 +842,9 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       key={`sprite-${effect.id}`}
       className={`playtest-hit-effect ${effect.result.toLowerCase()}`}
       style={{ left: `${laneX(effect.lane)}%` }}
-      defaultSrc={effect.sprite === 'red' ? redSprite : defaultTapSprite}
+      defaultSrc={effect.sprite === 'red' ? redSprite : tapSpriteSrc}
       atlas={effect.sprite === 'tap' ? particleAppearance?.tap : undefined}
+      transformFrames={effect.sprite === 'tap'}
       reduceMotion={preferences.reduceMotion}
     />)}
     {!centeredJudgment && judgments}
@@ -696,7 +865,16 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       <div className="playtest-combo">{combo > 0 && <b>{combo}</b>}</div>
       {centeredJudgment && judgments}
     </div>
-    {!playing && !completed && !exitStep && !settingsOpen && <Button variant="outline" className="playtest-paused" onClick={() => void togglePlayback()}><Play fill="currentColor" /><b>{displayTime > 0 ? text('继续', 'Continue') : formalSession ? text('开始游玩', 'Start play') : text('开始试玩', 'Start playtest')}</b><span>SPACE</span></Button>}
+    {!playing && !pauseOpen && !completed && !exitStep && !settingsOpen && (
+      <section className="playtest-ready" aria-label={chart.title}>
+        <strong>{chart.title}</strong>
+        {(chart.artist || chart.audioName) && <small>{chart.artist || chart.audioName}</small>}
+        <Button onClick={() => void startPlayback()}>
+          <Play fill="currentColor" />
+          {displayTime > 0 ? text(playPauseCopy.resume.zh, playPauseCopy.resume.en) : formalSession ? text('开始游玩', 'Start play') : text('开始试玩', 'Start playtest')}
+        </Button>
+      </section>
+    )}
     <div className="playtest-key-caps">{preferences.playKeys.map((key, lane) => <button
       key={`${key}-${lane}`}
       aria-label={text(`轨道 ${lane + 1}，按键 ${key}`, `Lane ${lane + 1}, key ${key}`)}
@@ -711,7 +889,26 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       onPointerCancel={(event) => releaseTouchLane(event, lane)}
       onLostPointerCapture={() => releaseLane(lane)}
     ><span>{key}</span></button>)}</div>
-    <div className="playtest-progress"><i style={{ width: `${Math.max(0, Math.min(100, displayTime / Math.max(1, duration) * 100))}%` }} /></div>
+    <div className="playtest-progress"><i ref={progressRef} /></div>
+    <Dialog open={pauseOpen && !settingsOpen && !exitStep} onMobileBack={openPause}>
+      <DialogContent className="playtest-pause-menu" showCloseButton={false}
+        onEscapeKeyDown={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          if (!pauseOpen && !completed) pauseTriggerRef.current?.focus({ preventScroll: true })
+        }}>
+        <DialogHeader><DialogTitle>{text(playPauseCopy.pause.zh, playPauseCopy.pause.en)}</DialogTitle><DialogDescription>{chart.title}</DialogDescription></DialogHeader>
+        <div className="playtest-pause-actions" data-scroll-region>
+          <Button onClick={resume}><Play />{text(playPauseCopy.resume.zh, playPauseCopy.resume.en)}</Button>
+          <Button variant="outline" disabled={improvising && recordedRef.current.length > 0} onClick={restartFromBeginning}><RotateCcw />{text(playPauseCopy.restart.zh, playPauseCopy.restart.en)}</Button>
+          {onSettings && <Button variant="outline" onClick={onSettings}><Settings />{settingsLabel}</Button>}
+          {!formalSession && !improvising && <Button variant={autoPlay ? 'secondary' : 'outline'} aria-pressed={autoPlay} onClick={() => setAutoSelected(!autoPlay)}><Bot />{text(autoPlayCopy.zh, autoPlayCopy.en)}</Button>}
+          {openingTrace && <Button variant="outline" onClick={() => openingTrace.download()}>{text(playPauseCopy.openingTrace.zh, playPauseCopy.openingTrace.en)}</Button>}
+          <Button variant="outline" onClick={leave}><ArrowLeft />{formalSession ? text(playPauseCopy.leave.zh, playPauseCopy.leave.en) : text(playPauseCopy.backToEditor.zh, playPauseCopy.backToEditor.en)}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
     <Dialog open={exitStep !== null} onOpenChange={(open) => { if (!open && !saving && !committedRef.current && !recordingEnded) { exitOpenRef.current = false; setExitStep(null) } }}><DialogContent size="md" showCloseButton={!saving && !committedRef.current && !recordingEnded} onEscapeKeyDown={(event) => { if (saving || committedRef.current || recordingEnded) event.preventDefault() }} onInteractOutside={(event) => event.preventDefault()}>
       <DialogHeader><DialogTitle>{text((exitStep === 'conflict' ? copy.conflict : copy.save).zh, (exitStep === 'conflict' ? copy.conflict : copy.save).en)}</DialogTitle><DialogDescription>{text((exitStep === 'conflict' ? copy.conflictDescription : copy.description).zh, (exitStep === 'conflict' ? copy.conflictDescription : copy.description).en)} · {recordedRef.current.length} NOTES</DialogDescription></DialogHeader>
       <DialogFooter className="sm:flex-wrap">
@@ -721,7 +918,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
         <Button disabled={saving} onClick={() => void saveRecording(exitStep === 'conflict' ? true : undefined)}>{text((exitStep === 'conflict' && !committedRef.current ? copy.overwrite : copy.confirm).zh, (exitStep === 'conflict' && !committedRef.current ? copy.overwrite : copy.confirm).en)}</Button>
       </DialogFooter>
     </DialogContent></Dialog>
-    <Dialog open={completed} onOpenChange={() => undefined}><DialogContent showCloseButton={false} className="result-dialog">
+    <Dialog open={completed && !pauseOpen} onMobileBack={openPause}><DialogContent showCloseButton={false} className="result-dialog" onEscapeKeyDown={(event) => { event.preventDefault(); openPause() }}>
       <DialogHeader><span className="eyebrow">PLAY RESULT</span><DialogTitle>{text('演奏完成', 'Chart cleared')}</DialogTitle><DialogDescription>{chart.title} · {chart.artist}</DialogDescription></DialogHeader>
       <div className="result-grade">{accuracy >= 99 ? 'SS' : accuracy >= 95 ? 'S' : accuracy >= 90 ? 'A' : accuracy >= 80 ? 'B' : 'C'}</div>
       <div className="result-score"><span>SCORE</span><strong>{score.toString().padStart(8, '0')}</strong><small>{accuracy.toFixed(2)}% ACCURACY</small></div>

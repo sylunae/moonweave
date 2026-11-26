@@ -5,11 +5,16 @@ import { cn } from "cn"
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui"
 
 import { Button } from "@/components/ui/button"
+import { useMobileModal } from "@/app/mobileBack"
 
 function AlertDialog({
+  open,
+  defaultOpen,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
+  const state = useMobileModal({ open, defaultOpen, onOpenChange })
+  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} {...state} />
 }
 
 function AlertDialogTrigger({

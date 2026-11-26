@@ -239,6 +239,15 @@ export function isRouteId(value: string): value is RouteId {
   return value === 'manage' || value === 'editor' || value === 'playtest'
 }
 
+export const playPauseCopy = {
+  pause: { zh: '暂停', en: 'Pause' },
+  resume: { zh: '继续', en: 'Resume' },
+  restart: { zh: '重头开始', en: 'Restart from beginning' },
+  leave: { zh: '退出游玩', en: 'Leave play' },
+  backToEditor: { zh: '返回编辑器', en: 'Back to editor' },
+  openingTrace: { zh: '下载开场诊断', en: 'Download opening trace' },
+} as const
+
 export const autoPlayCopy = { zh: '自动演奏', en: 'Auto Play' } as const
 
 export const redZoneCopy = {

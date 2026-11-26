@@ -13,7 +13,7 @@ export function syncBackgroundVideoTime(
   if (video.playbackRate !== playbackRate) video.playbackRate = playbackRate
 }
 
-export function canPlayBackgroundVideo(audio: HTMLAudioElement, chartTime: number, startTime: number) {
+export function canPlayBackgroundVideo(audio: Pick<HTMLMediaElement, 'paused' | 'ended' | 'seeking' | 'readyState'>, chartTime: number, startTime: number) {
   return !audio.paused && !audio.ended && !audio.seeking
     && audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA && chartTime >= startTime && !document.hidden
 }

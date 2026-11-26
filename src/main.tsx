@@ -2,8 +2,11 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { claimEarlyAccessNotice, PreferencesProvider } from './app/preferences'
 import { SoundGate } from './app/sound'
+import { requestFullscreenOnFirstClick } from './app/webFullscreen'
 import App from './App'
 import './styles.css'
+
+requestFullscreenOnFirstClick()
 
 if (import.meta.env.PROD && !window.sylunae && window.isSecureContext && /^https?:$/.test(location.protocol) && 'serviceWorker' in navigator) {
   void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}service-worker.js`, { updateViaCache: 'none' })

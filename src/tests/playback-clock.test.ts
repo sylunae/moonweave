@@ -63,6 +63,19 @@ describe('PlaybackClock', () => {
     expect(clock.getTime(1000, 9016)).toBe(1008)
   })
 
+  it('holds the displayed position when forward audio resumes after the opening stall', () => {
+    const clock = new PlaybackClock()
+    clock.start(0, 1005.8, 1, { waitForProgress: true })
+    clock.getTime(7.8, 1035.9)
+    clock.getTime(41.1, 1085.6)
+    clock.getTime(72.6, 1168.6)
+    const frozen = clock.getTime(72.6, 1350.6)
+    expect(frozen).toBeCloseTo(122.6)
+    expect(clock.getTime(86.9, 1367.1)).toBe(frozen)
+    expect(clock.getTime(103.3, 1383.6)).toBe(frozen)
+    expect(clock.getTime(136.5, 1416.8)).toBeGreaterThan(frozen)
+  })
+
   it('anchors to actual media progress after repeated seeks instead of counting decoder startup delay', () => {
     const clock = new PlaybackClock()
     let now = 0

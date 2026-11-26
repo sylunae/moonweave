@@ -2,6 +2,7 @@ import { effectLabel } from './labels'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Crosshair, Pause, Plus, Trash2 } from 'lucide-react'
 import { useI18n } from '@/app/i18n'
+import { isTouchWeb } from '@/app/mobileBack'
 import { editorEffects } from '@/config/app'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -147,7 +148,7 @@ export function EffectsModule({ editor }: { editor: ReturnType<typeof useEffects
             <label><span>{copy('start')} (ms)</span><div><Input aria-label={`${copy('start')} (ms)`} inputMode="decimal" value={draft.startText ?? String(draft.time)} onChange={(e) => editor.setDraft({ ...draft, startText: e.target.value, time: e.target.value.trim() ? Number(e.target.value) : NaN })} /><Button variant="outline" aria-label={`${copy('start')} · ${copy('pick')}`} onClick={editor.pickStart}><Crosshair />{copy('pick')}</Button></div></label>
             {draft.transition === 'linear' && <label><span>{copy('end')} (ms)</span><div><Input aria-label={`${copy('end')} (ms)`} inputMode="decimal" placeholder="—" value={draft.endText ?? (draft.endTime === undefined ? '' : String(draft.endTime))} onChange={(e) => editor.setDraft({ ...draft, endText: e.target.value, endTime: e.target.value.trim() ? Number(e.target.value) : undefined })} /><Button variant="outline" aria-label={`${copy('end')} · ${copy('pick')}`} onClick={editor.pickEnd}><Crosshair />{copy('pick')}</Button></div></label>}
           </div>
-          <label><span>{text('目标倍率（0 为停速）', 'Target multiplier (0 stops movement)')}</span><Input autoFocus inputMode="decimal" value={draft.multiplier} onChange={(e) => editor.setDraft({ ...draft, multiplier: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); editor.save() } }} /></label>
+          <label><span>{text('目标倍率（0 为停速）', 'Target multiplier (0 stops movement)')}</span><Input autoFocus={!isTouchWeb()} inputMode="decimal" value={draft.multiplier} onChange={(e) => editor.setDraft({ ...draft, multiplier: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); editor.save() } }} /></label>
           <div className="effect-multiplier-presets">{[0, 0.5, 1, 2, 4].map((value) => <Button key={value} size="sm" variant={draft.multiplier === String(value) ? 'default' : 'outline'} aria-pressed={draft.multiplier === String(value)} onClick={() => editor.setDraft({ ...draft, multiplier: String(value) })}>{value === 0 ? <Pause /> : null}×{value}</Button>)}</div>
           <label><span>{text('变化方式', 'Transition')}</span><Select value={draft.transition} onValueChange={(transition: 'instant' | 'linear') => editor.setDraft({ ...draft, transition })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="instant">{text('瞬时切换', 'Instant')}</SelectItem><SelectItem value="linear">{text('渐变', 'Gradual')}</SelectItem></SelectContent></Select></label>
           {draft.transition === 'linear' && <CurveEditor draft={draft} from={from} onChange={editor.setDraft} />}

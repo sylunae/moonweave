@@ -74,8 +74,10 @@ export class PlaybackClock {
         this.anchorMediaMs = mediaMs
         this.anchorPerformanceMs = performanceMs
         predicted = mediaMs
-        // A real seek may go backwards. Do not keep the old monotonic floor.
-        this.lastOutputMs = mediaMs
+        // A forward-moving media sample can arrive behind the rendered
+        // position after a stall. Keep that position unless the media itself
+        // moved backwards, as it does on a backward seek.
+        if (mediaMs < this.lastMediaSampleMs) this.lastOutputMs = mediaMs
       } else {
         this.anchorMediaMs += clamp(drift * CORRECTION_RATIO, -MAX_CORRECTION_MS, MAX_CORRECTION_MS)
         predicted = this.anchorMediaMs + (performanceMs - this.anchorPerformanceMs) * this.playbackRate
@@ -83,8 +85,8 @@ export class PlaybackClock {
       this.lastMediaSampleMs = mediaMs
     }
 
-    // Small clock corrections must never make falling notes move backwards.
-    predicted = Math.min(Math.max(this.lastOutputMs, predicted), mediaMs + MAX_EXTRAPOLATION_MS)
+    // Bound newly extrapolated motion without retracting a presented frame.
+    predicted = Math.max(this.lastOutputMs, Math.min(predicted, mediaMs + MAX_EXTRAPOLATION_MS))
     this.lastOutputMs = predicted
     return predicted
   }

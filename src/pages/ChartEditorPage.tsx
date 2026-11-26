@@ -8,6 +8,7 @@ import {
   Undo2, Upload, X, Sparkles, FileJson, FileUp,
 } from 'lucide-react'
 import { navigate } from '@/app/navigation'
+import { isTouchWeb, useMobileBack } from '@/app/mobileBack'
 import { useI18n } from '@/app/i18n'
 import { usePreferences } from '@/app/preferences'
 import { Button } from '@/components/ui/button'
@@ -61,6 +62,8 @@ export default function ChartEditorPage() {
     isPlaying, historyLength, futureLength, commitNotes, undo, redo, flushActiveChart, togglePlay,
     chooseAudio, chooseBackground, removeBackground, chooseCover, removeCover, showToast,
   } = useChart()
+  const leaveEditor = () => { void flushActiveChart().finally(() => navigate('manage')) }
+  useMobileBack(true, activeChartId ? leaveEditor : () => navigate('manage'))
   const { preferences, setPreferences } = usePreferences()
   const playbackRate = preferences.playbackRate
   const editorRef = useRef<ChartEditorHandle>(null)
@@ -241,7 +244,7 @@ export default function ChartEditorPage() {
 
   return <div className="editor-page page-enter">
     <header className="game-page-toolbar editor-toolbar">
-      <Tooltip><TooltipTrigger asChild><GameButton size="icon-lg" aria-label={text('退出编辑器', 'Exit editor')} onClick={() => void flushActiveChart().finally(() => navigate('manage'))}><ArrowLeft /></GameButton></TooltipTrigger><TooltipContent side="bottom">{text('退出编辑器', 'Exit editor')}</TooltipContent></Tooltip>
+      <Tooltip><TooltipTrigger asChild><GameButton size="icon-lg" aria-label={text('退出编辑器', 'Exit editor')} onClick={leaveEditor}><ArrowLeft /></GameButton></TooltipTrigger><TooltipContent side="bottom">{text('退出编辑器', 'Exit editor')}</TooltipContent></Tooltip>
       <h1><i aria-hidden /><span>{chart.title || text('未命名谱面', 'Untitled')}</span></h1>
       <GameButton className="primary" onClick={() => setOpenSheet('playtest')}><Gamepad2 />{text('谱面试玩', 'Playtest')}</GameButton>
       <div role="group" className="editor-utility-actions" data-scroll-region aria-label={text('编辑器工具栏', 'Editor toolbar')}>
@@ -427,7 +430,7 @@ export default function ChartEditorPage() {
     <Dialog open={tempoTime !== null} onOpenChange={(open) => { if (!open) setTempoTime(null) }}>
       <DialogContent className="tempo-dialog">
         <DialogHeader><DialogTitle>{text('设置 BPM 变化', 'Set BPM change')}</DialogTitle><DialogDescription>{tempoTime === null ? '' : text(`从 ${formatTime(tempoTime)} 的节拍线开始使用新 BPM。`, `Use the new BPM from the beat line at ${formatTime(tempoTime)}.`)}</DialogDescription></DialogHeader>
-        <label><span>BPM</span><Input autoFocus inputMode="decimal" value={tempoDraft} onChange={(event) => setTempoDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') saveTempoChange() }} /></label>
+        <label><span>BPM</span><Input autoFocus={!isTouchWeb()} inputMode="decimal" value={tempoDraft} onChange={(event) => setTempoDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') saveTempoChange() }} /></label>
         <DialogFooter>{tempoTime !== null && chart.bpmChanges.some((change) => Math.abs(change.time - tempoTime) < 0.01) && <Button variant="destructive" onClick={() => deleteTempoChange(tempoTime)}>{text('删除 BPM 变化点', 'Delete BPM change')}</Button>}<Button variant="outline" onClick={() => setTempoTime(null)}>{text('取消', 'Cancel')}</Button><Button onClick={saveTempoChange}>{text('保存', 'Save')}</Button></DialogFooter>
       </DialogContent>
     </Dialog>

@@ -4,7 +4,7 @@ export const JUDGMENT_LINE_Y = 0.86
 export const TOUCH_LANE_START_Y = 0.56
 export const PLAYTEST_HORIZON_MS = 1_400
 const VERTICAL_TRACK_HALF_WIDTH = 0.62
-const TILTED_TRACK_HALF_WIDTH = 0.80
+const TILTED_TRACK_HALF_WIDTH = 0.86
 export type PlaytestTrackLayout = 'tilted' | 'portrait' | 'compact'
 
 export function resolvePlaytestTrackLayout(portrait: boolean, canChoose: boolean, trackMode: 'tilted' | 'vertical') {
@@ -52,7 +52,10 @@ export function getPlaytestViewportGeometry(
 ) {
   const horizon = getPlaytestHorizon(PLAYTEST_HORIZON_MS, scrollSpeed, laneTilt)
   if (layout === 'tilted') {
-    return { halfWidth: Math.min(getPlaytestTrackHalfWidth(laneTilt), height * 1.5 / width), horizon }
+    // Keep the full projection inside the stage while limiting the width on ultrawide viewports.
+    const projectedWidthLimit = 0.98 / getPlaytestTrackScale(laneTilt, 1)
+    const halfWidth = Math.min(getPlaytestTrackHalfWidth(laneTilt), projectedWidthLimit, height * 1.9 / width)
+    return { halfWidth, horizon }
   }
   const halfWidth = layout === 'portrait' ? 0.88 : Math.min(0.72, 360 / width, height * 0.53 / width)
   // Scale travel time with the visible distance to keep linear fall speed

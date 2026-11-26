@@ -47,11 +47,16 @@ export default function App({ showEarlyAccessNotice }: { showEarlyAccessNotice: 
   const hasAppTitlebar = Boolean(window.sylunae)
 
   useEffect(() => {
-    const url = new URL(window.location.href)
-    if (route === 'manage') url.searchParams.delete('page')
-    else url.searchParams.set('page', route)
-    window.history.replaceState(null, '', url)
+    const syncRouteUrl = () => {
+      const url = new URL(window.location.href)
+      if (route === 'manage') url.searchParams.delete('page')
+      else url.searchParams.set('page', route)
+      if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url)
+    }
+    syncRouteUrl()
+    window.addEventListener('popstate', syncRouteUrl)
     setPageScrolled(false)
+    return () => window.removeEventListener('popstate', syncRouteUrl)
   }, [route])
 
   useEffect(() => {

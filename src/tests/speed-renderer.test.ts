@@ -5,6 +5,8 @@ import type { ChartNote } from '@/features/chart/types'
 
 it.each(['note', 'hold'] as const)('keeps red %s above ordinary holds in one cached batch without frame layout reads', (redKind) => {
   const methods = new Map<PropertyKey, ReturnType<typeof vi.fn>>()
+  const upload = vi.fn((..._arguments: unknown[]) => methods.get('bindBuffer')?.mock.lastCall?.[1])
+  methods.set('bufferSubData', upload)
   const gl = new Proxy({}, { get: (_target, key) => {
     if (typeof key === 'string' && /^[A-Z_0-9]+$/.test(key)) return 1
     if (!methods.has(key)) methods.set(key, vi.fn(() => ({})))
@@ -23,19 +25,22 @@ it.each(['note', 'hold'] as const)('keeps red %s above ordinary holds in one cac
       bpm: 120, bpmChanges: [], effects: [], offset: 0, duration: 5000, laneTilt: 0, scrollSpeed: 7,
       autoplay: false, getTime: () => 1100, getPlaying: () => true, onStats: vi.fn(),
     })
+    const instances = methods.get('createBuffer')!.mock.results[0].value
+    const noteUploads = () => upload.mock.calls.filter((_, index) => upload.mock.results[index].value === instances)
     frame(10)
-    const upload = methods.get('bufferSubData')!
-    const noteUpload = upload.mock.calls.find((call) => call[2].length === 12)
-    expect([noteUpload?.[2][4], noteUpload?.[2][10]]).toEqual([0, 4]) // Both palettes share one batch.
+    expect(noteUploads()).toHaveLength(1)
+    const batch = noteUploads()[0][2] as Float32Array
+    expect([batch[4], batch[10]]).toEqual([0, 4]) // Both palettes share one batch.
+    expect(noteUploads()[0][4]).toBe(12)
     expect(methods.get('drawArraysInstanced')!.mock.calls[0][3]).toBe(2)
     upload.mockClear(); height.mockClear()
     frame(20)
     // Beat lines still move each frame; note instances do not need another upload.
-    expect(upload.mock.calls.filter((call) => call[2].length === 12)).toHaveLength(0)
+    expect(noteUploads()).toHaveLength(0)
     expect(height).not.toHaveBeenCalled()
     renderer.setHoldActive('hold', true)
     frame(30)
-    expect(upload.mock.calls.find((call) => call[2].length === 12)?.[2][5]).toBe(1)
+    expect((noteUploads()[0]?.[2] as Float32Array)?.[5]).toBe(1)
   } finally {
     renderer?.destroy(); vi.restoreAllMocks(); vi.unstubAllGlobals()
   }

@@ -2,11 +2,16 @@ import * as React from "react"
 import { cn } from "cn"
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
 import { CheckIcon, ChevronRightIcon } from "lucide-react"
+import { useMobileModal } from "@/app/mobileBack"
 
 function DropdownMenu({
+  open,
+  defaultOpen,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  const state = useMobileModal({ open, defaultOpen, onOpenChange })
+  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} {...state} />
 }
 
 function DropdownMenuPortal({

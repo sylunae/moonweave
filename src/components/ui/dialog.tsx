@@ -7,11 +7,17 @@ import { Dialog as DialogPrimitive } from "radix-ui"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 import { useI18n } from "@/app/i18n"
+import { focusMobileDialog, useMobileModal } from "@/app/mobileBack"
 
 function Dialog({
+  open,
+  defaultOpen,
+  onOpenChange,
+  onMobileBack,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+}: React.ComponentProps<typeof DialogPrimitive.Root> & { onMobileBack?: () => void }) {
+  const state = useMobileModal({ open, defaultOpen, onOpenChange, onMobileBack })
+  return <DialogPrimitive.Root data-slot="dialog" {...props} {...state} />
 }
 
 function DialogTrigger({
@@ -55,6 +61,7 @@ function DialogContent({
   showCloseButton = true,
   size = "sm",
   mobileSize = "dialog",
+  onOpenAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   overlayClassName?: string
@@ -81,6 +88,10 @@ function DialogContent({
           mobileSize === "fullscreen" && "max-sm:inset-0 max-sm:h-dvh max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none",
           className
         )}
+        onOpenAutoFocus={(event) => {
+          onOpenAutoFocus?.(event)
+          if (!event.defaultPrevented) focusMobileDialog(event)
+        }}
         {...props}
       >
         {children}

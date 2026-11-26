@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import ChartManagementPage from '@/pages/ChartManagementPage'
 import { normalizeManagedChart } from '@/features/chart/types'
@@ -28,7 +28,7 @@ afterEach(() => {
 })
 
 it('switches difficulty on the first click and edits it on the next click', () => {
-  vi.stubGlobal('matchMedia', () => ({ matches: true }))
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: query !== '(pointer: coarse)' }))
   render(<ChartManagementPage onSettings={() => {}} />)
 
   const hard = screen.getByRole('button', { name: /^HARD\s*8$/ })
@@ -42,7 +42,7 @@ it('switches difficulty on the first click and edits it on the next click', () =
 })
 
 it('applies the selected difficulty to every row and opens the matching track', async () => {
-  vi.stubGlobal('matchMedia', () => ({ matches: true }))
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: query !== '(pointer: coarse)' }))
   render(<ChartManagementPage onSettings={() => {}} />)
 
   const track = screen.getByRole('option', { name: /Track/ })
@@ -60,4 +60,31 @@ it('applies the selected difficulty to every row and opens the matching track', 
   const hard = screen.getByRole('button', { name: /^HARD\s*1$/ })
   expect(hard.getAttribute('aria-pressed')).toBe('true')
   await waitFor(() => expect((screen.getByRole('button', { name: /Open editor/ }) as HTMLButtonElement).disabled).toBe(false))
+})
+
+it('waits for a tap to focus the new chart title and dismisses the form through mobile Back', async () => {
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(pointer: coarse)' }))
+  render(<ChartManagementPage onSettings={() => {}} />)
+  fireEvent.click(screen.getByRole('button', { name: 'New chart' }))
+
+  const dialog = screen.getByRole('dialog', { name: 'New chart' })
+  const title = within(dialog).getByRole('textbox', { name: 'Title' })
+  expect(document.activeElement).toBe(dialog)
+  fireEvent.change(title, { target: { value: 'Draft title' } })
+  title.focus()
+  await waitFor(() => expect(window.history.state?.moonweaveMobileBack).toBe(true))
+
+  const back = () => act(async () => {
+    const popped = new Promise<void>((resolve) => window.addEventListener('popstate', () => resolve(), { once: true }))
+    window.history.back()
+    await popped
+  })
+
+  await back()
+  expect(document.activeElement).toBe(dialog)
+  expect((title as HTMLInputElement).value).toBe('Draft title')
+  await waitFor(() => expect(window.history.state?.moonweaveMobileBack).toBe(true))
+
+  await back()
+  expect(screen.queryByRole('dialog', { name: 'New chart' })).toBeNull()
 })

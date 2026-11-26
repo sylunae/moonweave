@@ -14,7 +14,7 @@ describe('playtest perspective compensation', () => {
 
   it('narrows the track and keeps lane centers symmetric as tilt decreases', () => {
     expect(getPlaytestTrackHalfWidth(0)).toBeCloseTo(0.62)
-    expect(getPlaytestTrackHalfWidth(45)).toBeCloseTo(0.8)
+    expect(getPlaytestTrackHalfWidth(45)).toBeCloseTo(0.86)
     expect(getPlaytestLaneCenterPercent(0, 0)).toBeCloseTo(26.75)
     expect(getPlaytestLaneCenterPercent(3, 0)).toBeCloseTo(73.25)
   })
@@ -37,6 +37,15 @@ describe('playtest perspective compensation', () => {
     expect(short.halfWidth * 1_200).toBeCloseTo(318)
     expect(tall.halfWidth * 2_400).toBeCloseTo(360)
     expect(tall.horizon / short.horizon).toBeCloseTo(1.5)
+  })
+
+  it('widens the landscape track while retaining all four touch lanes inside the stage', () => {
+    const width = 932
+    const height = 390
+    const { halfWidth } = getPlaytestViewportGeometry('tilted', 45, 7, width, height)
+    expect(halfWidth * width).toBeCloseTo(741)
+    expect(getPlaytestLanePositionPercent(0, 45, 1, halfWidth)).toBeGreaterThan(0)
+    expect(getPlaytestLanePositionPercent(4, 45, 1, halfWidth)).toBeLessThan(100)
   })
 
   it('aligns projected touch lanes with the track in either orientation', () => {
