@@ -6,7 +6,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameS
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ChartLibraryItem, ManagedChart, TitlebarTheme } from '../../src/shared/electron'
-import { createChartPackage, readChartPackage } from '../../src/features/chart/chartPackage'
+import { chartPackageExtensions, createChartPackage, isChartPackageFile, readChartPackage } from '../../src/features/chart/chartPackage'
 import { normalizeManagedChart, type Chart } from '../../src/features/chart/types'
 import { readAnalysisAudio } from './analysisAudio'
 import { discardYoutubeImport, getYoutubeImport, registerYoutubeImport } from './youtubeImport'
@@ -391,14 +391,13 @@ function registerIpc(): void {
   ipcMain.handle('library:import', async (event) => {
     const owner = BrowserWindow.fromWebContents(event.sender)
     if (!owner) return null
-    const result = await dialog.showOpenDialog(owner, { properties: ['openFile'], filters: [{ name: 'Moonweave Chart Package', extensions: ['mwchart'] }, { name: 'Legacy Moonweave Chart', extensions: ['json'] }] })
+    const result = await dialog.showOpenDialog(owner, { properties: ['openFile'], filters: [{ name: 'Moonweave Chart Package', extensions: chartPackageExtensions }, { name: 'Legacy Moonweave Chart', extensions: ['json'] }] })
     if (result.canceled) return null
     const sourceFile = result.filePaths[0]
     const id = crypto.randomUUID()
-    if (path.extname(sourceFile).toLowerCase() === '.mwchart') {
+    if (isChartPackageFile(sourceFile)) {
       const packaged = await readChartPackage(readFileSync(sourceFile))
-      if (!packaged.chart || typeof packaged.chart !== 'object') throw new Error('谱面文件格式无效')
-      const chart = packaged.chart as Record<string, unknown>
+      const chart = packaged.chart
       if (packaged.assets.audio) {
         chart.audioPath = storeAudioBytes(id, packaged.assets.audio.name, packaged.assets.audio.data)
         chart.audioName = packaged.assets.audio.name

@@ -35,6 +35,8 @@ npm run package:win
 
 `npm run dev` 会同时启动 Web 与 Electron 开发进程，通常更推荐根据目标平台单独运行对应命令。Web 产物位于 `dist/`，Electron 产物位于 `out/`，安装包位于 `release/`。
 
+手机使用 Web 版。通过 HTTPS 部署 `dist/` 后，可在 Android Chrome 菜单中安装应用，或在 iPhone Safari 的分享菜单中选择「添加到主屏幕」。首次联网加载并缓存后，可从主屏幕离线启动应用，打开设备上的本地谱面。
+
 ## 主要代码入口
 
 - 应用名称与导航：`src/config/app.tsx`

@@ -16,6 +16,7 @@ export interface Preferences {
   noteScrollSpeed: number
   trackBackgroundBlur: boolean
   playbackRate: number
+  trackMode: 'tilted' | 'vertical'
   laneTilt: number
   timingWindow: TimingWindow
   judgmentDisplay: 'lane' | 'center'
@@ -42,6 +43,7 @@ export const defaultPreferences: Preferences = {
   noteScrollSpeed: 8,
   trackBackgroundBlur: true,
   playbackRate: 1,
+  trackMode: 'tilted',
   laneTilt: 45,
   timingWindow: 'standard',
   judgmentDisplay: 'center',
@@ -87,6 +89,8 @@ export function normalizePreferences(input: unknown): Preferences {
     noteScrollSpeed,
     trackBackgroundBlur: typeof value.trackBackgroundBlur === 'boolean' ? value.trackBackgroundBlur : defaultPreferences.trackBackgroundBlur,
     playbackRate,
+    trackMode: value.trackMode === 'vertical' || (value.trackMode === undefined && value.laneTilt === 0)
+      ? 'vertical' : defaultPreferences.trackMode,
     laneTilt,
     timingWindow,
     judgmentDisplay: value.judgmentDisplay === 'lane' ? 'lane' : defaultPreferences.judgmentDisplay,

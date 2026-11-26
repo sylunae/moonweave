@@ -18,8 +18,9 @@ import { canPlayBackgroundVideo, syncBackgroundVideoTime as syncVideoTime } from
 import { createRedZoneIndex, RED_HOLD_GRACE_MS, RedZoneTracker } from '@/features/playtest/redZones'
 import { PlaybackClock } from '@/features/playtest/PlaybackClock'
 import { PlaytestRenderer, type PlaytestStats } from '@/features/playtest/PlaytestRenderer'
-import { getPlaytestLaneCenterPercent, getPlaytestTrackInsetPercent, JUDGMENT_LINE_Y } from '@/features/playtest/playtestGeometry'
+import { getPlaytestLaneCenterPercent, getPlaytestLanePositionPercent, getPlaytestViewportGeometry, JUDGMENT_LINE_Y, resolvePlaytestTrackLayout, TOUCH_LANE_START_Y } from '@/features/playtest/playtestGeometry'
 import { accuracyFromUnits, judgmentUnits, scoreFromUnits, type Judgment } from '@/features/playtest/scoring'
+import { usePlaytestViewport } from '@/features/playtest/usePlaytestViewport'
 
 const INITIAL_STATS: PlaytestStats = { fps: 0, backend: 'WebGL2', renderScale: 1, notes: 0, drawCalls: 0, frameTimeP95: 0, frameTimeMax: 0, longFramePercent: 0, clockStalls: 0 }
 const PREROLL_MS = 1000
@@ -60,6 +61,10 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   const runStartTimeRef = useRef(Math.max(0, Math.min(currentTime, chart.duration)))
   const showToast = editor.showToast
   const { preferences } = usePreferences()
+  const { portrait, canChooseTrackMode } = usePlaytestViewport()
+  const trackLayout = resolvePlaytestTrackLayout(portrait, canChooseTrackMode, preferences.trackMode)
+  const laneTilt = trackLayout === 'tilted' ? Math.max(1, preferences.laneTilt) : 0
+  const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }))
   const particleAppearance = useParticleAppearance(preferences.particleAppearanceId)
   const tapEffectDuration = particleAppearance?.tap.duration ?? 400
   const centeredJudgment = preferences.judgmentDisplay === 'center'
@@ -400,7 +405,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     const canvas = canvasRef.current
     if (!canvas) return
     const renderer = new PlaytestRenderer({
-      canvas, notes, laneTilt: preferences.laneTilt, scrollSpeed: preferences.noteScrollSpeed,
+      canvas, notes, laneTilt, trackLayout, scrollSpeed: preferences.noteScrollSpeed,
       bpm: chart.bpm, bpmChanges: chart.bpmChanges, effects: chart.effects, offset: chart.offset, duration: chart.duration, getTime: getRenderTime,
       getPlaying: () => playingRef.current,
       autoplay: false,
@@ -408,6 +413,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       transparentBackground: hasCustomBackground,
       initialRenderScale: hasVideoBackground ? 0.9 : 1,
       onStats: setStats,
+      onViewportResize: (width, height) => setViewport((current) => current.width === width && current.height === height ? current : { width, height }),
     })
     for (const id of judgedRef.current.keys()) renderer.hideNote(id)
     for (const id of holdStartsRef.current.keys()) {
@@ -418,7 +424,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     for (const lane of pressedRef.current) renderer.setLanePressed(lane, true)
     rendererRef.current = renderer
     return () => { rendererRef.current = null; renderer.destroy() }
-  }, [chart.bpm, chart.bpmChanges, chart.effects, chart.duration, chart.offset, getRenderTime, hasCustomBackground, hasVideoBackground, noteById, notes, preferences.laneTilt, preferences.noteScrollSpeed])
+  }, [chart.bpm, chart.bpmChanges, chart.effects, chart.duration, chart.offset, getRenderTime, hasCustomBackground, hasVideoBackground, laneTilt, noteById, notes, preferences.noteScrollSpeed, trackLayout])
 
   useEffect(() => {
     resetRun(runStartTimeRef.current)
@@ -540,6 +546,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   }, [autoPlay, audioRef, getRenderTime, noteById, processFrame, updateActiveHoldLanes])
 
   const pressTouchLane = useCallback((event: React.PointerEvent<HTMLButtonElement>, lane: number) => {
+    if (event.button !== 0) return
     event.preventDefault()
     event.currentTarget.setPointerCapture(event.pointerId)
     pressLane(lane)
@@ -613,10 +620,12 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     return () => window.removeEventListener('blur', releaseAll)
   }, [releaseLane])
 
-  const laneX = (lane: number) => getPlaytestLaneCenterPercent(lane, preferences.laneTilt)
-  const trackInset = getPlaytestTrackInsetPercent(preferences.laneTilt, JUDGMENT_LINE_Y)
-  const trackTopInset = getPlaytestTrackInsetPercent(preferences.laneTilt, 0)
-  const trackBottomInset = getPlaytestTrackInsetPercent(preferences.laneTilt, 1)
+  const { halfWidth } = getPlaytestViewportGeometry(trackLayout, laneTilt, preferences.noteScrollSpeed, viewport.width, viewport.height)
+  const laneEdge = (edge: number, y: number) => getPlaytestLanePositionPercent(edge, laneTilt, y, halfWidth)
+  const laneX = (lane: number) => getPlaytestLaneCenterPercent(lane, laneTilt, halfWidth)
+  const trackInset = laneEdge(0, JUDGMENT_LINE_Y)
+  const trackTopInset = laneEdge(0, 0)
+  const trackBottomInset = laneEdge(0, 1)
   const videoBackgroundActive = displayTime >= chart.backgroundVideoStartTime
   const judgmentFeedback = centeredJudgment ? feedback.filter(({ id }) => id === latestFeedbackId) : feedback
   const judgments = judgmentFeedback.map((effect) => <div
@@ -630,9 +639,11 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     </div>
   </div>)
 
-  return <div className="playtest-page page-enter" style={{
+  return <div className="playtest-page page-enter" data-orientation={portrait ? 'portrait' : 'landscape'} style={{
     '--playtest-track-inset': `${trackInset}%`,
+    '--playtest-effect-width': `${halfWidth * 60}%`,
     '--playtest-judgment-bottom': `${100 - JUDGMENT_LINE_Y * 100}%`,
+    '--playtest-touch-height': `${(1 - TOUCH_LANE_START_Y) * 100}%`,
   } as React.CSSProperties}>
     {formalSession && <audio ref={formalAudioRef} src={audioUrl} preload="auto" />}
     {backgroundUrl && chart.backgroundType === 'image' && <img key={backgroundUrl} className="playtest-background" src={backgroundUrl} alt="" decoding="async" />}
@@ -684,7 +695,20 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       {centeredJudgment && judgments}
     </div>
     {!playing && !completed && !exitStep && !settingsOpen && <Button variant="outline" className="playtest-paused" onClick={() => void togglePlayback()}><Play fill="currentColor" /><b>{displayTime > 0 ? text('继续', 'Continue') : formalSession ? text('开始游玩', 'Start play') : text('开始试玩', 'Start playtest')}</b><span>SPACE</span></Button>}
-    <div className="playtest-key-caps">{preferences.playKeys.map((key, lane) => <button key={`${key}-${lane}`} aria-label={text(`轨道 ${lane + 1}，按键 ${key}`, `Lane ${lane + 1}, key ${key}`)} className={pressed.has(lane) ? 'pressed' : ''} style={{ '--lane-x': `${laneX(lane)}%` } as React.CSSProperties} onContextMenu={(event) => event.preventDefault()} onPointerDown={(event) => pressTouchLane(event, lane)} onPointerUp={(event) => releaseTouchLane(event, lane)} onPointerCancel={(event) => releaseTouchLane(event, lane)} onLostPointerCapture={() => releaseLane(lane)}><span>{key}</span></button>)}</div>
+    <div className="playtest-key-caps">{preferences.playKeys.map((key, lane) => <button
+      key={`${key}-${lane}`}
+      aria-label={text(`轨道 ${lane + 1}，按键 ${key}`, `Lane ${lane + 1}, key ${key}`)}
+      className={pressed.has(lane) ? 'pressed' : ''}
+      style={{
+        '--lane-x': `${laneX(lane)}%`,
+        '--lane-touch-clip': `polygon(${laneEdge(lane, TOUCH_LANE_START_Y)}% 0, ${laneEdge(lane + 1, TOUCH_LANE_START_Y)}% 0, ${laneEdge(lane + 1, 1)}% 100%, ${laneEdge(lane, 1)}% 100%)`,
+      } as React.CSSProperties}
+      onContextMenu={(event) => event.preventDefault()}
+      onPointerDown={(event) => pressTouchLane(event, lane)}
+      onPointerUp={(event) => releaseTouchLane(event, lane)}
+      onPointerCancel={(event) => releaseTouchLane(event, lane)}
+      onLostPointerCapture={() => releaseLane(lane)}
+    ><span>{key}</span></button>)}</div>
     <div className="playtest-progress"><i style={{ width: `${Math.max(0, Math.min(100, displayTime / Math.max(1, duration) * 100))}%` }} /></div>
     <Dialog open={exitStep !== null} onOpenChange={(open) => { if (!open && !saving && !committedRef.current && !recordingEnded) { exitOpenRef.current = false; setExitStep(null) } }}><DialogContent size="md" showCloseButton={!saving && !committedRef.current && !recordingEnded} onEscapeKeyDown={(event) => { if (saving || committedRef.current || recordingEnded) event.preventDefault() }} onInteractOutside={(event) => event.preventDefault()}>
       <DialogHeader><DialogTitle>{text((exitStep === 'conflict' ? copy.conflict : copy.save).zh, (exitStep === 'conflict' ? copy.conflict : copy.save).en)}</DialogTitle><DialogDescription>{text((exitStep === 'conflict' ? copy.conflictDescription : copy.description).zh, (exitStep === 'conflict' ? copy.conflictDescription : copy.description).en)} · {recordedRef.current.length} NOTES</DialogDescription></DialogHeader>

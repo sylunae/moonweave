@@ -10,6 +10,7 @@ import { GameButton } from '@/components/ui/game-controls'
 import { EDITOR_LANE_WIDTH, type Chart, type ChartNote, type ToolMode } from './types'
 
 const LANE_COLORS = ['var(--editor-note-blue)', 'var(--editor-note-purple)', 'var(--editor-note-purple)', 'var(--editor-note-blue)']
+const TOUCH_DRAG_THRESHOLD = 8
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 
@@ -56,6 +57,7 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
   const [dragPreview, setDragPreview] = useState<Record<string, { lane: number; time: number; endTime?: number }>>({})
   const dragPreviewRef = useRef<Record<string, { lane: number; time: number; endTime?: number }>>({})
   const viewportTimeRef = useRef(currentTime)
+  const currentTimeRef = useRef(currentTime)
   const previewingSeekRef = useRef(false)
   const seekCommitTimerRef = useRef(0)
   const seekFrameRef = useRef(0)
@@ -67,6 +69,7 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
   const judgmentY = clamp(laneHeight - preferences.judgmentLineHeight, minJudgmentY, Math.max(minJudgmentY, laneHeight - 80))
   const timelineTime = previewingSeekRef.current ? viewportTime : currentTime
   const timelinePosition = scrollPositionAtTime(chart, timelineTime)
+  currentTimeRef.current = currentTime
   if (!previewingSeekRef.current) {
     viewportTimeRef.current = currentTime
     pendingViewportTimeRef.current = currentTime
@@ -93,10 +96,8 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
     const raw = timeAtScrollPosition(chart, viewportPosition + (judgmentY - (clientY - rect.top)) / pps * 1000)
     return snapToBeatLine(chart, raw, subdivision)
   }
-  const laneClick = (event: React.PointerEvent, lane: number) => {
-    if (event.button !== 0) return
-    if (tool === 'region') { notePointerDown(event); return }
-    const time = pointerTime(event.clientY)
+  const placeAtLane = (clientY: number, lane: number) => {
+    const time = pointerTime(clientY)
     if (tool === 'tempo') { onTempoLine(time); return }
     if (tool === 'effect') { onEffectLine(time); return }
     if (tool === 'delete') return
@@ -124,26 +125,36 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
     suppressRegionClickRef.current = false
   }
   const notePointerDown = (event: React.PointerEvent, id?: string) => {
-    if (event.button !== 0) return
+    if (event.button !== 0 || (event.pointerType === 'touch' && event.isPrimary === false)) return
     if (id && Boolean(chart.notes.find((note) => note.id === id)?.red) !== redMode) return
     event.stopPropagation(); event.preventDefault()
     pointerCleanupRef.current()
     suppressRegionClickRef.current = false
-    if (tool === 'tempo') { onTempoLine(pointerTime(event.clientY)); return }
-    if (tool === 'effect') { onEffectLine(pointerTime(event.clientY)); return }
-    if (tool === 'delete') { onNotesChange(chart.notes.filter((note) => note.id !== id)); return }
     const regionMode = tool === 'region'
-    if (!regionMode && !id) return
     const wasSelected = id !== undefined && selectedIds.has(id)
+    const time = pointerTime(event.clientY)
+    const canDragRegion = region?.end != null && (wasSelected || (id === undefined && time >= region.start && time <= region.end))
+    const applyTool = (clientY: number) => {
+      if (tool === 'tempo') onTempoLine(pointerTime(clientY))
+      else if (tool === 'effect') onEffectLine(pointerTime(clientY))
+      else if (tool === 'delete') onNotesChange(chart.notes.filter((note) => note.id !== id))
+      else if (regionMode) onRegionLine(pointerTime(clientY))
+      else if (id) onSelectionChange(new Set(selectedIds).add(id))
+    }
+    if (event.pointerType === 'touch' && !(regionMode ? canDragRegion && selectedIds.size > 0 : wasSelected && (tool === 'note' || tool === 'hold'))) {
+      startTouchPan(event, applyTool)
+      return
+    }
+    if (tool === 'tempo' || tool === 'effect' || tool === 'delete') { applyTool(event.clientY); return }
+    if (!regionMode && !id) return
     const nextSelection = new Set(selectedIds)
     if (!regionMode && !wasSelected) { nextSelection.add(id!); onSelectionChange(nextSelection) }
     const startX = event.clientX
     const startY = event.clientY
     const pointerId = event.pointerId
-    const dragThreshold = event.pointerType === 'touch' ? 8 : 3
+    const dragThreshold = event.pointerType === 'touch' ? TOUCH_DRAG_THRESHOLD : 3
     const rect = laneRef.current!.querySelector('.lanes')!.getBoundingClientRect()
-    const time = pointerTime(startY)
-    const canDrag = !regionMode || (region?.end != null && (wasSelected || (id === undefined && time >= region.start && time <= region.end)))
+    const canDrag = !regionMode || canDragRegion
     const selectedNotes = canDrag ? chart.notes.filter((note) => nextSelection.has(note.id) && Boolean(note.red) === redMode) : []
     const earliest = Math.min(...selectedNotes.map((note) => note.time))
     const latest = Math.max(...selectedNotes.map((note) => note.endTime ?? note.time))
@@ -181,7 +192,7 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
     pointerCleanupRef.current = cleanup
   }
   const resizeHold = (event: React.PointerEvent<HTMLButtonElement>, edge: 'start' | 'end') => {
-    if (event.button !== 0) return
+    if (event.button !== 0 || (event.pointerType === 'touch' && event.isPrimary === false)) return
     event.stopPropagation(); event.preventDefault()
     suppressRegionClickRef.current = true
     pointerCleanupRef.current()
@@ -249,6 +260,61 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
     onSeek(pendingViewportTimeRef.current)
     return pendingViewportTimeRef.current
   }, [onSeek])
+
+  const startTouchPan = (event: React.PointerEvent, onTap: (clientY: number) => void) => {
+    event.preventDefault()
+    pointerCleanupRef.current()
+    suppressRegionClickRef.current = true
+    const { pointerId, clientX: startX, clientY: startY } = event
+    const startPosition = scrollPositionAtTime(chart, viewportTimeRef.current)
+    let moved = false
+    let panning = false
+
+    const move = (pointer: globalThis.PointerEvent) => {
+      if (pointer.pointerId !== pointerId) return
+      const deltaY = pointer.clientY - startY
+      moved ||= Math.hypot(pointer.clientX - startX, deltaY) >= TOUCH_DRAG_THRESHOLD
+      if (!panning && Math.abs(deltaY) < TOUCH_DRAG_THRESHOLD) return
+      panning = true
+      window.clearTimeout(seekCommitTimerRef.current)
+      renderSeekPreview(timeAtScrollPosition(chart, startPosition + deltaY / pps * 1000))
+    }
+    const cleanup = () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', end)
+      window.removeEventListener('pointercancel', end)
+      pointerCleanupRef.current = () => undefined
+    }
+    const end = (pointer: globalThis.PointerEvent) => {
+      if (pointer.pointerId !== pointerId) return
+      cleanup()
+      if (pointer.type === 'pointercancel') {
+        if (panning) {
+          cancelAnimationFrame(seekFrameRef.current)
+          seekFrameRef.current = 0
+          previewingSeekRef.current = false
+          pendingViewportTimeRef.current = currentTimeRef.current
+          viewportTimeRef.current = currentTimeRef.current
+          setViewportTime(currentTimeRef.current)
+        }
+        return
+      }
+      move(pointer)
+      if (panning) commitSeekPreview()
+      else if (!moved) onTap(startY)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', end)
+    window.addEventListener('pointercancel', end)
+    pointerCleanupRef.current = cleanup
+  }
+
+  const lanePointerDown = (event: React.PointerEvent, lane: number) => {
+    if (event.button !== 0 || (event.pointerType === 'touch' && event.isPrimary === false)) return
+    if (tool === 'region') notePointerDown(event)
+    else if (event.pointerType === 'touch') startTouchPan(event, (clientY) => placeAtLane(clientY, lane))
+    else placeAtLane(event.clientY, lane)
+  }
 
   useImperativeHandle(ref, () => ({ flushSeek: commitSeekPreview }), [commitSeekPreview])
 
@@ -329,7 +395,7 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
             const tempo = chart.bpmChanges.find((change) => Math.abs(change.time - line.time) < 0.01)
             return <div key={line.index} className={`beat-line ${tone}${tempo ? ' tempo-change' : ''}`} style={{ top: y }}><span>{line.major ? Math.floor(line.beat) + 1 : ''}</span>{tempo && <b>{tempo.bpm} BPM</b>}</div>
           })}</div>
-          <div className="lanes">{[0, 1, 2, 3].map((lane) => <div className={`edit-lane lane-${lane}`} key={lane} onPointerDown={(event) => laneClick(event, lane)} onClick={regionClick} />)}</div>
+          <div className="lanes">{[0, 1, 2, 3].map((lane) => <div className={`edit-lane lane-${lane}`} key={lane} onPointerDown={(event) => lanePointerDown(event, lane)} onClick={regionClick} />)}</div>
           <div className="notes-layer">{visibleNotes.map((originalNote) => {
             const note = dragPreview[originalNote.id] ? { ...originalNote, ...dragPreview[originalNote.id] } : originalNote
             const y = yAt(note.time); const endY = note.kind === 'hold' ? yAt(note.endTime!) : y

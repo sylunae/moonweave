@@ -3,11 +3,10 @@ import { beatLinesInRange } from '@/features/chart/tempoMap'
 import type { ChartEffect } from '@/features/chart/effects/scrollSpeed'
 import { createSpeedGeometry, type VisualNote } from './speedGeometry'
 import type { BpmChange, ChartNote } from '@/features/chart/types'
-import { getPlaytestHorizon, getPlaytestTrackHalfWidth, JUDGMENT_LINE_Y, TRACK_TOP_SCALE_RANGE } from '@/features/playtest/playtestGeometry'
+import { getPlaytestTrackScale, getPlaytestViewportGeometry, JUDGMENT_LINE_Y, normalizeLaneTilt, TRACK_TOP_SCALE_RANGE, type PlaytestTrackLayout } from './playtestGeometry'
 import { NOTE_APPEARANCE, NOTE_GLOW_PADDING } from './noteAppearance'
 
 const NOTE_STRIDE = 6
-const HORIZON_MS = 1_400
 const MAX_BEAT_BUFFER_FLOATS = 1024
 const LANE_COLORS = [
   [0.192, 0.843, 1, 1],
@@ -32,6 +31,7 @@ interface PlaytestRendererOptions {
   canvas: HTMLCanvasElement
   notes: ChartNote[]
   laneTilt: number
+  trackLayout?: PlaytestTrackLayout
   scrollSpeed: number
   bpm: number
   bpmChanges: BpmChange[]
@@ -45,6 +45,7 @@ interface PlaytestRendererOptions {
   transparentBackground?: boolean
   initialRenderScale?: number
   onStats(stats: PlaytestStats): void
+  onViewportResize?(width: number, height: number): void
   onAutoplayHit?(lane: number): void
 }
 
@@ -110,8 +111,8 @@ void main() {
   float headBottom = visualScreenY(iNote.y);
   float tailY = hold ? visualScreenY(iNote.z) : headBottom;
   float headScale = max(0.0, trackScaleAt(headBottom));
-  float minHeadHeight = mix(36.0, 44.0, smoothstep(480.0, 850.0, uViewportSize.x));
-  float headHeight = clamp(noteWidth * 0.34, minHeadHeight, 54.0) * headScale / uViewportSize.y;
+  float maxHeadHeight = min(54.0, uViewportSize.y * 0.085);
+  float headHeight = min(maxHeadHeight, max(12.0, noteWidth * 0.34)) * headScale / uViewportSize.y;
   float headTop = headBottom - headHeight;
   vNoteBounds = vec4(headTop, headBottom, tailY, noteWidth);
   // Pad the same instance quad for the local halo. The solid head still ends
@@ -308,6 +309,8 @@ export class PlaytestRenderer {
     1, 0, 1, 0.86, 1, 0.86, 1, 1,
   ])
   private readonly noteInstances: WebGLBuffer
+  private readonly buffers: WebGLBuffer[] = []
+  private trackGeometry: ReturnType<typeof getPlaytestViewportGeometry>
   private readonly beatVertices = new Float32Array(MAX_BEAT_BUFFER_FLOATS)
   private readonly palette = new Float32Array(LANE_COLORS.flat())
   private readonly frameTimes = new Float32Array(512)
@@ -334,7 +337,7 @@ export class PlaytestRenderer {
   private noteCapacity = 0
   private visibleCount = 0
   private drawCalls = 0
-  private lastTime = 0
+  private lastTime: number | null = null
   private lastFrameAt = 0
   private lastRenderTime = 0
   private frameTimeCount = 0
@@ -350,6 +353,7 @@ export class PlaytestRenderer {
     })
     if (!gl) throw new Error('当前设备不支持 WebGL2')
     this.gl = gl
+    this.trackGeometry = getPlaytestViewportGeometry(options.trackLayout ?? 'tilted', options.laneTilt, options.scrollSpeed, 1, 1)
     const token = getComputedStyle(options.canvas).getPropertyValue('--red-zone').trim()
     const color = Number.parseInt((/^#[0-9a-f]{6}$/i.test(token) ? token : defaultThemePalettes.dark.redZone).slice(1), 16)
     this.redColor = [(color >> 16 & 255) / 255, (color >> 8 & 255) / 255, (color & 255) / 255, 1]
@@ -360,8 +364,9 @@ export class PlaytestRenderer {
     this.noteProgram = compileProgram(gl, NOTE_VERTEX, NOTE_FRAGMENT, ['uTime', 'uRealTime', 'uHorizon', 'uTilt', 'uTrackWidth', 'uViewportSize', 'uColors', 'uRedColor'])
     this.trackProgram = compileProgram(gl, TRACK_VERTEX, TRACK_FRAGMENT, ['uTilt', 'uTrackWidth', 'uTrackGeometry', 'uColor'])
     this.glowProgram = compileProgram(gl, GLOW_VERTEX, GLOW_FRAGMENT, ['uTrackWidth', 'uColor'])
-    this.noteVao = this.createNoteVao()
-    this.noteInstances = this.getInstanceBuffer(this.noteVao, 1)
+    const noteGeometry = this.createNoteVao()
+    this.noteVao = noteGeometry.vao
+    this.noteInstances = noteGeometry.instances
     this.trackVao = this.createTrackVao()
     const glowGeometry = this.createGlowVao()
     this.glowVao = glowGeometry.vao
@@ -380,11 +385,11 @@ export class PlaytestRenderer {
     const gl = this.gl
     const buffer = gl.createBuffer()
     if (!buffer) throw new Error('无法创建 WebGL buffer')
+    this.buffers.push(buffer)
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), gl.STATIC_DRAW)
     gl.enableVertexAttribArray(0)
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
-    return buffer
   }
 
   private createNoteVao() {
@@ -392,6 +397,7 @@ export class PlaytestRenderer {
     const vao = gl.createVertexArray()
     const instances = gl.createBuffer()
     if (!vao || !instances) throw new Error('无法创建音符实例缓冲区')
+    this.buffers.push(instances)
     gl.bindVertexArray(vao)
     this.createQuadBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, instances)
@@ -406,8 +412,7 @@ export class PlaytestRenderer {
     gl.vertexAttribPointer(3, 1, gl.FLOAT, false, NOTE_STRIDE * 4, 5 * 4)
     gl.vertexAttribDivisor(3, 1)
     gl.bindVertexArray(null)
-    ;(vao as WebGLVertexArrayObject & { instanceBuffer?: WebGLBuffer }).instanceBuffer = instances
-    return vao
+    return { vao, instances }
   }
 
   private createTrackVao() {
@@ -421,6 +426,7 @@ export class PlaytestRenderer {
     const vao = gl.createVertexArray()
     const buffer = gl.createBuffer()
     if (!vao || !buffer) throw new Error('无法创建轨道缓冲区')
+    this.buffers.push(buffer)
     gl.bindVertexArray(vao)
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
@@ -437,9 +443,7 @@ export class PlaytestRenderer {
     const blurSigma = 0.0115
     const blurRadius = blurSigma * 3
     const columns = 6
-    const topScale = 1 - (this.options.laneTilt / 45) * 0.82
-    const scaleAt = (y: number) => topScale + (1 - topScale) * Math.min(1, Math.max(0, y / 0.86))
-    const projectX = (x: number, y: number) => 0.5 + (x - 0.5) * scaleAt(y)
+    const projectX = (x: number, y: number) => 0.5 + (x - 0.5) * getPlaytestTrackScale(this.options.laneTilt, y)
     const cubic = (a: number, b: number, c: number, d: number, t: number) => {
       const inverse = 1 - t
       return inverse ** 3 * a + 3 * inverse ** 2 * t * b + 3 * inverse * t ** 2 * c + t ** 3 * d
@@ -459,7 +463,7 @@ export class PlaytestRenderer {
         rows.push(xs.map((x, index) => [x, y, coverage[index]]))
       }
 
-      addRow(1, left, right)
+      addRow(1, projectX(left, 1), projectX(right, 1))
       for (let step = 0; step <= curveSteps; step++) {
         const t = step / curveSteps
         const y = cubic(0.86, 0.62, 0.27, 0.13, t)
@@ -482,6 +486,7 @@ export class PlaytestRenderer {
     const vao = gl.createVertexArray()
     const buffer = gl.createBuffer()
     if (!vao || !buffer) throw new Error('无法创建轨道高亮缓冲区')
+    this.buffers.push(buffer)
     gl.bindVertexArray(vao)
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
@@ -498,6 +503,7 @@ export class PlaytestRenderer {
     const vao = gl.createVertexArray()
     const buffer = gl.createBuffer()
     if (!vao || !buffer) throw new Error('无法创建节拍线缓冲区')
+    this.buffers.push(buffer)
     gl.bindVertexArray(vao)
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
     gl.bufferData(gl.ARRAY_BUFFER, MAX_BEAT_BUFFER_FLOATS * 4, gl.DYNAMIC_DRAW)
@@ -507,12 +513,6 @@ export class PlaytestRenderer {
     return { vao, buffer }
   }
 
-  private getInstanceBuffer(vao: WebGLVertexArrayObject, _location: number) {
-    const buffer = (vao as WebGLVertexArrayObject & { instanceBuffer?: WebGLBuffer }).instanceBuffer
-    if (!buffer) throw new Error('实例缓冲区丢失')
-    return buffer
-  }
-
   private resize() {
     const { canvas } = this.options
     const nativeDpr = window.devicePixelRatio || 1
@@ -520,20 +520,21 @@ export class PlaytestRenderer {
     this.lastWindowWidth = window.innerWidth
     this.viewportWidth = Math.max(1, canvas.clientWidth)
     this.viewportHeight = Math.max(1, canvas.clientHeight)
-    const dpr = Math.min(nativeDpr * (window.innerWidth < 760 ? 1 : 1.5), window.innerWidth < 760 ? 1.5 : 2)
+    this.trackGeometry = getPlaytestViewportGeometry(this.options.trackLayout ?? 'tilted', this.options.laneTilt, this.options.scrollSpeed, this.viewportWidth, this.viewportHeight)
+    this.options.onViewportResize?.(this.viewportWidth, this.viewportHeight)
+    const compactViewport = window.innerWidth <= 760 || (window.innerWidth <= 1024 && window.innerHeight <= 540)
+    const dpr = compactViewport ? Math.min(nativeDpr, 1.5) : Math.min(nativeDpr * 1.5, 2)
     const scale = dpr * this.renderScale
     const width = Math.max(1, Math.round(this.viewportWidth * scale))
     const height = Math.max(1, Math.round(this.viewportHeight * scale))
     this.resizePending = false
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width
-      canvas.height = height
-      this.gl.viewport(0, 0, width, height)
-    }
+    if (canvas.width !== width) canvas.width = width
+    if (canvas.height !== height) canvas.height = height
+    this.gl.viewport(0, 0, width, height)
   }
 
   private uploadVisibleNotes(time: number) {
-    const horizon = getPlaytestHorizon(HORIZON_MS, this.options.scrollSpeed, this.options.laneTilt)
+    const { horizon } = this.trackGeometry
     const position = this.geometry.map.positionAt(time)
     const candidates = this.geometry.visible(position - horizon * (100 / 86 - 1) - 260, position + horizon, this.visibleCandidates)
     const recorded = this.options.getRecordedNotes?.()
@@ -584,8 +585,8 @@ export class PlaytestRenderer {
     const { program, uniforms } = this.trackProgram
     gl.useProgram(program)
     gl.bindVertexArray(this.trackVao)
-    gl.uniform1f(uniforms.uTilt, this.options.laneTilt / 45)
-    gl.uniform1f(uniforms.uTrackWidth, getPlaytestTrackHalfWidth(this.options.laneTilt))
+    gl.uniform1f(uniforms.uTilt, normalizeLaneTilt(this.options.laneTilt))
+    gl.uniform1f(uniforms.uTrackWidth, this.trackGeometry.halfWidth)
     gl.uniform1f(uniforms.uTrackGeometry, 1)
     for (let lane = 0; lane < 4; lane++) {
       const inner = lane === 1 || lane === 2
@@ -601,7 +602,7 @@ export class PlaytestRenderer {
     const { program, uniforms } = this.glowProgram
     gl.useProgram(program)
     gl.bindVertexArray(this.glowVao)
-    gl.uniform1f(uniforms.uTrackWidth, getPlaytestTrackHalfWidth(this.options.laneTilt))
+    gl.uniform1f(uniforms.uTrackWidth, this.trackGeometry.halfWidth)
     for (const lane of this.pressedLanes) {
       const color = LANE_COLORS[lane]
       gl.uniform3f(uniforms.uColor, color[0], color[1], color[2])
@@ -617,8 +618,8 @@ export class PlaytestRenderer {
     gl.bindVertexArray(this.beatVao)
     gl.bindBuffer(gl.ARRAY_BUFFER, this.beatBuffer)
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.trackBoundaryVertices)
-    gl.uniform1f(uniforms.uTilt, this.options.laneTilt / 45)
-    gl.uniform1f(uniforms.uTrackWidth, getPlaytestTrackHalfWidth(this.options.laneTilt))
+    gl.uniform1f(uniforms.uTilt, normalizeLaneTilt(this.options.laneTilt))
+    gl.uniform1f(uniforms.uTrackWidth, this.trackGeometry.halfWidth)
     gl.uniform1f(uniforms.uTrackGeometry, 1)
     gl.uniform4f(uniforms.uColor, 0.78, 0.855, 1, 0.42)
     gl.drawArrays(gl.LINES, 0, this.trackBoundaryVertices.length / 2)
@@ -626,7 +627,7 @@ export class PlaytestRenderer {
   }
 
   private drawBeats(time: number) {
-    const horizon = getPlaytestHorizon(HORIZON_MS, this.options.scrollSpeed, this.options.laneTilt)
+    const { horizon } = this.trackGeometry
     const position = this.geometry.map.positionAt(time)
     let lo = 0, hi = this.visualBeats.length
     while (lo < hi) {
@@ -656,8 +657,8 @@ export class PlaytestRenderer {
     gl.bindVertexArray(this.beatVao)
     gl.bindBuffer(gl.ARRAY_BUFFER, this.beatBuffer)
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.beatVertices, 0, floatCount)
-    gl.uniform1f(uniforms.uTilt, this.options.laneTilt / 45)
-    gl.uniform1f(uniforms.uTrackWidth, getPlaytestTrackHalfWidth(this.options.laneTilt))
+    gl.uniform1f(uniforms.uTilt, normalizeLaneTilt(this.options.laneTilt))
+    gl.uniform1f(uniforms.uTrackWidth, this.trackGeometry.halfWidth)
     gl.uniform1f(uniforms.uTrackGeometry, 0)
     gl.uniform4f(uniforms.uColor, 0.843, 0.898, 1, 0.16)
     gl.drawArrays(gl.LINES, 0, floatCount / 2)
@@ -676,9 +677,9 @@ export class PlaytestRenderer {
     gl.bindVertexArray(this.noteVao)
     gl.uniform1f(uniforms.uTime, this.geometry.map.positionAt(time))
     gl.uniform1f(uniforms.uRealTime, time)
-    gl.uniform1f(uniforms.uHorizon, getPlaytestHorizon(HORIZON_MS, this.options.scrollSpeed, this.options.laneTilt))
-    gl.uniform1f(uniforms.uTilt, this.options.laneTilt / 45)
-    gl.uniform1f(uniforms.uTrackWidth, getPlaytestTrackHalfWidth(this.options.laneTilt))
+    gl.uniform1f(uniforms.uHorizon, this.trackGeometry.horizon)
+    gl.uniform1f(uniforms.uTilt, normalizeLaneTilt(this.options.laneTilt))
+    gl.uniform1f(uniforms.uTrackWidth, this.trackGeometry.halfWidth)
     gl.uniform4fv(uniforms.uRedColor, this.redColor)
     gl.uniform2f(uniforms.uViewportSize, this.viewportWidth, this.viewportHeight)
     this.setPalette(uniforms.uColors)
@@ -710,7 +711,7 @@ export class PlaytestRenderer {
     }
     this.lastFrameAt = now
     this.lastRenderTime = time
-    if (time < this.lastTime - 250) this.reset(time)
+    if (this.lastTime !== null && time < this.lastTime - 250) this.reset(time)
     this.lastTime = time
     this.autoplay(time)
     this.uploadVisibleNotes(time)
@@ -789,5 +790,9 @@ export class PlaytestRenderer {
   destroy() {
     cancelAnimationFrame(this.frame)
     this.resizeObserver.disconnect()
+    const gl = this.gl
+    for (const vao of [this.noteVao, this.trackVao, this.glowVao, this.beatVao]) gl.deleteVertexArray(vao)
+    for (const buffer of this.buffers) gl.deleteBuffer(buffer)
+    for (const { program } of [this.noteProgram, this.trackProgram, this.glowProgram]) gl.deleteProgram(program)
   }
 }

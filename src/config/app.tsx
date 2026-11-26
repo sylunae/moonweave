@@ -41,6 +41,9 @@ export const youtubeImportCopy = {
 } as const
 
 export const playSettingsCopy = {
+  trackMode: { zh: '横屏轨道', en: 'Landscape track' },
+  tiltedTrack: { zh: '倾斜轨道', en: 'Tilted track' },
+  verticalTrack: { zh: '垂直 4K 轨道', en: 'Vertical 4K track' },
   trackBackgroundBlur: { zh: '轨道背景模糊', en: 'Track background blur' },
   judgmentDisplay: { zh: '判定显示位置', en: 'Judgment display position' },
   judgmentLane: { zh: '音符判定线', en: 'Judgment line' },
@@ -218,7 +221,7 @@ export const appConfig = {
   englishName: 'Moonweave',
   shortName: '织月制谱',
   eyebrow: 'CHART STUDIO',
-  description: import.meta.env.VITE_APP_DESCRIPTION || '织月制谱（Moonweave Chart Editor）——专注于 4K 下落式节奏谱面的桌面制谱工具。',
+  description: import.meta.env.VITE_APP_DESCRIPTION || '织月制谱（Moonweave Chart Editor）——支持桌面与网页的 4K 下落式谱面编辑和游玩工具。',
   navigation: [{
     items: [
       { id: 'manage', label: { zh: '我的谱面', en: 'My Charts' }, description: { zh: '管理内部谱面库', en: 'Manage the local chart library' }, icon: Library },

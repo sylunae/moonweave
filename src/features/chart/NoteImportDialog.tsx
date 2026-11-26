@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { GameSelect } from '@/components/ui/game-select'
 import { noteImportTitle } from '@/config/app'
 import { useChart } from './ChartProvider'
+import { chartPackageAccept } from './chartPackage'
 import { libraryMetadata, tiers } from './libraryMetadata'
 import { noteImportIssue, readNoteSource } from './noteImport'
 import type { Chart } from './types'
@@ -85,7 +86,7 @@ export default function NoteImportDialog({ onClose, onApplied }: { onClose(): vo
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" disabled={busy} onClick={() => input.current?.click()}><FileUp />{text('选择谱面文件', 'Choose chart file')}</Button>
           {(file || error) && <Button variant="ghost" disabled={busy} onClick={() => { setFile(null); setSelection(undefined); setError('') }}>{text('使用本谱面', 'Use this chart')}</Button>}
-          <input ref={input} type="file" accept=".mwchart,.json" hidden onChange={event => {
+          <input ref={input} type="file" accept={`${chartPackageAccept},.json`} hidden onChange={event => {
             const selectedFile = event.currentTarget.files?.[0]
             event.currentTarget.value = ''
             if (selectedFile) void load(selectedFile)

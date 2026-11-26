@@ -6,7 +6,7 @@ import { migrateLegacyChartPreferences, usePreferences } from '@/app/preferences
 import type { ChartInfoMedia, ChartLibraryItem } from '@/shared/electron'
 import { PlaybackClock } from '@/features/playtest/PlaybackClock'
 import { deleteWebChart, listWebCharts, readWebChart, writeWebChart } from './webLibrary'
-import { createChartPackage, readChartPackage } from './chartPackage'
+import { chartPackageAccept, createChartPackage, isChartPackageFile, readChartPackage } from './chartPackage'
 import { DEFAULT_CHART, normalizeManagedChart, type Chart, type ChartNote } from './types'
 import { snapToBeatLine } from './tempoMap'
 import { BpmDetectionDialog } from './BpmDetectionDialog'
@@ -547,8 +547,8 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
         updateSummary(webSummary(record.id, loaded, record.updatedAt, record.coverUrl), false); showToast(text('谱面资源已导入内部谱面库', 'Chart resources imported into the local library'))
         return record.id
       }
-      const files = await chooseLocalFiles('.mwchart,application/json,.json,audio/*,.flac,.m4a,image/png,image/jpeg,image/webp,image/avif,video/mp4,video/webm', true)
-      const packageFile = files.find((file) => file.name.toLowerCase().endsWith('.mwchart'))
+      const files = await chooseLocalFiles(`${chartPackageAccept},application/json,.json,audio/*,.flac,.m4a,image/png,image/jpeg,image/webp,image/avif,video/mp4,video/webm`, true)
+      const packageFile = files.find(file => isChartPackageFile(file.name))
       if (packageFile) {
         const packaged = await readChartPackage(new Uint8Array(await packageFile.arrayBuffer()))
         const loaded = normalizeManagedChart(packaged.chart)

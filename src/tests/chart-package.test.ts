@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createChartPackage, readChartPackage } from '@/features/chart/chartPackage'
+import { strToU8, zipSync } from 'fflate'
+import { createChartPackage, isChartPackageFile, readChartPackage } from '@/features/chart/chartPackage'
 import { DEFAULT_CHART, normalizeChart } from '@/features/chart/types'
 import { noteImportIssue, readNoteSource } from '@/features/chart/noteImport'
 
@@ -35,8 +36,19 @@ describe('Moonweave chart packages', () => {
     expect(normalizeChart({ settings: { editorLaneWidthPercent: 140 } }).settings.editorLaneWidthPercent).toBe(100)
   })
 
-  it('rejects archives without a Moonweave manifest', async () => {
+  it('recognizes both chart package extensions regardless of case', () => {
+    expect(['song.mwchart', 'song.zip', 'song.ZIP', 'song.json'].map(isChartPackageFile)).toEqual([true, true, true, false])
+  })
+
+  it('rejects ordinary ZIPs and packages with incomplete content', async () => {
+    const chart = strToU8(JSON.stringify(DEFAULT_CHART))
+    const manifest = strToU8(JSON.stringify({
+      format: 'moonweave-chart', version: 1, chart: 'chart.json', assets: { audio: { path: 'assets/audio.ogg', name: 'song.ogg' } },
+    }))
     await expect(readChartPackage(new Uint8Array([1, 2, 3]))).rejects.toThrow()
+    await expect(readChartPackage(zipSync({ 'chart.json': chart }))).rejects.toThrow('无效的 Moonweave 谱面包')
+    await expect(readChartPackage(zipSync({ 'manifest.json': manifest, 'chart.json': strToU8('{}') }))).rejects.toThrow('谱面文件格式无效')
+    await expect(readChartPackage(zipSync({ 'manifest.json': manifest, 'chart.json': chart }))).rejects.toThrow('谱面包缺少 audio 资源')
   })
 
   it('reads active and inactive difficulty notes from native JSON and packages including media', async () => {
@@ -44,7 +56,11 @@ describe('Moonweave chart packages', () => {
     const tap = { id: 'hard', time: 8000, lane: 3, kind: 'note' }
     const chart = normalizeChart({ library: { levels: [0, 4, 8, 0], tier: 2 }, notes: [tap], tracks: { 1: { notes: [hold] } } })
     const archive = await createChartPackage(chart, { audio: { data: new Uint8Array([1, 2, 3]), name: 'song.ogg' } })
-    const files = [new File([JSON.stringify(chart)], 'chart.json'), new File([archive.slice().buffer], 'song.mwchart')]
+    const files = [
+      new File([JSON.stringify(chart)], 'chart.json'),
+      new File([archive.slice().buffer], 'song.mwchart'),
+      new File([archive.slice().buffer], 'song.ZIP', { type: 'application/zip' }),
+    ]
     for (const file of files) {
       const source = await readNoteSource(file)
       expect(source.notes).toEqual([tap])

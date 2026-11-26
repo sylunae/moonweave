@@ -1,4 +1,4 @@
-import { readChartPackageMetadata } from './chartPackage'
+import { isChartPackageFile, readChartPackageMetadata } from './chartPackage'
 import { libraryMetadata } from './libraryMetadata'
 import { normalizeChart, type Chart, type ChartNote } from './types'
 
@@ -6,7 +6,7 @@ export const noteJsonLimit = 8 * 1024 * 1024
 export const notePackageLimit = 128 * 1024 * 1024
 
 export async function readNoteSource(file: File): Promise<Chart> {
-  const packaged = /\.mwchart$/i.test(file.name)
+  const packaged = isChartPackageFile(file.name)
   if (file.size > (packaged ? notePackageLimit : noteJsonLimit)) throw new RangeError('file size')
   const input = packaged
     ? await readChartPackageMetadata(new Uint8Array(await file.arrayBuffer()), noteJsonLimit)

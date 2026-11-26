@@ -4,6 +4,7 @@ import { useI18n } from '@/app/i18n'
 import { usePreferences, type ThemeMode, type TimingWindow } from '@/app/preferences'
 import { appConfig, playSettingsCopy, settingsCopy } from '@/config/app'
 import { ParticleAppearanceSettings } from '@/features/appearance/ParticleAppearanceSettings'
+import { usePlaytestViewport } from '@/features/playtest/usePlaytestViewport'
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
 import { Input } from './ui/input'
@@ -47,6 +48,8 @@ export function SettingsDialog({ open, onOpenChange, initialSection = 'appearanc
   const [section, setSection] = useState(initialSection)
   const { preferences, setPreferences, resetPreferences } = usePreferences()
   const { text } = useI18n()
+  const { portrait, canChooseTrackMode } = usePlaytestViewport()
+  const trackModeLabel = text(playSettingsCopy.trackMode.zh, playSettingsCopy.trackMode.en)
   const trackBackgroundBlurLabel = text(playSettingsCopy.trackBackgroundBlur.zh, playSettingsCopy.trackBackgroundBlur.en)
   const judgmentDisplayLabel = text(playSettingsCopy.judgmentDisplay.zh, playSettingsCopy.judgmentDisplay.en)
   const themeOptions: Array<{ value: ThemeMode; label: string; icon: typeof Laptop }> = [
@@ -86,8 +89,21 @@ export function SettingsDialog({ open, onOpenChange, initialSection = 'appearanc
               <div className="key-inputs">{preferences.playKeys.map((key, index) => <Input key={index} value={key} maxLength={1} aria-label={text(`轨道 ${index + 1} 按键`, `Lane ${index + 1} key`)} onChange={(event) => { const playKeys = [...preferences.playKeys]; playKeys[index] = event.target.value.slice(-1).toUpperCase(); setPreferences((current) => ({ ...current, playKeys })) }} />)}</div>
               <PlaySettingSlider label={text('音符下落速度', 'Note scroll speed')} description={text('控制游玩时音符的视觉速度', 'Controls the visual speed of notes during play')}
                 min={4} max={12} step={.5} value={preferences.noteScrollSpeed} onCommit={(noteScrollSpeed) => setPreferences((current) => ({ ...current, noteScrollSpeed }))} />
-              <PlaySettingSlider label={text('轨道倾斜度', 'Lane tilt')} description={text('只改变透视，不影响判定', 'Changes perspective without affecting judgment')}
-                min={0} max={45} value={preferences.laneTilt} unit="°" onCommit={(laneTilt) => setPreferences((current) => ({ ...current, laneTilt }))} />
+              {canChooseTrackMode && <div className="config-block">
+                <span>{trackModeLabel}</span>
+                <Select value={preferences.trackMode} onValueChange={(trackMode) => {
+                  if (trackMode === 'tilted' || trackMode === 'vertical') setPreferences((current) => ({ ...current, trackMode }))
+                }}>
+                  <SelectTrigger aria-label={trackModeLabel}><SelectValue /></SelectTrigger>
+                  <SelectContent position="popper" align="start">
+                    <SelectItem value="tilted">{text(playSettingsCopy.tiltedTrack.zh, playSettingsCopy.tiltedTrack.en)}</SelectItem>
+                    <SelectItem value="vertical">{text(playSettingsCopy.verticalTrack.zh, playSettingsCopy.verticalTrack.en)}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>}
+              {!portrait && (!canChooseTrackMode || preferences.trackMode === 'tilted') &&
+                <PlaySettingSlider label={text('轨道倾斜度', 'Lane tilt')} description={text('只改变透视，不影响判定', 'Changes perspective without affecting judgment')}
+                  min={1} max={45} value={Math.max(1, preferences.laneTilt)} unit="°" onCommit={(laneTilt) => setPreferences((current) => ({ ...current, laneTilt }))} />}
               <div className="config-block"><span>{text('判定宽松度', 'Timing window')}</span><div className="moon-segmented">{timingOptions.map(({ value, label }) => <button key={value} className={preferences.timingWindow === value ? 'active' : ''} onClick={() => setPreferences((current) => ({ ...current, timingWindow: value }))}>{label}</button>)}</div></div>
               <div className="config-block">
                 <span>{judgmentDisplayLabel}</span>
