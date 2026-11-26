@@ -5,7 +5,8 @@ import { app, BrowserWindow, dialog, ipcMain, protocol, shell } from 'electron'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { ChartLibraryItem, ManagedChart, TitlebarTheme } from '../../src/shared/electron'
+import { SYSTEM_LANGUAGES_ARG, type ChartLibraryItem, type ManagedChart, type TitlebarTheme } from '../../src/shared/electron'
+import { defaultThemePalettes } from '../../src/app/theme'
 import { chartPackageExtensions, createChartPackage, isChartPackageFile, readChartPackage } from '../../src/features/chart/chartPackage'
 import { normalizeManagedChart, type Chart } from '../../src/features/chart/types'
 import { readAnalysisAudio } from './analysisAudio'
@@ -245,10 +246,14 @@ function titlebarOverlay(theme: TitlebarTheme) {
 
 function createWindow(): void {
   const window = new BrowserWindow({
-    width: 1380, height: 880, minWidth: 360, minHeight: 560, show: false, backgroundColor: '#ffffff',
+    width: 1380, height: 880, minWidth: 360, minHeight: 560, show: false, backgroundColor: defaultThemePalettes.dark.bg,
     icon: app.isPackaged ? undefined : fileURLToPath(new URL('../../build/icon.png', import.meta.url)),
-    titleBarStyle: 'hidden', titleBarOverlay: titlebarOverlay('light'),
-    webPreferences: { preload: fileURLToPath(new URL('../preload/index.cjs', import.meta.url)), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: true },
+    titleBarStyle: 'hidden', titleBarOverlay: titlebarOverlay('dark'),
+    webPreferences: {
+      preload: fileURLToPath(new URL('../preload/index.cjs', import.meta.url)),
+      contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: true,
+      additionalArguments: [SYSTEM_LANGUAGES_ARG + app.getPreferredSystemLanguages().join(',')],
+    },
   })
   window.once('ready-to-show', () => window.show())
   const contents = window.webContents

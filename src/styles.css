@@ -127,7 +127,8 @@ html body :is([data-slot='card'], [data-slot='dialog-content']:not(.game-chart-d
 ::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: 20px; background: color-mix(in srgb, var(--muted-text) 34%, transparent); background-clip: padding-box; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-.boot-splash, .page-loader { height: 100%; display: flex; align-items: center; justify-content: center; gap: 11px; color: var(--muted-text); font-size: 13px; }
+.page-loader { height: 100%; display: flex; align-items: center; justify-content: center; gap: 11px; color: var(--muted-text); font-size: 13px; }
+.boot-splash + #root .content-shell > .page-loader { display: none; }
 .resource-loader { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; overflow: hidden; background: radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--brand) 14%, var(--bg)), var(--bg) 46%); }
 .resource-loader-brand { display: flex; align-items: center; gap: 11px; color: var(--text); font-family: var(--font-sans); font-size: 12px; font-weight: 700; letter-spacing: .16em; }
 .resource-loader-brand .brand-mark { width: 34px; height: 34px; flex-basis: 34px; }
@@ -346,12 +347,12 @@ body:has(.app-shell.has-app-titlebar) .settings-modal { top: calc(50% + var(--ti
 .playtest-hold-effect {
   z-index: 7;
   width: calc(clamp(140px, 18vw, 227px) * var(--playtest-sprite-scale));
-  animation: var(--particle-frame-animation, playtest-sprite-frames) var(--playtest-sprite-duration) step-end infinite;
 }
 .playtest-hold-effect.finishing {
-  animation: var(--particle-frame-animation, playtest-sprite-frames) var(--playtest-sprite-duration) step-end infinite,
-    playtest-hold-fade calc(var(--playtest-sprite-duration) * .6) ease-out forwards;
+  animation: playtest-hold-fade calc(var(--playtest-sprite-duration) * .6) ease-out forwards;
 }
+.particle-atlas-clip { position: absolute; inset: 0; overflow: hidden; }
+.particle-atlas-clip > img { position: absolute; top: 0; left: 0; max-width: none; }
 .playtest-hud { --playtest-combo-size: clamp(32px, 4vw, 48px); position: absolute; z-index: 20; top: max(72px, calc(55% - var(--playtest-combo-size) / 2)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 14px; pointer-events: none; }
 .playtest-combo { min-height: var(--playtest-combo-size); display: flex; color: #f5fbff; text-shadow: 0 2px 4px #000, 0 0 14px #28d7ff; }
 .playtest-combo b { font: 800 var(--playtest-combo-size)/1 Consolas, monospace; font-variant-numeric: tabular-nums; }
@@ -795,7 +796,7 @@ body:has(.has-app-titlebar) .editor-sheet { top: var(--titlebar-height); }
   .preview-eq i:nth-child(3) { --eq-delay: -.34s; }
 }
 @keyframes preview-eq { to { transform: scaleY(1); } }
-.density-playhead { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--text); pointer-events: none; }
+.density-playhead { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--text); pointer-events: none; will-change: transform; }
 .jacket-stage { padding: 0; border: 0; background: transparent; cursor: pointer; width: min(46%,29vh,290px); flex: none; position: relative; perspective: 900px; }
 .jacket-stage .record-art { transform: rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)); transition: transform .18s,box-shadow .22s; box-shadow: 0 14px 32px -14px var(--scene-color); animation: jacket-wipe .55s cubic-bezier(.6,0,.2,1); }
 .jacket-stage::before,.jacket-stage::after { content: ''; position: absolute; width: 18px; height: 18px; border: solid var(--selection-accent); pointer-events: none; transition: translate .2s, filter .2s; }
@@ -857,6 +858,9 @@ body:has(.has-app-titlebar) .editor-sheet { top: var(--titlebar-height); }
 @keyframes jacket-wipe { from { clip-path: polygon(0 0,0 0,-40% 100%,0 100%); } to { clip-path: polygon(0 0,140% 0,100% 100%,0 100%); } }
 @keyframes editor-sheen { 65%,100% { background-position: calc(100% + 100px) 0,center; } }
 @media (max-width: 760px) {
+  .stage-rails,
+  .chart-management-page[data-previewing=true] :is(.stage-aura, .open-editor)::after { animation: none; }
+  .stage-dust i:nth-child(n+13) { display: none; }
   .game-page-toolbar { gap: 8px; padding-block: 10px; }.game-page-toolbar h1 { font-size: 18px; margin-right: auto; }.library-tools { gap: 4px; }.library-tools .game-button { padding-inline: 8px; font-size: 12px; }.player-menu > span:not(.brand-mark),.player-menu > svg { display: none; }
   .game-search { order: 2; max-width: none; }.game-page-toolbar > .game-select { order: 3; }.game-tabs { order: 4; width: 100%; }.game-tabs button { flex: 1; }
   .library-tools { order: 1; }.library-stage { gap: 0; }.chart-management-page[data-detail=false] .library-detail,.chart-management-page[data-detail=true] .chart-library-list { display: none; }

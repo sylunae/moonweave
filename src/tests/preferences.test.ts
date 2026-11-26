@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { defaultPreferences, migrateLegacyChartPreferences, normalizePreferences, SIDEBAR_MAX, SIDEBAR_MIN } from '@/app/preferences'
+import { resolveStartupLanguage } from '@/app/startupPreferences'
+
+describe('resolveStartupLanguage', () => {
+  it('honors saved preferences, then locale order, and falls back to English', () => {
+    expect(resolveStartupLanguage('zh', ['en-US'])).toBe('zh')
+    expect(resolveStartupLanguage('en', ['zh-CN'])).toBe('en')
+    expect(resolveStartupLanguage(undefined, ['ja-JP', 'zh-Hans-SG', 'en-GB'])).toBe('zh')
+    expect(resolveStartupLanguage('invalid', ['en-GB', 'zh-CN'])).toBe('en')
+    expect(resolveStartupLanguage(undefined, ['de-DE'])).toBe('en')
+  })
+})
 
 describe('normalizePreferences', () => {
   it('uses safe defaults for invalid data', () => {

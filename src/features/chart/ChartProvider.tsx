@@ -19,6 +19,18 @@ import { noteImportIssue } from './noteImport'
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 const text = (zh: string, en: string) => document.documentElement.lang.startsWith('zh') ? zh : en
 const freshChart = () => normalizeManagedChart(DEFAULT_CHART)
+
+function createChartId() {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+
+  // randomUUID requires a secure context, but getRandomValues also works over LAN HTTP.
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  bytes[6] = (bytes[6] & 0x0f) | 0x40
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
+  const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
+
 const packagedAssetBlob = (asset: { data: Uint8Array; name: string }) => {
   const extension = asset.name.split('.').pop()?.toLowerCase() ?? ''
   const type = ({ mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', flac: 'audio/flac', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', avif: 'image/avif', mp4: 'video/mp4', webm: 'video/webm' } as Record<string, string>)[extension] ?? ''
@@ -61,7 +73,7 @@ interface ChartContextValue {
   chooseCover(): Promise<void>
   removeCover(): Promise<void>
   flushActiveChart(): Promise<boolean>
-  importChart(): Promise<string | null>
+  importChart(includeMedia?: boolean): Promise<string | null>
   exportChart(id: string): Promise<boolean>
   inspectAudio(id: string): Promise<string | Blob>
   inspectChart(id: string): Promise<Chart | null>
@@ -336,7 +348,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
   const createChart = useCallback(async (initial: Chart, media: ChartInfoMedia) => {
     if (!media.audio && (!media.youtubeImportId || !window.moonweave?.youtube)) return null
     if (activeIdRef.current && !await flushActiveChart()) return null
-    const id = crypto.randomUUID()
+    const id = createChartId()
     const library = newChartMetadata(initial.library)
     const tracks = Object.fromEntries(tiers.flatMap((_, tier) =>
       tier === library.tier ? [] : [[tier, emptyDifficultyTrack()]]))
@@ -382,7 +394,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     }
     const record = await readWebChart(id)
     if (!record) return null
-    const newId = crypto.randomUUID()
+    const newId = createChartId()
     const copy = { ...record.chart, title: record.chart.title + text('（副本）', ' (Copy)'), library: { ...libraryMetadata(record.chart.library), status: 'draft' as const } }
     const url = record.cover ? URL.createObjectURL(record.cover) : ''
     if (!await persistSnapshot(newId, copy, { audio: record.audio, background: record.background, cover: record.cover, coverUrl: url })) {
@@ -535,10 +547,10 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
     return true
   }, [flushActiveChart, readChartForExport, showToast])
 
-  const importChart = useCallback(async () => {
-    await flushActiveChart()
+  const importChart = useCallback(async (includeMedia = false) => {
     try {
       if (window.moonweave) {
+        if (activeIdRef.current && !await flushActiveChart()) return null
         const record = await window.moonweave.importChart()
         if (!record) return null
         migrateLegacyPreferences(record.chart)
@@ -547,7 +559,10 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
         updateSummary(webSummary(record.id, loaded, record.updatedAt, record.coverUrl), false); showToast(text('谱面资源已导入内部谱面库', 'Chart resources imported into the local library'))
         return record.id
       }
-      const files = await chooseLocalFiles(`${chartPackageAccept},application/json,.json,audio/*,.flac,.m4a,image/png,image/jpeg,image/webp,image/avif,video/mp4,video/webm`, true)
+      const files = await chooseLocalFiles(includeMedia
+        ? 'application/json,.json,audio/*,.flac,.m4a,image/png,image/jpeg,image/webp,image/avif,video/mp4,video/webm'
+        : `${chartPackageAccept},application/json,.json`, includeMedia)
+      if (!files.length || (activeIdRef.current && !await flushActiveChart())) return null
       const packageFile = files.find(file => isChartPackageFile(file.name))
       if (packageFile) {
         const packaged = await readChartPackage(new Uint8Array(await packageFile.arrayBuffer()))
@@ -559,7 +574,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
         loaded.backgroundPath = background ? 'indexeddb' : ''; loaded.backgroundName = packaged.assets.background?.name ?? ''
         loaded.backgroundType = background ? /\.(mp4|webm)$/i.test(loaded.backgroundName) ? 'video' : 'image' : ''
         loaded.coverPath = cover ? 'indexeddb' : ''; loaded.coverName = packaged.assets.cover?.name ?? ''
-        const id = crypto.randomUUID()
+        const id = createChartId()
         const importedCoverUrl = cover ? URL.createObjectURL(cover) : ''
         if (importedCoverUrl) webCoverUrlsRef.current.set(id, importedCoverUrl)
         if (!await persistSnapshot(id, loaded, { audio, background, cover, coverUrl: importedCoverUrl })) return null
@@ -568,7 +583,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
         return id
       }
       const json = files.find((file) => file.name.toLowerCase().endsWith('.json'))
-      if (!json) return null
+      if (!json) { showToast(text('请选择 .mwchart、.zip 或 .json 谱面文件', 'Choose a .mwchart, .zip or .json chart file')); return null }
       const imported = JSON.parse(await json.text())
       migrateLegacyPreferences(imported)
       const loaded = normalizeManagedChart(imported)
@@ -586,7 +601,7 @@ export function ChartProvider({ children }: { children: React.ReactNode }) {
       if (background) { loaded.backgroundName = background.name; loaded.backgroundType = background.type.startsWith('video/') || /\.(mp4|webm)$/i.test(background.name) ? 'video' : 'image' }
       else { loaded.backgroundName = ''; loaded.backgroundType = '' }
       loaded.coverPath = cover ? 'indexeddb' : ''; loaded.coverName = cover?.name ?? ''
-      const id = crypto.randomUUID()
+      const id = createChartId()
       const importedCoverUrl = cover ? URL.createObjectURL(cover) : ''
       if (importedCoverUrl) webCoverUrlsRef.current.set(id, importedCoverUrl)
       if (!await persistSnapshot(id, loaded, { audio, background, cover, coverUrl: importedCoverUrl })) return null

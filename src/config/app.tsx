@@ -1,5 +1,6 @@
 import { Library, Piano } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { englishAppName } from './brand'
 
 export const earlyAccessCopy = {
   title: { zh: '早期版本说明', en: 'Early access' },
@@ -15,6 +16,10 @@ export const earlyAccessCopy = {
 
 export const settingsCopy = {
   title: { zh: '设置', en: 'Settings' },
+} as const
+
+export const chartImportCopy = {
+  withMedia: { zh: '导入 JSON 与媒体', en: 'Import JSON with media' },
 } as const
 
 export const youtubeImportCopy = {
@@ -218,7 +223,7 @@ export interface NavigationGroup {
 
 export const appConfig = {
   name: import.meta.env.VITE_APP_NAME || '织月制谱',
-  englishName: 'Moonweave',
+  englishName: englishAppName,
   shortName: '织月制谱',
   eyebrow: 'CHART STUDIO',
   description: import.meta.env.VITE_APP_DESCRIPTION || '织月制谱（Moonweave Chart Editor）——支持桌面与网页的 4K 下落式谱面编辑和游玩工具。',

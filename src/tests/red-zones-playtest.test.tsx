@@ -242,11 +242,9 @@ it('lights tapped lanes together and releases them independently of a held lane'
   const litKeys = () => [...document.querySelectorAll('.playtest-key-caps .pressed')].map((key) => key.textContent)
   expect(litKeys()).toEqual(['d', 'f', 'j'])
   expect(document.querySelector<HTMLElement>('.playtest-hit-effect')?.style.backgroundImage).toContain('/claude/tap_hit_4k.png')
-  expect(document.querySelector<HTMLElement>('.playtest-hold-effect')?.style.backgroundImage).toContain('/claude/hold_loop_4k.png')
+  expect(document.querySelector('.playtest-hold-effect img')?.getAttribute('src')).toContain('/claude/hold_loop_4k.png')
   expect(state.lanePressed).toHaveBeenCalledWith(1, true)
   const holdSprite = document.querySelector<HTMLElement>('.playtest-hold-effect')!
-  fireEvent.animationIteration(holdSprite)
-  expect(document.querySelector('.playtest-hold-effect')).toBe(holdSprite)
   await frame(650)
   expect(litKeys()).toEqual(['d'])
   expect(state.lanePressed).toHaveBeenCalledWith(1, false)
@@ -254,8 +252,6 @@ it('lights tapped lanes together and releases them independently of a held lane'
   expect(litKeys()).toEqual([])
   expect(document.querySelector('.playtest-hold-effect')).toBe(holdSprite)
   expect(holdSprite.classList.contains('finishing')).toBe(true)
-  fireEvent.animationIteration(holdSprite)
-  expect(document.querySelector('.playtest-hold-effect')).toBe(holdSprite)
   fireEvent.animationEnd(holdSprite)
   expect(document.querySelector('.playtest-hold-effect')).toBeNull()
 })
@@ -281,11 +277,13 @@ it('uses the selected appearance for tap and hold effects during play', async ()
   fireEvent.keyDown(window, { key: 'd' })
 
   const hit = document.querySelector<HTMLElement>('.playtest-hit-effect')
-  const hold = document.querySelector<HTMLElement>('.playtest-hold-effect')
+  const hold = document.querySelector<HTMLImageElement>('.playtest-hold-effect img')
   expect(particles.readAssets).toHaveBeenCalledWith('custom-look')
   expect(hit?.style.backgroundImage).toContain('blob:tap-atlas')
   expect(hit?.style.getPropertyValue('--playtest-sprite-duration')).toBe('650ms')
-  expect(hold?.style.backgroundImage).toContain('blob:hold-atlas')
+  expect(hold?.getAttribute('src')).toBe('blob:hold-atlas')
+  expect(hold?.style.width).toBe('200%')
+  expect(hold?.style.height).toBe('200%')
   view.unmount()
   expect(revoke.mock.calls.flat()).toEqual(['blob:tap-atlas', 'blob:hold-atlas'])
 })
@@ -345,14 +343,19 @@ it('replays the pop and replaces the timing text during dense repeated judgments
   expect(screen.queryByText('Late')).toBeNull()
 })
 
-it('keeps the hold sprite mounted across scoring ticks without spawning a tap sprite', async () => {
+it('keeps the compact mobile hold sprite mounted across scoring ticks without spawning a tap sprite', async () => {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query.includes('(pointer: coarse)'),
+    addEventListener() {},
+    removeEventListener() {},
+  }))
   chart([{ ...note('hold', 500), kind: 'hold', endTime: 2000 }])
   render(<PlaytestPage />)
   await start()
   move(500)
   fireEvent.keyDown(window, { key: 'd' })
   const hold = document.querySelector<HTMLElement>('.playtest-hold-effect')
-  expect(hold?.style.backgroundImage).toContain('/claude/hold_loop_4k.png')
+  expect(hold?.querySelector('img')?.getAttribute('src')).toContain('/claude/hold_loop_1536.png')
   expect(document.querySelector('.playtest-hit-effect')).toBeNull()
 
   await frame(1000)

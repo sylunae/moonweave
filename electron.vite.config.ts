@@ -2,6 +2,7 @@ import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
+import { startupHtml } from './src/config/brand'
 
 export default defineConfig({
   main: {
@@ -23,7 +24,7 @@ export default defineConfig({
   },
   renderer: {
     root: '.',
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), startupHtml()],
     resolve: { alias: { '@': resolve('src') } },
     build: { rollupOptions: { input: resolve('index.html') }, sourcemap: true },
   },

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="dark" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -14,11 +14,112 @@
     <link rel="apple-touch-icon" href="./icons/moonweave-192.png" />
     <link rel="manifest" href="./site.webmanifest" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: moon-media: moon-cover: https:; media-src 'self' blob: moon-audio: moon-media:; connect-src 'self' blob: ws: wss:; object-src 'none'; base-uri 'self'" />
-    <script type="module" src="/src/theme-init.ts"></script>
+    <style id="boot-splash-style">
+      /* startup-theme-colors */
+      .boot-splash {
+        box-sizing: border-box;
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+        overflow: hidden;
+        pointer-events: none;
+        font-family: system-ui, sans-serif;
+        background:
+          linear-gradient(124deg, transparent 28%, color-mix(in srgb, var(--line) 30%, transparent) 28.1%, transparent 28.25% 72%, color-mix(in srgb, var(--line) 30%, transparent) 72.1%, transparent 72.25%),
+          radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--brand) 11%, var(--bg)), transparent 64%),
+          var(--bg);
+      }
+      .boot-splash > .boot-titlebar-drag { display: none; position: absolute; inset: 0 138px auto 0; -webkit-app-region: drag; }
+      .boot-splash[data-desktop] { padding-block-start: max(var(--titlebar-height, 42px), env(safe-area-inset-top)); }
+      .boot-splash[data-desktop]:not([data-leaving]) > .boot-titlebar-drag { display: block; height: var(--titlebar-height, 42px); pointer-events: auto; }
+      .boot-brand {
+        --boot-sweep-duration: 940ms;
+        --boot-sweep-easing: cubic-bezier(.27,.65,.34,1);
+        position: relative;
+        padding-block: clamp(40px, 7.5vw, 100px) clamp(6px, 1.4vw, 18px);
+      }
+      .boot-brand::after {
+        content: '';
+        position: absolute;
+        inset: auto 0 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--line) 14%, var(--brand) 50%, var(--line) 86%, transparent);
+      }
+      .boot-wordmark {
+        position: relative;
+        font: 900 clamp(26px, 11.5vw, 158px)/.95 'Arial Black', system-ui, sans-serif;
+        font-synthesis: weight;
+        letter-spacing: -.085em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .boot-wordmark-outline, .boot-wordmark-fill { display: block; padding: .12em .12em .16em .04em; }
+      .boot-wordmark-outline { color: transparent; -webkit-text-stroke: clamp(1px, .12vw, 2px) var(--muted-text); }
+      .boot-wordmark-reveal {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        animation: boot-reveal var(--boot-sweep-duration) var(--boot-sweep-easing) both;
+      }
+      .boot-wordmark-fill {
+        color: var(--text);
+        background: linear-gradient(110deg, var(--accent-deep), var(--text) 45% 64%, var(--accent-deep));
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: boot-fill var(--boot-sweep-duration) var(--boot-sweep-easing) both;
+      }
+      .boot-emblem {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        translate: -50% 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: clamp(53px, 10vw, 132px);
+        aspect-ratio: 1;
+        border: 1px solid var(--brand);
+        border-radius: 50%;
+        background: var(--surface);
+        box-shadow: 0 0 32px color-mix(in srgb, var(--brand) 16%, transparent);
+        animation: boot-emblem-light var(--boot-sweep-duration) ease-out both;
+      }
+      .boot-emblem img { display: block; width: 74%; height: auto; }
+      /* The layer and its clipping parent move in opposite directions to keep the glyphs aligned. */
+      @keyframes boot-reveal { from { transform: translateX(-101%); } to { transform: translateX(0); } }
+      @keyframes boot-fill { from { transform: translateX(101%); } to { transform: translateX(0); } }
+      @keyframes boot-emblem-light { 0%, 22% { opacity: .48; } 58%, 100% { opacity: 1; } }
+      :root[data-reduce-motion='true'] :is(.boot-wordmark-reveal, .boot-wordmark-fill, .boot-emblem) { animation: none; }
+      @media (prefers-reduced-motion: reduce) {
+        :is(.boot-wordmark-reveal, .boot-wordmark-fill, .boot-emblem) { animation: none; }
+      }
+      @media (forced-colors: active) {
+        .boot-wordmark-outline { -webkit-text-stroke-color: CanvasText; }
+        .boot-wordmark-fill { -webkit-text-fill-color: CanvasText; }
+      }
+      [data-boot-status] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    </style>
     <title>织月制谱 | Moonweave Chart Editor</title>
   </head>
   <body>
-    <div id="root"><div class="boot-splash"><span class="spinner"></span><span>正在准备应用…</span></div></div>
+    <div id="boot-splash" class="boot-splash">
+      <div class="boot-titlebar-drag" aria-hidden="true"></div>
+      <div class="boot-brand" aria-hidden="true">
+        <div class="boot-wordmark">
+          <span class="boot-wordmark-outline"><!-- startup-wordmark --></span>
+          <span class="boot-wordmark-reveal"><span class="boot-wordmark-fill"><!-- startup-wordmark --></span></span>
+        </div>
+        <span class="boot-emblem"><img src="./icons/moonweave-192.png" width="192" height="192" alt="" /></span>
+      </div>
+      <span role="status" data-boot-status></span>
+    </div>
+    <div id="root"></div>
+    <!-- app-stylesheets -->
+    <script type="module" src="/src/theme-init.ts"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

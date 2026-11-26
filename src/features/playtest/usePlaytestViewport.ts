@@ -22,5 +22,5 @@ function isMobileWeb() {
 export function usePlaytestViewport() {
   const portrait = useSyncExternalStore(subscribe, isPortrait)
   const mobileWeb = useSyncExternalStore(subscribe, isMobileWeb)
-  return { portrait, canChooseTrackMode: !portrait && !mobileWeb }
+  return { portrait, mobileWeb, canChooseTrackMode: !portrait && !mobileWeb }
 }

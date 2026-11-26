@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, it, vi } from 'vitest'
 import { ChartProvider, useChart } from '@/features/chart/ChartProvider'
+import { createChartPackage } from '@/features/chart/chartPackage'
 import { normalizeChart } from '@/features/chart/types'
 import { retimeInitialBpm } from '@/features/chart/tempoMap'
 import { mergeRecording } from '@/features/chart/improvisation'
@@ -16,6 +17,79 @@ vi.mock('@/features/chart/webLibrary', () => ({
   writeWebChart: dependencies.writeWebChart, deleteWebChart: vi.fn(),
 }))
 vi.mock('@/features/chart/BpmDetectionDialog', () => ({ BpmDetectionDialog: () => null }))
+
+it('opens the chart document picker immediately and reserves media selection for the legacy action', async () => {
+  Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+  const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
+  const pickers: HTMLInputElement[] = []
+  const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(function (this: HTMLInputElement) {
+    pickers.push(this)
+    this.dispatchEvent(new Event('cancel'))
+  })
+  const root = createRoot(document.createElement('div'))
+  let context!: ReturnType<typeof useChart>
+  function Harness() { context = useChart(); return null }
+  try {
+    await act(async () => root.render(<ChartProvider><Harness /></ChartProvider>))
+    dependencies.writeWebChart.mockClear()
+
+    const importing = context.importChart()
+    expect(click).toHaveBeenCalledOnce()
+    const [primary] = pickers
+    expect(primary.accept.split(',')).toEqual(['.mwchart', '.zip', 'application/zip', 'application/json', '.json'])
+    expect(primary.multiple).toBe(false)
+    await expect(importing).resolves.toBeNull()
+
+    await expect(context.importChart(true)).resolves.toBeNull()
+    const [, legacy] = pickers
+    expect(legacy.accept.split(',')).toEqual(expect.arrayContaining(['.json', 'audio/*', 'image/png', 'video/mp4']))
+    expect(legacy.multiple).toBe(true)
+    expect(dependencies.writeWebChart).not.toHaveBeenCalled()
+  } finally {
+    await act(async () => root.unmount())
+    pause.mockRestore()
+    click.mockRestore()
+  }
+})
+
+it('imports ZIP and JSON charts without the secure-context randomUUID API', async () => {
+  Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+  const zipChart = normalizeChart({ title: 'ZIP chart' })
+  const jsonChart = normalizeChart({ title: 'JSON chart' })
+  const zipBytes = await createChartPackage(zipChart, {})
+  const files = [
+    Object.assign(new File([], 'song.zip'), { arrayBuffer: async () => new Uint8Array(zipBytes).buffer }),
+    Object.assign(new File([], 'song.json'), { text: async () => JSON.stringify(jsonChart) }),
+  ]
+  const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
+  const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(function (this: HTMLInputElement) {
+    Object.defineProperty(this, 'files', { value: [files.shift()] })
+    this.dispatchEvent(new Event('change'))
+  })
+  vi.stubGlobal('crypto', { getRandomValues: crypto.getRandomValues.bind(crypto) })
+  const root = createRoot(document.createElement('div'))
+  let context!: ReturnType<typeof useChart>
+  function Harness() { context = useChart(); return null }
+  try {
+    await act(async () => root.render(<ChartProvider><Harness /></ChartProvider>))
+    const ids = new Set<string | null>()
+    for (const { title } of [zipChart, jsonChart]) {
+      let id: string | null = null
+      await act(async () => { id = await context.importChart() })
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+      expect(context.activeChartId).toBe(id)
+      expect(dependencies.writeWebChart).toHaveBeenLastCalledWith(id, expect.objectContaining({ title }), expect.anything())
+      ids.add(id)
+    }
+    expect(ids.size).toBe(2)
+  } finally {
+    await act(async () => root.unmount())
+    pause.mockRestore()
+    click.mockRestore()
+    vi.unstubAllGlobals()
+    dependencies.writeWebChart.mockClear()
+  }
+})
 
 it('requires creation audio and shares song info while keeping four distinct difficulty tracks', async () => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })

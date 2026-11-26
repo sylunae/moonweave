@@ -1,7 +1,9 @@
 export type TitlebarTheme = 'light' | 'dark'
+export const SYSTEM_LANGUAGES_ARG = '--moonweave-system-languages='
 
 export interface SylunaeShellAPI {
   readonly platform: 'electron'
+  readonly preferredLanguages: readonly string[]
   readonly versions: Readonly<Record<'electron' | 'chrome' | 'node', string>>
   system: {
     openExternal(url: string): Promise<boolean>

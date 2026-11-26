@@ -30,6 +30,7 @@ it('skips the notice for an existing user with saved preferences', async () => {
 
 it('switches the notice and saved app language from either language button', () => {
   vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+  localStorage.setItem('moonweave.preferences', JSON.stringify({ language: 'zh' }))
   render(<PreferencesProvider><EarlyAccessDialog /></PreferencesProvider>)
 
   expect(screen.getByRole('dialog', { name: '早期版本说明' })).toBeTruthy()
@@ -45,4 +46,13 @@ it('switches the notice and saved app language from either language button', () 
   fireEvent.click(screen.getByRole('button', { name: 'Get started' }))
   expect(screen.queryByRole('dialog')).toBeNull()
   expect(JSON.parse(localStorage.getItem('moonweave.preferences') ?? '{}').language).toBe('en')
+})
+
+it('opens the app in the first supported system language when no language is saved', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+  vi.stubGlobal('sylunae', { preferredLanguages: ['ja-JP', 'zh-Hant-TW', 'en-US'], system: { setTitlebarTheme: vi.fn() } })
+  render(<PreferencesProvider><EarlyAccessDialog /></PreferencesProvider>)
+
+  expect(screen.getByRole('dialog', { name: '早期版本说明' })).toBeTruthy()
+  expect(document.documentElement.lang).toBe('zh-CN')
 })

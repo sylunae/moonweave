@@ -4,6 +4,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig, type Plugin } from 'vite'
+import { startupHtml } from './src/config/brand'
 
 function webServiceWorker(): Plugin {
   return {
@@ -38,7 +39,7 @@ function webServiceWorker(): Plugin {
 
 export default defineConfig({
   base: './',
-  plugins: [react(), tailwindcss(), webServiceWorker()],
+  plugins: [react(), tailwindcss(), startupHtml(), webServiceWorker()],
   resolve: { alias: { '@': resolve(__dirname, 'src') } },
   build: { outDir: 'dist', sourcemap: true },
 })

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { NAVIGATE_EVENT } from '@/app/navigation'
 import { isRouteId, type RouteId } from '@/config/app'
 import { EarlyAccessDialog } from '@/components/EarlyAccessDialog'
@@ -17,6 +17,24 @@ const SettingsDialog = lazy(() => import('@/components/SettingsDialog').then((mo
 function initialRoute(): RouteId {
   const value = new URLSearchParams(window.location.search).get('page')
   return value && isRouteId(value) ? value : 'manage'
+}
+
+function DismissBootSplash() {
+  useLayoutEffect(() => {
+    const splash = document.getElementById('boot-splash')
+    if (!splash || splash.hasAttribute('data-leaving')) return
+    if (!splash.animate || document.documentElement.dataset.reduceMotion === 'true' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      splash.remove()
+      return
+    }
+
+    splash.setAttribute('data-leaving', '')
+    splash.setAttribute('aria-hidden', 'true')
+    for (const animation of splash.getAnimations?.({ subtree: true }) ?? []) animation.updatePlaybackRate(7)
+    const fade = splash.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease-out', fill: 'forwards' })
+    void fade.finished.then(() => splash.remove(), () => splash.remove())
+  }, [])
+  return null
 }
 
 export default function App({ showEarlyAccessNotice }: { showEarlyAccessNotice: boolean }) {
@@ -58,7 +76,10 @@ export default function App({ showEarlyAccessNotice }: { showEarlyAccessNotice: 
     <div className={`app-shell${hasAppTitlebar ? ' has-app-titlebar' : ''}`}>
       {hasAppTitlebar && route !== 'playtest' && <header className={`app-titlebar${pageScrolled ? ' scrolled' : ''}`}><div className="app-titlebar-drag" /><span>MOONWEAVE · CHART STUDIO</span></header>}
       <main className={`content-shell route-${route}`} onScroll={(event) => setPageScrolled(event.currentTarget.scrollTop > 0)}>
-        <Suspense fallback={<PageLoader />}><Page onSettings={openSettings} settingsOpen={settingsOpen} /></Suspense>
+        <Suspense fallback={<PageLoader />}>
+          <Page onSettings={openSettings} settingsOpen={settingsOpen} />
+          <DismissBootSplash />
+        </Suspense>
       </main>
       {showEarlyAccessNotice && <EarlyAccessDialog />}
       <Suspense fallback={null}>{settingsMounted && <SettingsDialog

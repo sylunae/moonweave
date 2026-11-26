@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import type { ChartInfoMedia, SylunaeShellAPI, TitlebarTheme } from '../../src/shared/electron'
+import { SYSTEM_LANGUAGES_ARG, type ChartInfoMedia, type SylunaeShellAPI, type TitlebarTheme } from '../../src/shared/electron'
 
 const selectedPath = (file: File | null | undefined) => {
   if (file == null) return file
@@ -8,8 +8,10 @@ const selectedPath = (file: File | null | undefined) => {
   return source
 }
 
+const systemLanguages = process.argv.find((arg) => arg.startsWith(SYSTEM_LANGUAGES_ARG))?.slice(SYSTEM_LANGUAGES_ARG.length)
 const api: SylunaeShellAPI = Object.freeze({
   platform: 'electron',
+  preferredLanguages: Object.freeze(systemLanguages ? systemLanguages.split(',') : []),
   versions: Object.freeze({
     electron: process.versions.electron,
     chrome: process.versions.chrome,

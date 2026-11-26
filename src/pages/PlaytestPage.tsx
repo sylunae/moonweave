@@ -9,7 +9,7 @@ import { useI18n } from '@/app/i18n'
 import { usePreferences } from '@/app/preferences'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { defaultHoldSprite, defaultTapSprite, ParticleSprite, redSprite, useParticleAppearance } from '@/features/appearance/ParticleSprite'
+import { defaultHoldSprite, defaultTapSprite, mobileHoldSprite, ParticleSprite, redSprite, useParticleAppearance } from '@/features/appearance/ParticleSprite'
 import { useChart } from '@/features/chart/ChartProvider'
 import { usePlatform } from '@/features/platform/PlatformProvider'
 import type { ChartNote } from '@/features/chart/types'
@@ -38,7 +38,6 @@ type PlaytestFeedback = {
 
 export default function PlaytestPage({ onSettings, settingsOpen = false }: { onSettings?: () => void; settingsOpen?: boolean }) {
   preload(defaultTapSprite, { as: 'image' })
-  preload(defaultHoldSprite, { as: 'image' })
   const { text } = useI18n()
   const settingsLabel = text(settingsCopy.title.zh, settingsCopy.title.en)
   const editor = useChart()
@@ -61,7 +60,9 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   const runStartTimeRef = useRef(Math.max(0, Math.min(currentTime, chart.duration)))
   const showToast = editor.showToast
   const { preferences } = usePreferences()
-  const { portrait, canChooseTrackMode } = usePlaytestViewport()
+  const { portrait, mobileWeb, canChooseTrackMode } = usePlaytestViewport()
+  const holdSpriteSrc = mobileWeb ? mobileHoldSprite : defaultHoldSprite
+  preload(holdSpriteSrc, { as: 'image' })
   const trackLayout = resolvePlaytestTrackLayout(portrait, canChooseTrackMode, preferences.trackMode)
   const laneTilt = trackLayout === 'tilted' ? Math.max(1, preferences.laneTilt) : 0
   const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }))
@@ -683,9 +684,10 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
         key={lane}
         className={state === 'finishing' ? 'playtest-hold-effect finishing' : 'playtest-hold-effect'}
         style={{ left: `${laneX(lane)}%` }}
-        defaultSrc={defaultHoldSprite}
+        defaultSrc={holdSpriteSrc}
         atlas={particleAppearance?.hold}
         loop
+        transformFrames
         reduceMotion={preferences.reduceMotion}
         onAnimationEnd={state === 'finishing' ? () => finishHoldSprite(lane) : undefined}
       />

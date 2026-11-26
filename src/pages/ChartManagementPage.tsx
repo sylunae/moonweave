@@ -112,6 +112,10 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
     lock.current = true
     try { await operation() } catch (error) { showToast(String(error)) } finally { lock.current = false }
   }
+  const importChart = (includeMedia = false) => void run(async () => {
+    const imported = await api.importChart(includeMedia)
+    if (imported) { reset(); select(imported) }
+  })
   const open = (route: 'editor' | 'playtest', target = id) => void run(async () => {
     if (!target) return
     if (await api.selectChart(target, tier)) { if (route === 'playtest') setPlayId(target); else navigate(route) }
@@ -166,7 +170,7 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
     } catch (e) { showToast(String(e)); return false }
   }
   const visibleCount = Math.max(limit,index+1)
-  return <div className="chart-management-page" style={{ "--scene-color": sceneColor, "--beat": `${60 / (chart?.bpm || 120)}s`, "--selection-accent": ['var(--success)','var(--brand)','var(--warning)','var(--danger)'][tier] } as React.CSSProperties} data-detail={mobileDetail && !!item}>
+  return <div className="chart-management-page" style={{ "--scene-color": sceneColor, "--beat": `${60 / (chart?.bpm || 120)}s`, "--selection-accent": ['var(--success)','var(--brand)','var(--warning)','var(--danger)'][tier] } as React.CSSProperties} data-detail={mobileDetail && !!item} data-previewing={previewing}>
     <LibraryAtmosphere selection={`${id ?? ''}-${tier}`} />
     <header className="game-page-toolbar"><h1><i aria-hidden />{appConfig.navigation[0].items[0].label[language]}<small>{api.charts.length}</small></h1>
       <GameSearch ref={search} value={query} placeholder={text('搜索标题、曲师','Search titles and artists')} onChange={e => { setQuery(e.target.value); setLimit(60); setMobileDetail(false); closePreview() }} />
@@ -179,9 +183,10 @@ export default function ChartManagementPage({ onSettings }: { onSettings(): void
           sound.toggle()
           showToast(sound.enabled ? text('声音已关闭','Sound off') : text('声音已开启','Sound on'))
         }}>{sound.enabled ? <Volume2/> : <VolumeX/>}</GameButton>
-        <GameButton disabled={!api.libraryReady} onClick={() => void run(async () => { const n = await api.importChart(); if(n){reset(); select(n)} })}><FileUp/>{text('导入谱面','Import')}</GameButton>
+        <GameButton disabled={!api.libraryReady} onClick={() => importChart()}><FileUp/>{text('导入谱面','Import')}</GameButton>
         <GameButton className="primary" disabled={!api.libraryReady} onClick={() => setForm('new')}><Plus/>{text('新建谱面','New chart')}</GameButton>
-        <PlayerMenu onSettings={() => { closePreview(); onSettings() }} onStorage={() => void run(api.revealLibrary)} /></div>
+        <PlayerMenu onSettings={() => { closePreview(); onSettings() }} onStorage={() => void run(api.revealLibrary)}
+          onImportWithMedia={!window.moonweave && api.libraryReady ? () => importChart(true) : undefined} /></div>
     </header>
     <div className="library-stage">
       <div className="chart-library-list" data-scroll-region ref={list} role="listbox" aria-label={text('谱面列表','Chart list')} onScroll={e => {const el=e.currentTarget; if(el.scrollTop+el.clientHeight>el.scrollHeight-240 && limit<items.length)setLimit(limit+60)}}>

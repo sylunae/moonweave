@@ -4,6 +4,7 @@ import { readParticleAssets, type ParticleAtlas } from './particleLibrary'
 const effectAssets = `${import.meta.env.BASE_URL}assets/particle`
 export const defaultTapSprite = `${effectAssets}/claude/tap_hit_4k.png`
 export const defaultHoldSprite = `${effectAssets}/claude/hold_loop_4k.png`
+export const mobileHoldSprite = `${effectAssets}/claude/hold_loop_1536.png`
 export const redSprite = `${effectAssets}/challenge_white.png`
 
 interface LoadedAtlas {
@@ -11,22 +12,32 @@ interface LoadedAtlas {
   backgroundSize: string
   duration: number
   frames: Keyframe[]
+  translatedFrames: Keyframe[]
 }
 
-function prepareAtlas(atlas: ParticleAtlas, url: string): LoadedAtlas {
-  const { columns, rows, frameDurations } = atlas
+function prepareFrames(columns: number, rows: number, frameDurations: number[]) {
   const duration = frameDurations.reduce((sum, delay) => sum + delay, 0)
+  const frames: Keyframe[] = []
+  const translatedFrames: Keyframe[] = []
   let elapsed = 0
-  const frames = frameDurations.map((delay, index) => {
+  frameDurations.forEach((delay, index) => {
     const column = index % columns, row = Math.floor(index / columns)
     const backgroundPosition = `${column * 100 / Math.max(1, columns - 1)}% ${row * 100 / Math.max(1, rows - 1)}%`
     const offset = elapsed / duration
     elapsed += delay
-    return { backgroundPosition, offset, easing: 'step-end' }
+    frames.push({ backgroundPosition, offset, easing: 'step-end' })
+    translatedFrames.push({
+      transform: `translate3d(${-column * 100 / columns}%, ${-row * 100 / rows}%, 0)`,
+      offset,
+      easing: 'step-end',
+    })
   })
   frames.push({ ...frames[frames.length - 1], offset: 1 })
-  return { url, backgroundSize: `${columns * 100}% ${rows * 100}%`, duration, frames }
+  translatedFrames.push({ ...translatedFrames[translatedFrames.length - 1], offset: 1 })
+  return { backgroundSize: `${columns * 100}% ${rows * 100}%`, duration, frames, translatedFrames }
 }
+
+const defaultHoldFrames = prepareFrames(4, 4, Array<number>(16).fill(25))
 
 export function useParticleAppearance(id?: string | null) {
   const [loaded, setLoaded] = useState<{ id: string; assets: { tap: LoadedAtlas; hold: LoadedAtlas } | null }>()
@@ -41,7 +52,7 @@ export function useParticleAppearance(id?: string | null) {
       const image = new Image()
       image.src = url
       await image.decode()
-      return prepareAtlas(atlas, url)
+      return { url, ...prepareFrames(atlas.columns, atlas.rows, atlas.frameDurations) }
     }
     void readParticleAssets(id).then(async (assets) => {
       if (cancelled) return
@@ -62,20 +73,33 @@ interface ParticleSpriteProps extends ComponentPropsWithoutRef<'i'> {
   atlas?: LoadedAtlas
   loop?: boolean
   reduceMotion?: boolean
+  transformFrames?: boolean
 }
 
-export function ParticleSprite({ defaultSrc, atlas, loop = false, reduceMotion, style, ...props }: ParticleSpriteProps) {
+export function ParticleSprite({ defaultSrc, atlas, loop = false, reduceMotion, transformFrames = false, style, ...props }: ParticleSpriteProps) {
   const elementRef = useRef<HTMLElement>(null)
+  const imageRef = useRef<HTMLImageElement>(null)
   useLayoutEffect(() => {
-    const element = elementRef.current
-    if (!element || !atlas || reduceMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const animation = element.animate(atlas.frames, { duration: atlas.duration, iterations: loop ? Infinity : 1, fill: 'both' })
+    const element = transformFrames ? imageRef.current : elementRef.current
+    const sequence = atlas ?? (transformFrames ? defaultHoldFrames : undefined)
+    if (!element?.animate || !sequence || reduceMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const frames = transformFrames ? sequence.translatedFrames : sequence.frames
+    const animation = element.animate(frames, { duration: sequence.duration, iterations: loop ? Infinity : 1, fill: 'both' })
     return () => animation.cancel()
-  }, [atlas, loop, reduceMotion])
+  }, [atlas, loop, reduceMotion, transformFrames])
 
+  const src = atlas?.url ?? defaultSrc
+  if (transformFrames) {
+    const [width, height] = (atlas ?? defaultHoldFrames).backgroundSize.split(' ')
+    return <i {...props} aria-hidden="true" data-custom-particle={atlas ? '' : undefined} style={style}>
+      <span className="particle-atlas-clip">
+        <img ref={imageRef} src={src} alt="" draggable={false} style={{ width, height }} />
+      </span>
+    </i>
+  }
   return <i {...props} ref={elementRef} aria-hidden="true" data-custom-particle={atlas ? '' : undefined} style={{
     ...style,
-    backgroundImage: `url(${atlas?.url ?? defaultSrc})`,
+    backgroundImage: `url(${src})`,
     backgroundSize: atlas?.backgroundSize,
     '--playtest-sprite-duration': atlas && !loop ? `${atlas.duration}ms` : undefined,
   } as CSSProperties} />

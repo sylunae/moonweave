@@ -1,9 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { accessibleForeground, defaultThemePalettes, normalizeThemePalettes, themeColorFields, themeCssVariables, type ThemePalettes } from './theme'
+import { defaultThemeMode, documentLanguage, getStartupLanguage, PREFERENCES_STORAGE_KEY, readStoredPreferences, resolveTheme, type Language, type ThemeMode } from './startupPreferences'
 
-export type ThemeMode = 'system' | 'light' | 'dark'
+export type { Language, ThemeMode } from './startupPreferences'
 export type TimingWindow = 'strict' | 'standard' | 'relaxed'
-export type Language = 'zh' | 'en'
 
 export interface Preferences {
   schemaVersion: 0 | 1
@@ -25,7 +25,6 @@ export interface Preferences {
   particleAppearanceId: string | null
 }
 
-const STORAGE_KEY = 'moonweave.preferences'
 const EARLY_ACCESS_STORAGE_KEY = 'moonweave.early-access-shown'
 export const SIDEBAR_MIN = 220
 export const SIDEBAR_MAX = 440
@@ -35,7 +34,7 @@ export const SIDEBAR_COLLAPSE_THRESHOLD = 176
 export const defaultPreferences: Preferences = {
   schemaVersion: 1,
   language: 'zh',
-  theme: 'dark',
+  theme: defaultThemeMode,
   sidebarWidth: 252,
   sidebarCollapsed: false,
   reduceMotion: false,
@@ -118,14 +117,16 @@ export function migrateLegacyChartPreferences(current: Preferences, input: unkno
 }
 
 function loadPreferences(): Preferences {
-  try { return normalizePreferences(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')) }
-  catch { return defaultPreferences }
+  const stored = readStoredPreferences()
+  const language = getStartupLanguage(stored?.language)
+  return stored ? normalizePreferences({ ...stored, language }) : { ...defaultPreferences, language }
 }
 
 export async function claimEarlyAccessNotice(): Promise<boolean> {
+  const alreadyVisited = () => localStorage.getItem(EARLY_ACCESS_STORAGE_KEY) !== null || localStorage.getItem(PREFERENCES_STORAGE_KEY) !== null
   const claim = () => {
     try {
-      if (localStorage.getItem(EARLY_ACCESS_STORAGE_KEY) !== null || localStorage.getItem(STORAGE_KEY) !== null) return false
+      if (alreadyVisited()) return false
       localStorage.setItem(EARLY_ACCESS_STORAGE_KEY, '1')
       return true
     } catch {
@@ -134,16 +135,13 @@ export async function claimEarlyAccessNotice(): Promise<boolean> {
   }
 
   try {
+    if (alreadyVisited()) return false
     // Serialize simultaneous first visits from tabs that share this storage.
     if (navigator.locks) return await navigator.locks.request(EARLY_ACCESS_STORAGE_KEY, claim)
   } catch {
     return claim()
   }
   return claim()
-}
-
-function resolveTheme(mode: ThemeMode, prefersDark: boolean) {
-  return mode === 'system' ? (prefersDark ? 'dark' : 'light') : mode
 }
 
 interface PreferencesContextValue {
@@ -159,18 +157,22 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const setPreferences = useCallback((next: Preferences | ((current: Preferences) => Preferences)) => {
     setPreferencesState((current) => normalizePreferences(typeof next === 'function' ? next(current) : next))
   }, [])
-  const resetPreferences = useCallback(() => setPreferencesState(defaultPreferences), [])
-
-  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences)) }, [preferences])
+  const resetPreferences = useCallback(() => setPreferencesState({ ...defaultPreferences, language: getStartupLanguage() }), [])
 
   useEffect(() => {
-    document.documentElement.lang = preferences.language === 'zh' ? 'zh-CN' : 'en'
+    try { localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences)) }
+    catch { /* Keep preferences available for the current session. */ }
+  }, [preferences])
+
+  useEffect(() => {
+    document.documentElement.lang = documentLanguage(preferences.language)
   }, [preferences.language])
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)')
     const apply = () => {
       const theme = resolveTheme(preferences.theme, media.matches)
+      const themeChanged = document.documentElement.dataset.theme !== theme
       document.documentElement.dataset.theme = theme
       document.documentElement.classList.toggle('dark', theme === 'dark')
       document.documentElement.dataset.reduceMotion = preferences.reduceMotion ? 'true' : 'false'
@@ -178,7 +180,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       themeColorFields.forEach(({ key }) => document.documentElement.style.setProperty(themeCssVariables[key], palette[key]))
       document.documentElement.style.setProperty('--brand-foreground', accessibleForeground(palette.brand, palette.accentDeep))
       document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', palette.bg)
-      void window.sylunae?.system.setTitlebarTheme(theme)
+      if (themeChanged) void window.sylunae?.system.setTitlebarTheme(theme)
     }
     apply()
     media.addEventListener('change', apply)
