@@ -129,18 +129,6 @@ html body :is([data-slot='card'], [data-slot='dialog-content']:not(.game-chart-d
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .page-loader { height: 100%; display: flex; align-items: center; justify-content: center; gap: 11px; color: var(--muted-text); font-size: 13px; }
 .boot-splash + #root .content-shell > .page-loader { display: none; }
-.resource-loader { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; overflow: hidden; background: radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--brand) 14%, var(--bg)), var(--bg) 46%); }
-.resource-loader-brand { display: flex; align-items: center; gap: 11px; color: var(--text); font-family: var(--font-sans); font-size: 12px; font-weight: 700; letter-spacing: .16em; }
-.resource-loader-brand .brand-mark { width: 34px; height: 34px; flex-basis: 34px; }
-.resource-loader-ring { --load-progress: 0deg; width: 126px; height: 126px; position: relative; display: flex; align-items: baseline; justify-content: center; border-radius: 50%; background: conic-gradient(var(--brand) var(--load-progress), color-mix(in srgb, var(--line) 50%, transparent) 0); box-shadow: 0 0 42px color-mix(in srgb, var(--brand) 16%, transparent); transition: background .18s ease; }
-.resource-loader-ring::before { content: ''; position: absolute; inset: 7px; border-radius: inherit; background: var(--bg); box-shadow: inset 0 0 28px color-mix(in srgb, var(--brand) 7%, transparent); }
-.resource-loader-ring strong, .resource-loader-ring span { z-index: 1; align-self: center; }
-.resource-loader-ring strong { font: 600 32px var(--font-sans); letter-spacing: -.05em; }
-.resource-loader-ring span { margin: 12px 0 0 3px; color: var(--faint); font: 600 10px var(--font-sans); }
-.resource-loader-copy { min-height: 58px; text-align: center; }
-.resource-loader-copy strong, .resource-loader-copy small { display: block; }
-.resource-loader-copy strong { font-size: 14px; }
-.resource-loader-copy small { margin-top: 6px; color: var(--faint); font: 600 9px var(--font-sans); letter-spacing: .12em; }
 .spinner { width: 18px; height: 18px; display: inline-block; border: 2px solid var(--line); border-top-color: var(--brand); border-radius: 50%; animation: spin .75s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -267,6 +255,7 @@ body:has(.app-shell.has-app-titlebar) .settings-modal { top: calc(50% + var(--ti
 .playtest-page { --playtest-control-top: max(8px, env(safe-area-inset-top)); position: relative; width: 100%; height: 100%; overflow: hidden; isolation: isolate; color: #eef6ff; background: radial-gradient(ellipse at 50% 75%, #172040, transparent 55%), #05070d; }
 .playtest-background { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none; transform: translateZ(0); }.playtest-background[data-active='false'] { opacity: 0; }
 .playtest-track-background-blur { --playtest-track-blur-radius: 12px; position: absolute; z-index: 0; inset: 0; pointer-events: none; -webkit-backdrop-filter: blur(var(--playtest-track-blur-radius)); backdrop-filter: blur(var(--playtest-track-blur-radius)); }
+.playtest-track-background-blur[data-economy="true"] { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--preview-stage); opacity: .18; }
 .playtest-canvas { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 .playtest-vignette { position: absolute; z-index: 2; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 54%, transparent 28%, rgba(1, 3, 10, .22) 66%, rgba(1, 3, 10, .82) 100%), linear-gradient(180deg, rgba(2, 5, 13, .52), transparent 20%, transparent 76%, rgba(2, 5, 13, .72)); }
 .playtest-judgment-line { position: absolute; z-index: 2; left: var(--playtest-track-inset, 10%); right: var(--playtest-track-inset, 10%); bottom: var(--playtest-judgment-bottom); height: 4px; pointer-events: none; background: #fff; box-shadow: 0 0 7px #fff, 0 0 20px #31d7ff; }
@@ -334,6 +323,8 @@ body:has(.app-shell.has-app-titlebar) .settings-modal { top: calc(50% + var(--ti
 .playtest-hit-effect {
   z-index: 8;
   width: calc(clamp(167px, 22.7vw, 293px) * var(--playtest-sprite-scale));
+}
+.playtest-hit-effect:not([data-atlas-fade]) {
   animation: playtest-hit-hide var(--playtest-sprite-duration) step-end forwards;
 }
 .playtest-hit-effect.good { width: calc(clamp(147px, 20vw, 253px) * var(--playtest-sprite-scale)); opacity: .72; }

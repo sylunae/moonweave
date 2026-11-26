@@ -1,7 +1,7 @@
 import { autoPlayCopy, playPauseCopy, redZoneCopy, settingsCopy, improvisationCopy as copy } from '@/config/app'
 import { mergeRecording, recordingConflicts } from '@/features/chart/improvisation'
 import { correctImprovisedNotes } from '@/features/chart/improvisationCorrection'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { preload } from 'react-dom'
 import { ArrowLeft, Bot, Gauge, Pause, Play, RotateCcw, Settings, Sparkles } from 'lucide-react'
 import { navigate } from '@/app/navigation'
@@ -27,6 +27,7 @@ import { accuracyFromUnits, judgmentUnits, scoreFromUnits, type Judgment } from 
 import { usePlaytestViewport } from '@/features/playtest/usePlaytestViewport'
 
 const INITIAL_STATS: PlaytestStats = { fps: 0, backend: 'WebGL2', renderScale: 1, notes: 0, drawCalls: 0, frameTimeP95: 0, frameTimeMax: 0, longFramePercent: 0, clockStalls: 0 }
+const LANES = [0, 1, 2, 3] as const
 const PREROLL_MS = 1000
 const AUTO_TAP_HIGHLIGHT_MS = 85
 type FeedbackResult = Judgment | 'Red'
@@ -119,18 +120,19 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   // The largest tap and hold effects are about 352 and 272 CSS pixels.
   const tapSpriteSrc = mobileWeb ? mobileTapSprite : spriteDpr <= 1.45 ? compactTapSprite : defaultTapSprite
   const holdSpriteSrc = mobileWeb || spriteDpr <= 1.4 ? mobileHoldSprite : defaultHoldSprite
+  const notesHaveRed = useMemo(() => chart.notes.some((note) => note.red), [chart.notes])
   preload(tapSpriteSrc, { as: 'image' })
   preload(holdSpriteSrc, { as: 'image' })
   useEffect(() => {
     if (typeof Image.prototype.decode !== 'function') return
-    const images = [tapSpriteSrc, holdSpriteSrc].map((src) => {
+    const images = [tapSpriteSrc, holdSpriteSrc, ...(notesHaveRed ? [redSprite] : [])].map((src) => {
       const image = new Image()
       image.src = src
       void image.decode?.().catch(() => undefined)
       return image
     })
     return () => images.forEach((image) => { image.removeAttribute('src') })
-  }, [tapSpriteSrc, holdSpriteSrc])
+  }, [tapSpriteSrc, holdSpriteSrc, notesHaveRed])
   const trackLayout = resolvePlaytestTrackLayout(portrait, canChooseTrackMode, preferences.trackMode)
   const laneTilt = trackLayout === 'tilted' ? Math.max(1, preferences.laneTilt) : 0
   const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }))
@@ -149,7 +151,11 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   const notesByTime = useMemo(() => notes.filter((note) => !note.red).sort((a, b) => a.time - b.time), [notes])
   const fakeHeads = useMemo(() => new Set(notesByTime.filter((note) => redZones.contains(note.lane, note.time)).map((note) => note.id)), [notesByTime, redZones])
   const fakeNotes = useMemo(() => notesByTime.filter((note) => fakeHeads.has(note.id)), [fakeHeads, notesByTime])
-  const notesByLane = useMemo(() => [0, 1, 2, 3].map((lane) => notes.filter((note) => !note.red && !fakeHeads.has(note.id) && note.lane === lane).sort((a, b) => a.time - b.time)), [fakeHeads, notes])
+  const notesByLane = useMemo(() => {
+    const lanes: ChartNote[][] = [[], [], [], []]
+    for (const note of notesByTime) if (!fakeHeads.has(note.id)) lanes[note.lane].push(note)
+    return lanes
+  }, [fakeHeads, notesByTime])
   const noteById = useMemo(() => new Map(notes.map((note) => [note.id, note])), [notes])
   const hasCustomBackground = Boolean(backgroundUrl && chart.backgroundType)
   const hasVideoBackground = Boolean(backgroundUrl && chart.backgroundType === 'video')
@@ -173,7 +179,6 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   const resultCountsRef = useRef<Record<Judgment, number>>({ Perfect: 0, Good: 0, Miss: 0 })
   const feedbackIdRef = useRef(0)
   const feedbackTimersRef = useRef(new Map<number, number>())
-  const rafRef = useRef(0)
   const lastUiUpdateRef = useRef(0)
   const playbackClockRef = useRef(new PlaybackClock())
   const prerollTimeRef = useRef<number | null>(null)
@@ -433,23 +438,18 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     checkRedZones(now)
   }, [autoPlay, judgeHead, syncAutoLanes, redZones, checkRedZones, fakeHeads, fakeNotes, holdTicksById, noteById, notesByTime, registerJudgment, updateActiveHoldLanes, windows])
 
-  useEffect(() => {
-    if (!playing) return
-    const tick = (timestamp: number) => {
-      const audio = getAudio()
-      if (!audio || audio.paused || prerollTimeRef.current !== null) { rafRef.current = requestAnimationFrame(tick); return }
-      const now = getRenderTime()
-      processFrame(now)
+  const beforeDrawRef = useRef<(time: number, timestamp: number) => void>(() => {})
+  useLayoutEffect(() => {
+    beforeDrawRef.current = (time, timestamp) => {
+      if (!playingRef.current || prerollTimeRef.current !== null || getAudio()?.paused !== false) return
+      processFrame(time)
       if (timestamp - lastUiUpdateRef.current > 70) {
-        updateProgress(now)
+        updateProgress(time)
         syncBackgroundVideoPlayback()
         lastUiUpdateRef.current = timestamp
       }
-      rafRef.current = requestAnimationFrame(tick)
     }
-    rafRef.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [getAudio, getRenderTime, playing, processFrame, syncBackgroundVideoPlayback, updateProgress])
+  }, [getAudio, processFrame, syncBackgroundVideoPlayback, updateProgress])
 
   useEffect(() => {
     const audio = audioRef.current
@@ -550,7 +550,9 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       autoplay: false,
       getRecordedNotes: () => recordedRef.current,
       transparentBackground: hasCustomBackground,
-      initialRenderScale: hasVideoBackground ? 0.9 : 1,
+      mobileWeb,
+      initialRenderScale: mobileWeb ? 0.85 : hasVideoBackground ? 0.9 : 1,
+      beforeDraw: (time, timestamp) => beforeDrawRef.current(time, timestamp),
       openingTrace,
       onStats: setStats,
       onViewportResize: (width, height) => setViewport((current) => current.width === width && current.height === height ? current : { width, height }),
@@ -564,11 +566,11 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     for (const lane of pressedRef.current) renderer.setLanePressed(lane, true)
     rendererRef.current = renderer
     return () => { rendererRef.current = null; renderer.destroy() }
-  }, [chart.bpm, chart.bpmChanges, chart.effects, chart.duration, chart.offset, getRenderTime, hasCustomBackground, hasVideoBackground, laneTilt, noteById, notes, openingTrace, preferences.noteScrollSpeed, trackLayout])
+  }, [chart.bpm, chart.bpmChanges, chart.effects, chart.duration, chart.offset, getRenderTime, hasCustomBackground, hasVideoBackground, laneTilt, mobileWeb, noteById, notes, openingTrace, preferences.noteScrollSpeed, trackLayout])
 
   useEffect(() => {
     resetRun(runStartTimeRef.current)
-    return () => { playingRef.current = false; prerollEpochRef.current += 1; cancelAnimationFrame(prerollFrameRef.current); cancelAnimationFrame(rafRef.current); getAudio()?.pause(); feedbackTimersRef.current.forEach(window.clearTimeout) }
+    return () => { playingRef.current = false; prerollEpochRef.current += 1; cancelAnimationFrame(prerollFrameRef.current); getAudio()?.pause(); feedbackTimersRef.current.forEach(window.clearTimeout) }
   // This initializes a run when the playtest mounts; editor time changes are intentionally ignored afterward.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -598,14 +600,16 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     const tryBuffered = audioStatus === 'buffered'
     if (tryBuffered) bufferedAudio.unlock()
     const playbackEpoch = needsPrerollRef.current ? prerollEpochRef.current + 1 : prerollEpochRef.current
+    const outputReady = tryBuffered ? bufferedAudio.waitForOutput() : null
+    let scheduled = false
     const startAudio = async () => {
       if (playbackEpoch !== prerollEpochRef.current || exitOpenRef.current) return
       try {
-        const ready = tryBuffered && await bufferedAudio.waitForOutput()
+        const ready = scheduled || (outputReady && await outputReady)
         if (playbackEpoch !== prerollEpochRef.current || exitOpenRef.current) return
         const position = getAudio()?.currentTime ?? audio.currentTime
         openingTrace?.mark('play-requested', position * 1000)
-        if (ready && bufferedAudio.playFrom(position)) {
+        if (scheduled || (ready && bufferedAudio.playFrom(position))) {
           openingTrace?.mark('audio-clock', 'web-audio')
         } else {
           if (bufferedAudio.active) {
@@ -647,13 +651,19 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       trackBlur: preferences.trackBackgroundBlur,
     })
     const epoch = ++prerollEpochRef.current
-    const startedAt = performance.now()
     playingRef.current = true; setPlaying(true)
+    if (outputReady && await outputReady) {
+      if (epoch !== prerollEpochRef.current || !playingRef.current) return
+      scheduled = bufferedAudio.playFrom(targetTime / 1000, PREROLL_MS / 1000)
+      if (scheduled) openingTrace?.mark('audio-scheduled', targetTime)
+    }
+    if (epoch !== prerollEpochRef.current || !playingRef.current) return
+    const startedAt = performance.now()
     const advancePreroll = (timestamp: number) => {
       if (epoch !== prerollEpochRef.current || !playingRef.current) return
-      const elapsed = Math.max(0, Math.min(PREROLL_MS, timestamp - startedAt))
-      prerollTimeRef.current = targetTime - PREROLL_MS + elapsed
-      if (elapsed < PREROLL_MS) { prerollFrameRef.current = requestAnimationFrame(advancePreroll); return }
+      const time = scheduled ? bufferedAudio.timelineTime * 1000 : targetTime - PREROLL_MS + Math.max(0, timestamp - startedAt)
+      prerollTimeRef.current = Math.max(prerollTimeRef.current ?? targetTime - PREROLL_MS, Math.min(targetTime, time))
+      if (prerollTimeRef.current < targetTime) { prerollFrameRef.current = requestAnimationFrame(advancePreroll); return }
       void startAudio()
     }
     prerollFrameRef.current = requestAnimationFrame(advancePreroll)
@@ -661,9 +671,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
 
   const restart = useCallback(() => resetRun(runStartTimeRef.current), [resetRun])
 
-  const hitLane = useCallback((lane: number) => {
-    if (!playingRef.current || exitOpenRef.current || prerollTimeRef.current !== null || getAudio()?.paused) return
-    const now = getRenderTime(); timeRef.current = now
+  const hitLane = useCallback((lane: number, now: number) => {
     if (improvising && now >= 0 && now <= duration) {
       const tap: ChartNote = { id: crypto.randomUUID(), lane, time: now, kind: 'note' }
       recordedRef.current.push(tap)
@@ -698,7 +706,11 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     const now = getRenderTime()
     openingTrace?.mark('lane-down', { lane, chartMs: now, judging })
     if (judging) processFrame(now) // Advance with the old key state before this transition.
-    pressedRef.current = new Set(pressedRef.current).add(lane); setPressed(new Set(pressedRef.current)); rendererRef.current?.setLanePressed(lane, true); hitLane(lane); updateActiveHoldLanes()
+    const next = new Set(pressedRef.current).add(lane)
+    pressedRef.current = next; setPressed(next)
+    rendererRef.current?.setLanePressed(lane, true)
+    if (judging) hitLane(lane, now)
+    updateActiveHoldLanes()
     if (judging) checkRedZones(now)
   }, [autoPlay, checkRedZones, getAudio, getRenderTime, hitLane, openingTrace, pauseOpen, processFrame, settingsOpen, updateActiveHoldLanes])
 
@@ -860,7 +872,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     {backgroundUrl && chart.backgroundType === 'image' && <img key={backgroundUrl} className="playtest-background" src={backgroundUrl} alt="" decoding="async" />}
     {backgroundUrl && chart.backgroundType === 'video' && <video key={backgroundUrl} ref={backgroundVideoRef} className="playtest-background" data-active={videoBackgroundActive} src={backgroundUrl} muted loop playsInline preload="metadata" disablePictureInPicture />}
     {preferences.trackBackgroundBlur && hasCustomBackground && (!hasVideoBackground || videoBackgroundActive) &&
-      <div className="playtest-track-background-blur" aria-hidden="true" style={{
+      <div className="playtest-track-background-blur" data-economy={mobileWeb && stats.renderScale <= 0.8} aria-hidden="true" style={{
         clipPath: `polygon(${trackTopInset}% 0, ${100 - trackTopInset}% 0, ${100 - trackBottomInset}% 100%, ${trackBottomInset}% 100%)`,
       }} />}
     <canvas ref={canvasRef} className="playtest-canvas" aria-label={text('WebGL2 谱面试玩画面', 'WebGL2 chart playtest')} />
@@ -870,29 +882,28 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     </header>
     <aside className="playtest-score"><span>SCORE</span><strong>{score.toString().padStart(8, '0')}</strong><span>ACCURACY</span><strong>{accuracy.toFixed(2)}%</strong></aside>
     <aside className="playtest-performance"><div><Gauge /><span><b>{stats.fps || '—'} FPS · P95 {stats.frameTimeP95.toFixed(1)} MS</b><small>MAX {stats.frameTimeMax.toFixed(1)} MS · {Math.round(stats.renderScale * 100)}% SCALE</small></span></div><div><Sparkles /><span><b>{stats.notes} NOTES</b><small>{stats.longFramePercent.toFixed(1)}% LONG · {stats.clockStalls} CLOCK STALLS</small></span></div></aside>
-    {feedback.map((effect) => effect.sprite && <ParticleSprite
-      key={`sprite-${effect.id}`}
-      className={`playtest-hit-effect ${effect.result.toLowerCase()}`}
-      style={{ left: `${laneX(effect.lane)}%` }}
-      defaultSrc={effect.sprite === 'red' ? redSprite : tapSpriteSrc}
-      atlas={effect.sprite === 'tap' ? particleAppearance?.tap : undefined}
-      transformFrames={effect.sprite === 'tap'}
-      reduceMotion={preferences.reduceMotion}
+    {LANES.map((lane) => {
+      const effect = feedback.find((item) => item.lane === lane && item.sprite === 'tap')
+      return <ParticleSprite key={lane} playbackId={effect?.id ?? null} hidden={!effect}
+        className={effect && `playtest-hit-effect ${effect.result.toLowerCase()}`}
+        style={{ left: `${laneX(lane)}%` }}
+        defaultSrc={tapSpriteSrc} atlas={particleAppearance?.tap} transformFrames reduceMotion={preferences.reduceMotion}
+      />
+    })}
+    {feedback.map((effect) => effect.sprite === 'red' && <ParticleSprite
+      key={effect.id} className="playtest-hit-effect red" style={{ left: `${laneX(effect.lane)}%` }}
+      defaultSrc={redSprite} reduceMotion={preferences.reduceMotion}
     />)}
     {!centeredJudgment && judgments}
-    {[...holdSprites].map(([lane, state]) => (
-      <ParticleSprite
-        key={lane}
-        className={state === 'finishing' ? 'playtest-hold-effect finishing' : 'playtest-hold-effect'}
+    {LANES.map((lane) => {
+      const state = holdSprites.get(lane)
+      return <ParticleSprite key={lane} playbackId={state ? 1 : null} hidden={!state}
+        className={state && (state === 'finishing' ? 'playtest-hold-effect finishing' : 'playtest-hold-effect')}
         style={{ left: `${laneX(lane)}%` }}
-        defaultSrc={holdSpriteSrc}
-        atlas={particleAppearance?.hold}
-        loop
-        transformFrames
-        reduceMotion={preferences.reduceMotion}
+        defaultSrc={holdSpriteSrc} atlas={particleAppearance?.hold} loop transformFrames reduceMotion={preferences.reduceMotion}
         onAnimationEnd={state === 'finishing' ? () => finishHoldSprite(lane) : undefined}
       />
-    ))}
+    })}
     <div className="playtest-hud">
       <div className="playtest-combo">{combo > 0 && <b>{combo}</b>}</div>
       {centeredJudgment && judgments}
@@ -911,6 +922,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     )}
     <div className="playtest-key-caps">{preferences.playKeys.map((key, lane) => <button
       key={`${key}-${lane}`}
+      data-sound="none"
       aria-label={text(`轨道 ${lane + 1}，按键 ${key}`, `Lane ${lane + 1}, key ${key}`)}
       className={pressed.has(lane) ? 'pressed' : ''}
       style={{

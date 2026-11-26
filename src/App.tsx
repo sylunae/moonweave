@@ -30,7 +30,15 @@ function DismissBootSplash() {
 
     splash.setAttribute('data-leaving', '')
     splash.setAttribute('aria-hidden', 'true')
-    for (const animation of splash.getAnimations?.({ subtree: true }) ?? []) animation.updatePlaybackRate(7)
+    const sweep = Array.from(splash.querySelectorAll('.boot-wordmark-reveal, .boot-wordmark-fill'), (layer) => ({
+      layer,
+      transform: getComputedStyle(layer).transform,
+    }))
+    for (const { layer, transform } of sweep) {
+      // Finish the sweep from its current position, including fast starts.
+      for (const animation of layer.getAnimations()) animation.cancel()
+      layer.animate([{ transform }, { transform: 'none' }], { duration: 100, easing: 'ease-out', fill: 'forwards' })
+    }
     const fade = splash.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease-out', fill: 'forwards' })
     void fade.finished.then(() => splash.remove(), () => splash.remove())
   }, [])

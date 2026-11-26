@@ -29,15 +29,26 @@ export class BufferedPlaytestAudio extends EventTarget {
   get ended() { return this.finished }
   get readyState() { return this.context?.state === 'running' ? 4 : 0 }
 
-  get currentTime() {
+  // Includes the scheduled lead-in, so the approach and the song share an output clock.
+  get timelineTime() {
     const context = this.context
     if (!this.source || !context || context.state !== 'running') return this.lastPosition
     const stamp = context.getOutputTimestamp?.()
-    if (stamp && !stamp.performanceTime && context.currentTime - this.startedAt < 0.1) return this.lastPosition
-    const output = stamp?.contextTime !== undefined && stamp.performanceTime
+    const output = stamp?.performanceTime && stamp.contextTime !== undefined
       ? Math.min(context.currentTime, stamp.contextTime + Math.min(MAX_OUTPUT_INTERPOLATION_SECONDS, Math.max(0, (performance.now() - stamp.performanceTime) / 1000)))
       : context.currentTime - (context.baseLatency || 0) - (context.outputLatency || 0)
-    const position = this.position + output - this.startedAt
+    // Some devices initially report an empty output timestamp. Keep the
+    // playhead at the onset until output advances or the fallback clock settles.
+    const elapsed = output - this.startedAt
+    if (stamp && !stamp.performanceTime && context.currentTime - this.startedAt < 0.1) {
+      return this.position + Math.min(0, elapsed)
+    }
+    return this.position + elapsed
+  }
+
+  get currentTime() {
+    if (!this.source || !this.buffer) return this.lastPosition
+    const position = this.timelineTime
     this.lastPosition = Math.min(this.buffer!.duration, Math.max(this.lastPosition, position))
     return this.lastPosition
   }
@@ -93,7 +104,7 @@ export class BufferedPlaytestAudio extends EventTarget {
     return Boolean(this.buffer && this.context?.state === 'running')
   }
 
-  playFrom(position: number) {
+  playFrom(position: number, delaySeconds = 0) {
     const context = this.context
     const buffer = this.buffer
     if (!context || context.state !== 'running' || !buffer || position >= buffer.duration) return false
@@ -117,7 +128,7 @@ export class BufferedPlaytestAudio extends EventTarget {
       }
       finishAtOutput()
     }
-    this.startedAt = context.currentTime
+    this.startedAt = context.currentTime + delaySeconds
     try {
       source.start(this.startedAt, this.position)
     } catch {

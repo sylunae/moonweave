@@ -3,8 +3,9 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { DEFAULT_CHART, type Chart, type ChartNote } from '@/features/chart/types'
 import PlaytestPage from '@/pages/PlaytestPage'
+import { SoundProvider } from '@/app/sound'
 
-const state = vi.hoisted(() => ({ editor: {} as Record<string, unknown>, options: {} as { getRecordedNotes(): ChartNote[] }, navigate: vi.fn(), lanePressed: vi.fn(), judgmentDisplay: 'lane' }))
+const state = vi.hoisted(() => ({ editor: {} as Record<string, unknown>, options: {} as { getRecordedNotes(): ChartNote[]; getTime(): number; beforeDraw(time: number, timestamp: number): void }, navigate: vi.fn(), lanePressed: vi.fn(), judgmentDisplay: 'lane' }))
 const particles = vi.hoisted(() => ({ id: null as string | null, readAssets: vi.fn() }))
 vi.mock('@/features/appearance/particleLibrary', () => ({ readParticleAssets: particles.readAssets }))
 vi.mock('@/features/chart/ChartProvider', () => ({ useChart: () => state.editor }))
@@ -78,6 +79,7 @@ const redHold = (time: number, endTime: number): ChartNote => ({ ...note('red-ho
 function move(time: number) { audio.currentTime = time / 1000; vi.mocked(performance.now).mockReturnValue(time) }
 async function frame(time: number) {
   move(time)
+  await act(async () => state.options.beforeDraw(state.options.getTime(), time))
   await act(async () => { const pending = [...frames.values()]; frames.clear(); pending.forEach((cb) => cb(time)) })
 }
 function combo() { return document.querySelector('.playtest-combo b')?.textContent ?? '0' }
@@ -378,4 +380,47 @@ it('keeps the compact mobile hold sprite mounted across scoring ticks without sp
 
   fireEvent.keyUp(window, { key: 'd' })
   expect(document.querySelector('.playtest-hold-effect')).toBeNull()
+})
+
+it('replays repeated taps with the particle element mounted before the first input', async () => {
+  const animate = vi.fn(() => ({ pause: vi.fn(), play: vi.fn(), cancel: vi.fn(), currentTime: 0 }))
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }))
+  Object.defineProperty(HTMLElement.prototype, 'animate', { configurable: true, value: animate })
+  try {
+    chart([note('first', 500), note('second', 750)])
+    render(<PlaytestPage />)
+    const laneImage = document.querySelector('.particle-atlas-clip img')
+    const initialAnimations = animate.mock.calls.length
+    const animation = animate.mock.results[0].value
+    expect(animation.pause).toHaveBeenCalled()
+    await start()
+    for (const time of [0.5, 0.75]) {
+      tap(time)
+      expect(document.querySelector('.playtest-hit-effect img')).toBe(laneImage)
+    }
+    expect(animation.play).toHaveBeenCalledTimes(2)
+    expect(animate).toHaveBeenCalledTimes(initialAnimations)
+  } finally {
+    Reflect.deleteProperty(HTMLElement.prototype, 'animate')
+  }
+})
+
+it('keeps gameplay lane touches silent with menu sounds enabled', async () => {
+  const playUiSound = vi.fn(async () => {})
+  const createAudio = vi.fn(function () { return { play: playUiSound } })
+  vi.stubGlobal('Audio', createAudio)
+  chart([note('tap', 500)])
+  render(<SoundProvider><PlaytestPage /></SoundProvider>)
+  await start()
+  move(500)
+  const lane = screen.getByRole('button', { name: '轨道 1，按键 d' })
+  lane.setPointerCapture = vi.fn()
+  lane.hasPointerCapture = vi.fn(() => false)
+  fireEvent.pointerOver(lane)
+  fireEvent.pointerDown(lane, { pointerId: 1 })
+  fireEvent.pointerUp(lane, { pointerId: 1 })
+  fireEvent.click(lane)
+  expect(combo()).toBe('1')
+  expect(createAudio).not.toHaveBeenCalled()
+  expect(playUiSound).not.toHaveBeenCalled()
 })

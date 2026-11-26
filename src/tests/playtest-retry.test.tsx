@@ -101,14 +101,20 @@ it('waits for mobile audio decoding before starting and follows its output clock
   expect(audio.play).not.toHaveBeenCalled()
   await act(async () => finishDecoding(buffer))
   expect(screen.queryByRole('status')).toBeNull()
-  fireEvent.keyDown(window, { code: 'Space' })
-  await act(async () => {
-    const pending = [...frames.values()]; frames.clear(); pending.forEach((callback) => callback(1100))
-  })
-  expect(start).toHaveBeenCalledWith(10, 25)
+  await act(async () => fireEvent.keyDown(window, { code: 'Space' }))
+  expect(start).toHaveBeenCalledExactlyOnceWith(11, 25)
   expect(audio.play).not.toHaveBeenCalled()
-  contextTime = 10.25
-  output = 10.2
+  contextTime = output = 10.5
+  await act(async () => {
+    const pending = [...frames.values()]; frames.clear(); pending.forEach((callback) => callback(500))
+  })
+  expect(state.renderTime()).toBeCloseTo(24500)
+  contextTime = 11.25
+  output = 11.2
+  await act(async () => {
+    const pending = [...frames.values()]; frames.clear(); pending.forEach((callback) => callback(1250))
+  })
+  expect(start).toHaveBeenCalledOnce()
   expect(state.renderTime()).toBeCloseTo(25200)
   expect(audio.currentTime).toBe(25)
   fireEvent.click(screen.getByRole('button', { name: '暂停' }))

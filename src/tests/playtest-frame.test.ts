@@ -46,8 +46,10 @@ it.each([500, 1200])('presents a complete frame when adapting resolution or resi
     expect(hasFrame).toBe(true)
     const initialWidth = width
     expect(initialWidth).toBe(Math.round(windowWidth * (windowWidth <= 760 ? 1.5 : 1.25) * 0.9))
-    frame(1016); expect(hasFrame).toBe(true)
-    frame(2016); expect(hasFrame).toBe(true)
+    // A steady 30 FPS has no relative long frames but exceeds the 60 FPS budget.
+    for (let i = 1; i <= 60; i++) frame(16 + i * 1000 / 30)
+    expect(hasFrame).toBe(true)
+    expect(stats.at(-1)?.longFramePercent).toBe(0)
     expect(stats.at(-1)?.renderScale).toBeCloseTo(0.8)
     frame(2032)
     expect(width).toBeLessThan(initialWidth)

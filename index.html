@@ -89,9 +89,10 @@
         animation: boot-emblem-light var(--boot-sweep-duration) ease-out both;
       }
       .boot-emblem img { display: block; width: 74%; height: auto; }
+      .boot-splash[data-leaving] .boot-emblem { animation: none; }
       /* The layer and its clipping parent move in opposite directions to keep the glyphs aligned. */
-      @keyframes boot-reveal { from { transform: translateX(-101%); } to { transform: translateX(0); } }
-      @keyframes boot-fill { from { transform: translateX(101%); } to { transform: translateX(0); } }
+      @keyframes boot-reveal { from { transform: translateX(-101%); } to { transform: translateX(-12%); } }
+      @keyframes boot-fill { from { transform: translateX(101%); } to { transform: translateX(12%); } }
       @keyframes boot-emblem-light { 0%, 22% { opacity: .48; } 58%, 100% { opacity: 1; } }
       :root[data-reduce-motion='true'] :is(.boot-wordmark-reveal, .boot-wordmark-fill, .boot-emblem) { animation: none; }
       @media (prefers-reduced-motion: reduce) {

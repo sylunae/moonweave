@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { claimEarlyAccessNotice, PreferencesProvider } from './app/preferences'
-import { SoundGate } from './app/sound'
+import { SoundProvider } from './app/sound'
 import { requestFullscreenOnFirstClick } from './app/webFullscreen'
 import App from './App'
 import './styles.css'
@@ -16,7 +16,7 @@ if (import.meta.env.PROD && !window.sylunae && window.isSecureContext && /^https
 void claimEarlyAccessNotice().then((showEarlyAccessNotice) => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <PreferencesProvider><SoundGate><App showEarlyAccessNotice={showEarlyAccessNotice} /></SoundGate></PreferencesProvider>
+      <PreferencesProvider><SoundProvider><App showEarlyAccessNotice={showEarlyAccessNotice} /></SoundProvider></PreferencesProvider>
     </StrictMode>,
   )
 })

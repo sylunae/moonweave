@@ -5,6 +5,7 @@ export const TOUCH_LANE_START_Y = 0.56
 export const PLAYTEST_HORIZON_MS = 1_400
 const VERTICAL_TRACK_HALF_WIDTH = 0.62
 const TILTED_TRACK_HALF_WIDTH = 0.86
+const PORTRAIT_TRACK_MAX_WIDTH = 480
 export type PlaytestTrackLayout = 'tilted' | 'portrait' | 'compact'
 
 export function resolvePlaytestTrackLayout(portrait: boolean, canChoose: boolean, trackMode: 'tilted' | 'vertical') {
@@ -57,7 +58,9 @@ export function getPlaytestViewportGeometry(
     const halfWidth = Math.min(getPlaytestTrackHalfWidth(laneTilt), projectedWidthLimit, height * 1.9 / width)
     return { halfWidth, horizon }
   }
-  const halfWidth = layout === 'portrait' ? 0.88 : Math.min(0.72, 360 / width, height * 0.53 / width)
+  const halfWidth = layout === 'portrait'
+    ? Math.min(1, PORTRAIT_TRACK_MAX_WIDTH / width)
+    : Math.min(0.72, 360 / width, height * 0.53 / width)
   // Scale travel time with the visible distance to keep linear fall speed
   // comparable across different window heights.
   return { halfWidth, horizon: horizon * Math.min(1.6, Math.max(0.65, height / 600)) }

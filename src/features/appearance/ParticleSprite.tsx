@@ -75,25 +75,53 @@ interface ParticleSpriteProps extends ComponentPropsWithoutRef<'i'> {
   atlas?: LoadedAtlas
   loop?: boolean
   reduceMotion?: boolean
+  playbackId?: number | null
   transformFrames?: boolean
 }
 
-export function ParticleSprite({ defaultSrc, atlas, loop = false, reduceMotion, transformFrames = false, style, ...props }: ParticleSpriteProps) {
+export function ParticleSprite({ defaultSrc, atlas, loop = false, reduceMotion, playbackId, transformFrames = false, style, ...props }: ParticleSpriteProps) {
   const elementRef = useRef<HTMLElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
+  const animationRef = useRef<Animation | null>(null)
+  const pooled = playbackId !== undefined
   useLayoutEffect(() => {
     const element = transformFrames ? imageRef.current : elementRef.current
     const sequence = atlas ?? (transformFrames ? defaultFrames : undefined)
     if (!element?.animate || !sequence || reduceMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const frames = transformFrames ? sequence.translatedFrames : sequence.frames
-    const animation = element.animate(frames, { duration: sequence.duration, iterations: loop ? Infinity : 1, fill: 'both' })
-    return () => animation.cancel()
-  }, [atlas, loop, reduceMotion, transformFrames])
+    const hideAfterTap = pooled && !loop
+    const keyframes = hideAfterTap
+      ? frames.map((frame, index) => ({ ...frame, opacity: index === frames.length - 1 ? 0 : 1 }))
+      : frames
+    const root = elementRef.current
+    if (hideAfterTap) root?.setAttribute('data-atlas-fade', '')
+    const animation = element.animate(keyframes, { duration: sequence.duration, iterations: loop ? Infinity : 1, fill: 'both' })
+    animationRef.current = animation
+    if (pooled) animation.pause()
+    return () => {
+      animation.cancel()
+      animationRef.current = null
+      if (hideAfterTap) root?.removeAttribute('data-atlas-fade')
+    }
+  }, [atlas, loop, pooled, reduceMotion, transformFrames])
+
+  useLayoutEffect(() => {
+    if (!pooled) return
+    const animation = animationRef.current
+    if (playbackId == null) {
+      animation?.pause()
+      return
+    }
+    if (animation) {
+      animation.currentTime = 0
+      animation.play()
+    }
+  }, [playbackId, pooled, atlas, reduceMotion, loop, transformFrames])
 
   const src = atlas?.url ?? defaultSrc
   if (transformFrames) {
     const [width, height] = (atlas ?? defaultFrames).backgroundSize.split(' ')
-    return <i {...props} aria-hidden="true" data-custom-particle={atlas ? '' : undefined} style={{
+    return <i {...props} ref={elementRef} aria-hidden="true" data-custom-particle={atlas ? '' : undefined} style={{
       ...style,
       '--playtest-sprite-duration': atlas && !loop ? `${atlas.duration}ms` : undefined,
     } as CSSProperties}>

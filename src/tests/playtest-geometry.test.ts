@@ -48,6 +48,14 @@ describe('playtest perspective compensation', () => {
     expect(getPlaytestLanePositionPercent(4, 45, 1, halfWidth)).toBeLessThan(100)
   })
 
+  it.each([[390, 0], [480, 0], [600, 60]])('centers the portrait track at viewport width %i with %ipx side gaps', (width, gap) => {
+    const { halfWidth } = getPlaytestViewportGeometry('portrait', 0, 7, width, 844)
+    const left = getPlaytestLanePositionPercent(0, 0, JUDGMENT_LINE_Y, halfWidth)
+    const right = getPlaytestLanePositionPercent(4, 0, JUDGMENT_LINE_Y, halfWidth)
+    expect(left * width / 100).toBeCloseTo(gap)
+    expect((100 - right) * width / 100).toBeCloseTo(gap)
+  })
+
   it('aligns projected touch lanes with the track in either orientation', () => {
     const landscape = getPlaytestViewportGeometry('tilted', 45, 7, 844, 390)
     const portrait = getPlaytestViewportGeometry('portrait', 0, 7, 390, 844)
@@ -56,7 +64,7 @@ describe('playtest perspective compensation', () => {
     expect(landscapeEdge(TOUCH_LANE_START_Y)).toBeGreaterThan(landscapeEdge(JUDGMENT_LINE_Y))
     expect(landscapeEdge(JUDGMENT_LINE_Y)).toBeGreaterThan(landscapeEdge(1))
     expect(landscapeEdge(1)).toBeGreaterThan(0)
-    expect(portraitEdge(TOUCH_LANE_START_Y)).toBeCloseTo(6)
+    expect(portraitEdge(TOUCH_LANE_START_Y)).toBe(0)
     expect(portraitEdge(1)).toBe(portraitEdge(TOUCH_LANE_START_Y))
   })
 })
