@@ -5,7 +5,7 @@ import { DEFAULT_CHART, type Chart, type ChartNote } from '@/features/chart/type
 import PlaytestPage from '@/pages/PlaytestPage'
 import { SoundProvider } from '@/app/sound'
 
-const state = vi.hoisted(() => ({ editor: {} as Record<string, unknown>, options: {} as { getRecordedNotes(): ChartNote[]; getTime(): number; beforeDraw(time: number, timestamp: number): void }, navigate: vi.fn(), lanePressed: vi.fn(), judgmentDisplay: 'lane' }))
+const state = vi.hoisted(() => ({ editor: {} as Record<string, unknown>, options: {} as { notes: ChartNote[]; getRecordedNotes(): ChartNote[]; getTime(): number; beforeDraw(time: number, timestamp: number): void }, navigate: vi.fn(), lanePressed: vi.fn(), judgmentDisplay: 'lane' }))
 const particles = vi.hoisted(() => ({ id: null as string | null, readAssets: vi.fn() }))
 vi.mock('@/features/appearance/particleLibrary', () => ({ readParticleAssets: particles.readAssets }))
 vi.mock('@/features/chart/ChartProvider', () => ({ useChart: () => state.editor }))
@@ -85,6 +85,31 @@ async function frame(time: number) {
 function combo() { return document.querySelector('.playtest-combo b')?.textContent ?? '0' }
 function score() { return document.querySelector('.playtest-score strong')?.textContent }
 function chart(notes: ChartNote[]) { state.editor.chart = { ...DEFAULT_CHART, notes } }
+
+it('ignores decorative taps, holds and hazards even when covering a playable note', async () => {
+  chart([{ ...note('decoy', 500), visualOnly: true }, { ...redHold(0, 1200), visualOnly: true },
+    { ...note('decorative-hold', 750), kind: 'hold', endTime: 2500, visualOnly: true }, note('real', 500)])
+  render(<PlaytestPage />); await start(); tap(0.5)
+  expect(score()).toBe('10000000')
+  await frame(3000)
+  expect(combo()).toBe('1')
+  expect(screen.queryByText('Miss')).toBeNull()
+})
+
+it('excludes disabled notes from rendering, scoring and red zones', async () => {
+  const playable = note('real', 500)
+  const decorative = { ...note('decoy', 500), visualOnly: true }
+  chart([playable, decorative, { ...redHold(0, 1200), disabled: true },
+    { ...note('disabled-tap', 500), disabled: true },
+    { ...note('disabled-hold', 750), kind: 'hold', endTime: 2500, disabled: true }])
+  render(<PlaytestPage />); await start()
+  expect(state.options.notes).toEqual([playable, decorative])
+  tap(0.5)
+  expect(score()).toBe('10000000')
+  await frame(3000)
+  expect(combo()).toBe('1')
+  expect(screen.queryByText('Miss')).toBeNull()
+})
 
 it.each(['note', 'hold'] as const)('holding a key when a red %s crosses breaks combo without a Miss or score loss', async (kind) => {
   chart([note('a', 500), kind === 'note' ? note('red', 1000, 0, true) : redHold(1000, 1500)])

@@ -8,6 +8,7 @@ import { normalizeChart } from '@/features/chart/types'
 import { retimeInitialBpm } from '@/features/chart/tempoMap'
 import { mergeRecording } from '@/features/chart/improvisation'
 import { prepareAiImport } from '@/features/chart/ai/aiChart'
+import { motionPreset } from '@/features/chart/effects/noteAnimation'
 
 const dependencies = vi.hoisted(() => ({ setPreferences: vi.fn(), writeWebChart: vi.fn(async () => ({ updatedAt: 1 })) }))
 vi.mock('@/app/preferences', () => ({ usePreferences: () => ({ setPreferences: dependencies.setPreferences }), migrateLegacyChartPreferences: vi.fn() }))
@@ -161,7 +162,7 @@ it('undoes and redoes BPM, notes, effects and linked retiming as atomic edits', 
     await act(async () => { root.render(<ChartProvider><Harness /></ChartProvider>) })
     expect(context!.activeChartId).toBe('test-chart')
     await act(async () => context!.commitEdit((chart) => ({ ...chart, ...normalizeChart({ ...chart,
-      notes: [{ id: 'note', lane: 0, time: 2000, kind: 'note' }],
+      notes: [{ id: 'note', lane: 0, time: 2000, kind: 'note', animation: motionPreset('rebound', 4) }],
       effects: [{ id: 'speed', type: 'scrollSpeed', time: 2000, endTime: 4000, multiplier: 0, transition: 'linear' }],
     }) })))
     await act(async () => context!.commitEdit((chart) => retimeInitialBpm(chart, 240)))
@@ -181,6 +182,14 @@ it('undoes and redoes BPM, notes, effects and linked retiming as atomic edits', 
     expect(context!.futureLength).toBe(0)
     await act(async () => context!.undo())
     expect(context!.chart.notes[0].time).toBe(2000)
+    const animatedNotes = context!.chart.notes
+    await act(async () => context!.commitEdit(chart => ({ ...chart, notes: chart.notes.map(({ animation: _, ...note }) => note) })))
+    expect(context!.chart.notes[0].animation).toBeUndefined()
+    await act(async () => context!.undo())
+    expect(context!.chart.notes).toEqual(animatedNotes)
+    expect(context!.chart.notes[0].animation).toEqual(motionPreset('rebound', 4))
+    await act(async () => context!.redo())
+    expect(context!.chart.notes[0].animation).toBeUndefined()
     expect(dependencies.writeWebChart).not.toHaveBeenCalled()
   } finally {
     await act(async () => root.unmount())

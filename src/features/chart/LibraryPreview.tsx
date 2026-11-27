@@ -71,7 +71,7 @@ export function LibraryPreview({ id, chart, fraction, playhead, elapsed, onClose
     let frame = 0
     const fail = () => { if (live) { showToast(failure); onClose() } }
     const start = Math.max(0, timeAtBeat(chart, Math.floor(beatAtTime(chart, chart.duration * fraction) / 4) * 4))
-    const notes = chart.notes.filter(note => (note.endTime ?? note.time) >= start).map(note => {
+    const notes = chart.notes.filter(note => !note.disabled && (note.endTime ?? note.time) >= start).map(note => {
       const head = beatAtTime(chart, note.time)
       return { head, tail: note.endTime === undefined ? head : beatAtTime(chart, note.endTime), lane: note.lane, red: note.red }
     }).sort((a, b) => a.head - b.head)

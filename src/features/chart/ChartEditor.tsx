@@ -1,12 +1,13 @@
 import { EffectMarkers } from './effects/EffectMarkers'
 import type { ChartEffect } from './effects/scrollSpeed'
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
-import { createEditorNoteIndex, visibleEditorNotes } from './editorTimeline'
+import { ChevronDown, ChevronUp, TriangleAlert } from 'lucide-react'
+import { createEditorNoteIndex, findEditorNoteOverlaps, visibleEditorNotes } from './editorTimeline'
 import { adjacentBeatLine, beatAtTime, beatLinesInRange, bpmAtTime, scrollPositionAtTime, snapToBeatLine, timeAtScrollPosition } from './tempoMap'
 import { usePreferences } from '@/app/preferences'
 import { useI18n } from '@/app/i18n'
 import { GameButton } from '@/components/ui/game-controls'
+import { editorOverlapCopy, notePropertiesCopy } from '@/config/app'
 import { EDITOR_LANE_WIDTH, type Chart, type ChartNote, type ToolMode } from './types'
 
 const LANE_COLORS = ['var(--editor-note-blue)', 'var(--editor-note-purple)', 'var(--editor-note-purple)', 'var(--editor-note-blue)']
@@ -58,6 +59,8 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
   const dragPreviewRef = useRef<Record<string, { lane: number; time: number; endTime?: number }>>({})
   const viewportTimeRef = useRef(currentTime)
   const currentTimeRef = useRef(currentTime)
+  const notesRef = useRef(chart.notes)
+  notesRef.current = chart.notes
   const previewingSeekRef = useRef(false)
   const seekCommitTimerRef = useRef(0)
   const seekFrameRef = useRef(0)
@@ -75,6 +78,7 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
     pendingViewportTimeRef.current = currentTime
   }
   const noteIndex = useMemo(() => createEditorNoteIndex(chart.notes), [chart.notes])
+  const overlaps = useMemo(() => findEditorNoteOverlaps(chart.notes), [chart.notes])
   const visibleRange = useMemo(() => ({
     from: timeAtScrollPosition(chart, timelinePosition - ((laneHeight - judgmentY + 160) / pps * 1000)),
     to: timeAtScrollPosition(chart, timelinePosition + ((judgmentY + 160) / pps * 1000)),
@@ -181,7 +185,7 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
       if (upEvent.pointerId !== pointerId) return
       const preview = dragPreviewRef.current
       if (upEvent.type !== 'pointercancel' && didDrag && Object.keys(preview).length) {
-        onNotesChange(chart.notes.map((note) => preview[note.id] ? { ...note, ...preview[note.id] } : note))
+        onNotesChange(notesRef.current.map((note) => preview[note.id] ? { ...note, ...preview[note.id] } : note))
         if (regionMode) onRegionMove?.(preview[selectedNotes[0].id].time - selectedNotes[0].time)
       } else if (!regionMode && upEvent.type !== 'pointercancel' && wasSelected) { const next = new Set(selectedIds); next.delete(id!); onSelectionChange(next) }
       if (regionMode && upEvent.type === 'pointercancel') suppressRegionClickRef.current = true
@@ -220,7 +224,7 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
     const up = (upEvent: globalThis.PointerEvent) => {
       if (upEvent.pointerId !== pointerId) return
       const preview = dragPreviewRef.current
-      if (upEvent.type !== 'pointercancel' && Object.keys(preview).length) onNotesChange(chart.notes.map((note) => preview[note.id] ? { ...note, ...preview[note.id] } : note))
+      if (upEvent.type !== 'pointercancel' && Object.keys(preview).length) onNotesChange(notesRef.current.map((note) => preview[note.id] ? { ...note, ...preview[note.id] } : note))
       dragPreviewRef.current = {}; setDragPreview({})
       cleanup()
     }
@@ -354,6 +358,12 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
 
   const regionAnchor = tool === 'region' ? chart.notes.find((note) => selectedIds.has(note.id) && dragPreview[note.id]) : undefined
   const regionDelta = regionAnchor ? dragPreview[regionAnchor.id].time - regionAnchor.time : 0
+  const beatRows = lines.map((line) => {
+    const position = ((line.index % subdivision) + subdivision) % subdivision
+    const tone = line.major ? 'major' : subdivision === 3 || (subdivision % 2 === 0 && position === subdivision / 2) ? 'blue' : 'violet'
+    const tempo = chart.bpmChanges.find((change) => Math.abs(change.time - line.time) < 0.01)
+    return { line, top: yAt(line.time), tone, tempo }
+  })
 
   return <section className="chart-editor-stage">
     <div className="editor-body">
@@ -363,6 +373,13 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
           <strong>1/{subdivision}</strong>
           <GameButton size="icon-sm" onClick={() => onSubdivisionChange(-1)} aria-label={text('降低吸附精度', 'Decrease snap precision')}><ChevronDown /></GameButton>
         </div>
+        {overlaps.times.length > 0 && <GameButton size="sm" className="editor-overlap-warning"
+          aria-label={text(...editorOverlapCopy.locate)} title={text(...editorOverlapCopy.locate)}
+          onClick={() => {
+            const next = overlaps.times.find((position) => position > viewportTimeRef.current) ?? overlaps.times[0]
+            renderSeekPreview(next)
+            commitSeekPreview()
+          }}><TriangleAlert aria-hidden /><span aria-live="polite">{overlaps.ids.size}</span></GameButton>}
         <div className="minimap" onPointerDown={(event) => {
           event.preventDefault(); pointerCleanupRef.current(); const minimap = event.currentTarget
           const pointerId = event.pointerId
@@ -383,26 +400,45 @@ export function ChartEditor({ ref, chart, laneWidthPercent = chart.settings.edit
           <div className="density-bars">{densityBins.map((density, index) => <i key={index} style={{ width: `${density * 100}%`, opacity: density > 0 ? 1 : 0 }} />)}</div>
           <div className="minimap-window" style={{ bottom: `${clamp(timelineTime / chart.duration * 100, 0, 94)}%` }} />
         </div>
-        <time>{formatOverviewTime(timelineTime)} / {formatOverviewTime(chart.duration)}</time>
+        <div className="editor-position">
+          <span>{isPlaying ? text('播放中', 'Playing') : text('判定线', 'Judgment')}</span>
+          <time>{formatOverviewTime(timelineTime)} / {formatOverviewTime(chart.duration)}</time>
+        </div>
       </aside>
       <div className="editor-track-space" style={{ '--editor-lane-width': `${laneWidthPercent}%` } as React.CSSProperties}>
         <div className={`lane-editor ${tool === 'region' || tool === 'tempo' || tool === 'effect' ? 'region-mode' : ''}`} ref={laneRef}>
           <EffectMarkers effects={chart.effects} from={visibleRange.from} to={visibleRange.to} height={laneHeight} yAt={yAt} onEdit={onEffectEdit} />
           {region && <div className="region-overlay" style={{ top: yAt((region.end ?? region.start) + regionDelta), height: Math.max(2, (scrollPositionAtTime(chart, (region.end ?? region.start) + regionDelta) - scrollPositionAtTime(chart, region.start + regionDelta)) / 1000 * pps) }} />}
-          <div className="beat-layer">{lines.map((line) => {
-            const y = yAt(line.time); const position = ((line.index % subdivision) + subdivision) % subdivision
-            const tone = line.major ? 'major' : subdivision === 3 || (subdivision % 2 === 0 && position === subdivision / 2) ? 'blue' : 'violet'
-            const tempo = chart.bpmChanges.find((change) => Math.abs(change.time - line.time) < 0.01)
-            return <div key={line.index} className={`beat-line ${tone}${tempo ? ' tempo-change' : ''}`} style={{ top: y }}><span>{line.major ? Math.floor(line.beat) + 1 : ''}</span>{tempo && <b>{tempo.bpm} BPM</b>}</div>
-          })}</div>
+          <div className="beat-layer">{beatRows.map(({ line, top, tone, tempo }) =>
+            <div key={line.index} className={`beat-line ${tone}${tempo ? ' tempo-change' : ''}`} style={{ top }} />,
+          )}</div>
+          <div className="beat-labels">{beatRows.map(({ line, top, tempo }) => (line.major || tempo) && (
+            <div key={line.index} className="beat-label-row" style={{ top }}>
+              {line.major && <span>{Math.floor(line.beat) + 1}</span>}
+              {tempo && <b>{tempo.bpm} BPM</b>}
+            </div>
+          ))}</div>
           <div className="lanes">{[0, 1, 2, 3].map((lane) => <div className={`edit-lane lane-${lane}`} key={lane} onPointerDown={(event) => lanePointerDown(event, lane)} onClick={regionClick} />)}</div>
           <div className="notes-layer">{visibleNotes.map((originalNote) => {
             const note = dragPreview[originalNote.id] ? { ...originalNote, ...dragPreview[originalNote.id] } : originalNote
             const y = yAt(note.time); const endY = note.kind === 'hold' ? yAt(note.endTime!) : y
             if (y < -150 || endY > laneHeight) return null
-            return <div key={note.id} className={`editor-note ${note.kind} ${note.red ? 'red-zone' : ''} ${Boolean(note.red) !== redMode ? 'inactive-mode' : ''} ${selectedIds.has(note.id) ? 'selected' : ''} ${tool === 'delete' ? 'deletable' : ''}`} onPointerDown={(event) => notePointerDown(event, note.id)} onClick={regionClick} style={{ left: `${note.lane * 25 + 1.6}%`, top: note.kind === 'hold' ? endY : y - 7, height: note.kind === 'hold' ? Math.max(16, y - endY + 12) : 14, '--lane': note.red ? 'var(--red-zone)' : LANE_COLORS[note.lane] } as React.CSSProperties}><i />{note.kind === 'hold' && selectedIds.has(note.id) && Boolean(note.red) === redMode && <><button className="hold-resize-handle end" aria-label={text('调整 Hold 终点', 'Adjust Hold end')} onPointerDown={(event) => resizeHold(event, 'end')} /><button className="hold-resize-handle start" aria-label={text('调整 Hold 起点', 'Adjust Hold start')} onPointerDown={(event) => resizeHold(event, 'start')} /></>}</div>
+            const description = [
+              overlaps.ids.has(note.id) && text(...editorOverlapCopy.note),
+              note.disabled && text(...notePropertiesCopy.disabled),
+              note.animation && text('自定义特效', 'Custom effects'),
+              note.visualOnly && text(...notePropertiesCopy.visual),
+            ].filter(Boolean).join(' · ')
+            return <div key={note.id} title={description || undefined} data-animation={note.animation ? true : undefined} data-visual-only={note.visualOnly} data-disabled={note.disabled}
+              className={`editor-note ${note.kind} ${note.red ? 'red-zone' : ''} ${Boolean(note.red) !== redMode ? 'inactive-mode' : ''} ${selectedIds.has(note.id) ? 'selected' : ''} ${tool === 'delete' ? 'deletable' : ''}`} onPointerDown={(event) => notePointerDown(event, note.id)} onClick={regionClick} style={{ left: `${note.lane * 25 + 1.6}%`, top: note.kind === 'hold' ? endY : y - 7, height: note.kind === 'hold' ? Math.max(16, y - endY + 12) : 14, '--lane': note.red ? 'var(--red-zone)' : LANE_COLORS[note.lane] } as React.CSSProperties}>
+              <div className="editor-note-body" aria-hidden><i /></div>
+              {note.kind === 'hold' && selectedIds.has(note.id) && Boolean(note.red) === redMode && <>
+                <button className="hold-resize-handle end" aria-label={text('调整 Hold 终点', 'Adjust Hold end')} onPointerDown={(event) => resizeHold(event, 'end')} />
+                <button className="hold-resize-handle start" aria-label={text('调整 Hold 起点', 'Adjust Hold start')} onPointerDown={(event) => resizeHold(event, 'start')} />
+              </>}
+            </div>
           })}{holdStart && <div className="hold-pending" style={{ left: `${holdStart.lane * 25 + 2}%`, top: yAt(holdStart.time) - 8, '--lane': redMode ? 'var(--red-zone)' : LANE_COLORS[holdStart.lane] } as React.CSSProperties} />}</div>
-          <div className="judgment-line" style={{ top: judgmentY }}><span>{isPlaying ? text('播放中', 'Playing') : text('判定线', 'Judgment')}</span></div>
+          <div className="judgment-line" style={{ top: judgmentY }} />
         </div>
       </div>
     </div>

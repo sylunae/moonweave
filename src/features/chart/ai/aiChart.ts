@@ -34,7 +34,8 @@ const sortNotes = (notes: ChartNote[]) => [...notes].sort((a, b) => a.time - b.t
 export function aiChartBase(chart: Chart) {
   return JSON.stringify({ title: chart.title, artist: chart.artist, audioName: chart.audioName, audioPath: chart.audioPath,
     duration: chart.duration, bpm: chart.bpm, offset: chart.offset, bpmChanges: chart.bpmChanges,
-    notes: sortNotes(chart.notes).map((n) => [n.id, n.kind, n.lane, n.time, n.endTime ?? null, ...(n.red ? [true] : [])]),
+    notes: sortNotes(chart.notes).map((n) => [n.id, n.kind, n.lane, n.time, n.endTime ?? null, ...(n.red ? [true] : []),
+      ...(n.animation || n.visualOnly || n.disabled ? [{ animation: n.animation, visualOnly: n.visualOnly, disabled: n.disabled }] : [])]),
     effects: chart.effects, aiImportHistory: chart.aiImportHistory })
 }
 export async function aiChartRevision(chart: Chart) {
@@ -89,7 +90,7 @@ function validateResult(notes: ChartNote[], duration: number) {
     if (note.kind === 'hold' && (!finite(note.endTime) || note.endTime <= note.time || note.endTime > duration)) add('hold', path)
     if (note.kind === 'note' && note.endTime !== undefined) add('hold', path)
     if (note.red !== undefined && typeof note.red !== 'boolean') add('schema', `${path}.red`)
-    lanes[note.lane + (note.red ? 4 : 0)].push(note)
+    if (!note.visualOnly && !note.disabled) lanes[note.lane + (note.red ? 4 : 0)].push(note)
   }
   for (const lane of lanes) {
     lane.sort((a, b) => a.time - b.time)
@@ -180,7 +181,8 @@ export async function prepareAiImport(chart: Chart, chartId: string, input: unkn
       if (op.op === 'add' ? !!existing : !existing) fail(op.op === 'add' ? 'duplicate' : 'missing', path)
       if (existing && !inRange(existing)) fail('range', path)
       if (op.op === 'delete') byId.delete(id)
-      else byId.set(id, note!)
+      else byId.set(id, { ...note!, ...(existing?.animation && { animation: existing.animation }),
+        ...(existing?.visualOnly && { visualOnly: true }), ...(existing?.disabled && { disabled: true }) })
     }
     notes = [...byId.values()]
   } else {

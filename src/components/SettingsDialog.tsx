@@ -50,7 +50,7 @@ export function SettingsDialog({ open, onOpenChange, initialSection = 'appearanc
   const { text } = useI18n()
   const { portrait, canChooseTrackMode } = usePlaytestViewport()
   const trackModeLabel = text(playSettingsCopy.trackMode.zh, playSettingsCopy.trackMode.en)
-  const trackBackgroundBlurLabel = text(playSettingsCopy.trackBackgroundBlur.zh, playSettingsCopy.trackBackgroundBlur.en)
+  const trackBackgroundDimmingLabel = text(playSettingsCopy.trackBackgroundDimming.zh, playSettingsCopy.trackBackgroundDimming.en)
   const judgmentDisplayLabel = text(playSettingsCopy.judgmentDisplay.zh, playSettingsCopy.judgmentDisplay.en)
   const themeOptions: Array<{ value: ThemeMode; label: string; icon: typeof Laptop }> = [
     { value: 'system', label: text('跟随系统', 'System'), icon: Laptop },
@@ -121,9 +121,9 @@ export function SettingsDialog({ open, onOpenChange, initialSection = 'appearanc
               </div>
             </section>
             <section className="settings-pane setting-row">
-              <strong>{trackBackgroundBlurLabel}</strong>
+              <strong>{trackBackgroundDimmingLabel}</strong>
               <Switch
-                aria-label={trackBackgroundBlurLabel}
+                aria-label={trackBackgroundDimmingLabel}
                 checked={preferences.trackBackgroundBlur}
                 onCheckedChange={(trackBackgroundBlur) => setPreferences((current) => ({ ...current, trackBackgroundBlur }))}
               />

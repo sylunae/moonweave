@@ -1,7 +1,8 @@
 import { EffectsModule, useEffectsEditor } from '@/features/chart/effects/EffectsModule'
+import { normalizeEffects, type ChartEffect } from '@/features/chart/effects/scrollSpeed'
 import { shiftChartOffset } from '@/features/chart/editHistory'
-import { aiChartCopy, backgroundVideoPreviewCopy, editorEffects, improvisationCopy, noteImportTitle, redZoneCopy } from '@/config/app'
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { aiChartCopy, backgroundVideoPreviewCopy, editorEffects, improvisationCopy, noteImportTitle, notePropertiesCopy, redZoneCopy } from '@/config/app'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import {
   ArrowLeft, BookOpen, ClipboardPaste, Copy, FlipHorizontal2, Gamepad2, Gauge, ImagePlus,
   Music2, Pause, Play, Plus, Redo2, ScanSearch, SlidersHorizontal, Trash2,
@@ -15,7 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { GameButton } from '@/components/ui/game-controls'
 import { Input } from '@/components/ui/input'
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { BackgroundVideoPreview } from '@/features/chart/BackgroundVideoPreview'
@@ -29,6 +30,8 @@ import { EDITOR_LANE_WIDTH, type ChartNote, type ToolMode } from '@/features/cha
 const SUBDIVISIONS = [2, 3, 4, 6, 8, 12, 16, 24, 32] as const
 const AiChartDialog = lazy(() => import('@/features/chart/ai/AiChartDialog'))
 const NoteImportDialog = lazy(() => import('@/features/chart/NoteImportDialog'))
+const NotePropertiesPanel = lazy(() => import('@/features/chart/effects/NotePropertiesPanel'))
+const NOTE_PROPERTIES_DRAWER_QUERY = '(max-width: 1024px)'
 const PLAYBACK_RATES = [0.5, 0.75, 1] as const
 const BPM_MIN = 20
 const BPM_MAX = 400
@@ -38,6 +41,12 @@ const formatTime = (milliseconds: number) => {
   return `${Math.floor(total / 60)}:${Math.floor(total % 60).toString().padStart(2, '0')}.${Math.floor((total % 1) * 1000).toString().padStart(3, '0')}`
 }
 const notesInRegion = (notes: ChartNote[], start: number, end: number) => notes.filter((note) => note.time >= start && (note.endTime ?? note.time) <= end)
+
+function commitFocusedNoteProperty() {
+  const focused = document.activeElement
+  if (focused instanceof HTMLInputElement && focused.closest('.note-properties')) focused.blur()
+}
+
 const playCopyConfirmation = () => {
   try {
     const context = new AudioContext()
@@ -82,11 +91,30 @@ export default function ChartEditorPage() {
   const [redMode, setRedMode] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
   const [noteImportOpen, setNoteImportOpen] = useState(false)
+  const [propertiesInDrawer, setPropertiesInDrawer] = useState(() => window.matchMedia?.(NOTE_PROPERTIES_DRAWER_QUERY).matches ?? false)
+  const [propertiesTarget, setPropertiesTarget] = useState<{ chartId: string; tier?: number } | null>(null)
+  const propertiesOpen = propertiesInDrawer && propertiesTarget?.chartId === activeChartId && propertiesTarget.tier === chart.library?.tier
+  useEffect(() => {
+    const viewport = window.matchMedia?.(NOTE_PROPERTIES_DRAWER_QUERY)
+    if (!viewport) return
+    const changeLayout = ({ matches }: MediaQueryListEvent) => {
+      commitFocusedNoteProperty()
+      setPropertiesInDrawer(matches)
+      setPropertiesTarget(null)
+    }
+    setPropertiesInDrawer(viewport.matches)
+    viewport.addEventListener?.('change', changeLayout)
+    return () => viewport.removeEventListener?.('change', changeLayout)
+  }, [])
   const effectsEditor = useEffectsEditor(tool, (tool) => { setTool(tool); setHoldStart(null); setRegion(null); setSelectedIds(new Set()) })
   const [holdStart, setHoldStart] = useState<{ lane: number; time: number } | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const selectNotes = useCallback((ids: Set<string>) => {
+    commitFocusedNoteProperty()
+    setSelectedIds(ids)
+  }, [])
   const [region, setRegion] = useState<{ start: number; end: number | null } | null>(null)
-  const [clipboard, setClipboard] = useState<{ start: number; notes: ChartNote[] } | null>(null)
+  const [clipboard, setClipboard] = useState<{ start: number; notes: ChartNote[]; effects: ChartEffect[] } | null>(null)
   const [actionFeedback, setActionFeedback] = useState<{ id: number; tone: 'action' | 'empty' | 'ready'; title: string; detail: string } | null>(null)
   const feedbackTimerRef = useRef(0)
   const feedbackIdRef = useRef(0)
@@ -100,7 +128,14 @@ export default function ChartEditorPage() {
   const [backgroundVideoStartDraft, setBackgroundVideoStartDraft] = useState(String(chart.backgroundVideoStartTime))
   const [videoPreviewChartId, setVideoPreviewChartId] = useState<string | null>(null)
   const regionNotes = useMemo(() => !region || region.end === null ? [] : notesInRegion(chart.notes, region.start, region.end).filter((note) => Boolean(note.red) === redMode), [chart.notes, redMode, region])
+  const regionEffects = useMemo(() => {
+    if (tool !== 'region' || !region || region.end === null) return []
+    const { start, end } = region
+    return chart.effects.filter((effect) => effect.time >= start && (effect.endTime ?? effect.time) <= end)
+  }, [chart.effects, region, tool])
   const selectedNotes = useMemo(() => chart.notes.filter((note) => selectedIds.has(note.id) && Boolean(note.red) === redMode), [chart.notes, redMode, selectedIds])
+  const canCopy = selectedNotes.length > 0 || regionEffects.length > 0
+  const selectionKey = useMemo(() => JSON.stringify([...selectedIds]), [selectedIds])
   const regionStatus = useMemo(() => {
     if (effectsEditor.status) return effectsEditor.status
     if (actionFeedback) return actionFeedback
@@ -108,9 +143,10 @@ export default function ChartEditorPage() {
     if (tool !== 'region') return null
     if (!region) return { tone: 'action', title: text('选择区域起点', 'Choose the region start'), detail: text('点击轨道上的一条节拍线作为区域起点。', 'Click a beat line to set the start of the region.') }
     if (region.end === null) return { tone: 'action', title: text('继续选择区域终点', 'Choose the region end'), detail: text(`起点 ${formatTime(region.start)}，现在点击另一条节拍线。`, `Start ${formatTime(region.start)}; now click another beat line.`) }
-    if (!regionNotes.length) return { tone: 'empty', title: text('所选区域没有音符', 'No notes in this region'), detail: text('请重新选择包含音符的范围，之后才能复制或镜像。', 'Select a range containing notes before copying or mirroring.') }
+    if (regionEffects.length) return { tone: 'ready', title: text(`已选择 ${regionNotes.length} 个音符、${regionEffects.length} 个变速`, `${regionNotes.length} notes and ${regionEffects.length} speed effects selected`), detail: text('可一起复制选区中的音符和变速。', 'Copy the notes and speed effects in this region together.') }
+    if (!regionNotes.length) return { tone: 'empty', title: text('所选区域没有音符或变速', 'No notes or speed effects in this region'), detail: text('请选择包含音符或变速的范围。', 'Select a range containing notes or speed effects.') }
     return { tone: 'ready', title: text(`已选择 ${regionNotes.length} 个音符`, `${regionNotes.length} notes selected`), detail: text('现在可以复制或镜像这些音符。', 'You can now copy or mirror these notes.') }
-  }, [effectsEditor.status, actionFeedback, clipboard, region, regionNotes.length, text, tool])
+  }, [effectsEditor.status, actionFeedback, region, regionEffects.length, regionNotes.length, text, tool])
 
   useEffect(() => setBpmDraft(String(chart.bpm)), [chart.bpm])
   useEffect(() => setOffsetDraft(String(chart.offset)), [chart.offset])
@@ -139,29 +175,48 @@ export default function ChartEditorPage() {
     if (next !== 'delete') setSelectedIds(new Set())
   }, [])
   const chooseRegionLine = useCallback((time: number) => {
-    if (!region || region.end !== null) { setRegion({ start: time, end: null }); setSelectedIds(new Set()); return }
+    if (!region || region.end !== null) { setRegion({ start: time, end: null }); selectNotes(new Set()); return }
     const start = Math.min(region.start, time); const end = Math.max(region.start, time)
-    setRegion({ start, end }); setSelectedIds(new Set(notesInRegion(chart.notes, start, end).filter((note) => Boolean(note.red) === redMode).map((note) => note.id)))
-  }, [chart.notes, redMode, region])
+    setRegion({ start, end }); selectNotes(new Set(notesInRegion(chart.notes, start, end).filter((note) => Boolean(note.red) === redMode).map((note) => note.id)))
+  }, [chart.notes, redMode, region, selectNotes])
   const copySelection = useCallback(() => {
-    if (!selectedNotes.length) return
-    const start = Math.min(...selectedNotes.map((note) => note.time))
-    setClipboard({ start, notes: selectedNotes.map((note) => ({ ...note })) })
+    if (!canCopy) return
+    const start = [...selectedNotes, ...regionEffects].reduce((earliest, item) => Math.min(earliest, item.time), Infinity)
+    setClipboard({ start, notes: selectedNotes, effects: regionEffects })
     setSelectedIds(new Set()); setRegion(null); setTool('note')
     playCopyConfirmation()
-    showEditorFeedback(text('已复制到粘贴板', 'Copied to clipboard'), text(`${selectedNotes.length} 个音符已就绪；点击粘贴后选择目标节拍线。`, `${selectedNotes.length} notes are ready; paste at the target beat line.`))
-  }, [selectedNotes, showEditorFeedback, text])
+    showEditorFeedback(text('已复制到粘贴板', 'Copied to clipboard'), regionEffects.length
+      ? text(`已复制 ${selectedNotes.length} 个音符、${regionEffects.length} 个变速。`, `Copied ${selectedNotes.length} notes and ${regionEffects.length} speed effects.`)
+      : text(`已复制 ${selectedNotes.length} 个音符。`, `Copied ${selectedNotes.length} notes.`))
+  }, [canCopy, regionEffects, selectedNotes, showEditorFeedback, text])
   const pasteClipboard = useCallback((time: number) => {
-    if (!clipboard?.notes.length) return
+    if (!clipboard) return
     const delta = time - clipboard.start
-    if (clipboard.notes.some((note) => note.time + delta < 0 || (note.endTime ?? note.time) + delta > chart.duration)) { showEditorFeedback(text('无法粘贴到这里', 'Cannot paste here'), text('目标位置超出谱面时长，请选择另一条节拍线。', 'The target is outside the chart duration; choose another beat line.'), 'empty'); return }
-    const pasted = clipboard.notes.map((note) => ({ ...note, id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, time: note.time + delta, endTime: note.endTime === undefined ? undefined : note.endTime + delta }))
-    commitNotes([...chart.notes, ...pasted]); setRedMode(Boolean(pasted[0].red)); setSelectedIds(new Set(pasted.map((note) => note.id))); setRegion(null); setTool('note'); showEditorFeedback(text('已粘贴音符', 'Notes pasted'), text(`${pasted.length} 个音符已粘贴并保持选中。`, `${pasted.length} notes pasted and kept selected.`))
-  }, [chart.duration, chart.notes, clipboard, commitNotes, showEditorFeedback, text])
+    const shift = <T extends ChartNote | ChartEffect,>(item: T): T => ({
+      ...item, id: crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, time: item.time + delta,
+      ...(item.endTime === undefined ? {} : { endTime: item.endTime + delta }),
+    })
+    if ([...clipboard.notes, ...clipboard.effects].some((item) => item.time + delta < 0 || (item.endTime ?? item.time) + delta > chart.duration)) {
+      showEditorFeedback(text('无法粘贴到这里', 'Cannot paste here'), text('目标位置超出谱面时长，请选择另一条节拍线。', 'The target is outside the chart duration. Choose another beat line.'), 'empty'); return
+    }
+    const pasted = clipboard.notes.map(shift)
+    const pastedEffects = clipboard.effects.map(shift)
+    if (pastedEffects.length) {
+      const candidates = [...chart.effects, ...pastedEffects]
+      const effects = normalizeEffects(candidates)
+      if (effects.length !== candidates.length) {
+        showEditorFeedback(text('无法粘贴到这里', 'Cannot paste here'), text('变速位置重复或与渐变区间重叠。', 'Duplicate speed effect position or overlapping transition.'), 'empty'); return
+      }
+      commitEdit((previous) => ({ ...previous, effects, notes: pasted.length ? [...previous.notes, ...pasted].sort((a, b) => a.time - b.time) : previous.notes }))
+    } else commitNotes([...chart.notes, ...pasted])
+    if (pasted.length) setRedMode(Boolean(pasted[0].red))
+    setSelectedIds(new Set(pasted.map((note) => note.id))); setRegion(null); setTool('note')
+    if (pastedEffects.length) showEditorFeedback(text('已粘贴选区内容', 'Region contents pasted'), text(`已粘贴 ${pasted.length} 个音符、${pastedEffects.length} 个变速。`, `Pasted ${pasted.length} notes and ${pastedEffects.length} speed effects.`))
+    else showEditorFeedback(text('已粘贴音符', 'Notes pasted'), text(`${pasted.length} 个音符已粘贴并保持选中。`, `${pasted.length} notes pasted and kept selected.`))
+  }, [chart.duration, chart.effects, chart.notes, clipboard, commitEdit, commitNotes, showEditorFeedback, text])
   const pasteAtCurrentBeat = useCallback(() => {
-    if (!clipboard?.notes.length) return
     pasteClipboard(snapToBeatLine(chart, currentTime, subdivision))
-  }, [chart, clipboard, currentTime, pasteClipboard, subdivision])
+  }, [chart, currentTime, pasteClipboard, subdivision])
   const mirrorSelection = useCallback(() => {
     if (!selectedNotes.length) return
     const ids = new Set(selectedNotes.map((note) => note.id))
@@ -212,7 +267,7 @@ export default function ChartEditorPage() {
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement
-      if (event.defaultPrevented || target.closest('[role="dialog"]')) return
+      if (event.defaultPrevented || propertiesOpen || target.closest('[role="dialog"], [role="alertdialog"], [role="listbox"]')) return
       if (event.code === 'Space' && target.closest('.video-preview button')) return
       const editing = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target.isContentEditable
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
@@ -220,10 +275,10 @@ export default function ChartEditorPage() {
         void flushActiveChart().then((saved) => { if (saved) showToast(text('已保存到内部谱面库', 'Saved to the local chart library')) })
         return
       }
-      if (editing) return
+      if (editing || target.closest('.note-properties')) return
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); event.shiftKey ? redo() : undo(); return }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') { event.preventDefault(); setRegion(null); setSelectedIds(new Set(chart.notes.map((note) => note.id))); return }
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c' && selectedNotes.length) { event.preventDefault(); copySelection(); return }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c' && canCopy) { event.preventDefault(); copySelection(); return }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v' && clipboard) { event.preventDefault(); pasteAtCurrentBeat(); return }
       if (event.repeat) return
       if (event.code === 'KeyQ') { event.preventDefault(); void toggleEditorPlay() }
@@ -234,7 +289,7 @@ export default function ChartEditorPage() {
     }
     window.addEventListener('keydown', keydown)
     return () => window.removeEventListener('keydown', keydown)
-  }, [chart, clipboard, copySelection, currentTime, deleteSelection, flushActiveChart, pasteAtCurrentBeat, playbackRate, redo, selectedIds.size, selectedNotes.length, setCurrentTime, showToast, subdivision, text, toggleEditorPlay, undo])
+  }, [canCopy, chart, clipboard, copySelection, currentTime, deleteSelection, flushActiveChart, pasteAtCurrentBeat, playbackRate, propertiesOpen, redo, selectedIds.size, setCurrentTime, showToast, subdivision, text, toggleEditorPlay, undo])
 
   if (!activeChartId) return <div className="editor-page page-enter">
     <div className="editor-workspace">
@@ -242,7 +297,31 @@ export default function ChartEditorPage() {
     </div>
   </div>
 
-  return <div className="editor-page page-enter">
+  const propertiesDescription = selectedNotes.length
+    ? text(`已选 ${selectedNotes.length} 个音符`, `${selectedNotes.length} selected`)
+    : text(...notePropertiesCopy.emptySelection)
+  const selectedNoteId = selectedNotes.length === 1 && <p className="note-properties-id">
+    {text(...notePropertiesCopy.id)} <code>{selectedNotes[0].id}</code>
+  </p>
+  const propertiesPanel = !!selectedNotes.length && <Suspense fallback={null}>
+    <NotePropertiesPanel key={selectionKey} notes={selectedNotes} />
+  </Suspense>
+
+  const onPropertiesKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
+    const target = event.target
+    if (event.defaultPrevented || !(event.ctrlKey || event.metaKey) || event.altKey || !(target instanceof Element)
+      || !event.currentTarget.contains(target) || target.hasAttribute('data-draft')) return
+    const key = event.key.toLowerCase()
+    if (key !== 'z' && key !== 'y') return
+    event.preventDefault()
+    if (key === 'y' || event.shiftKey) redo()
+    else undo()
+  }
+
+  return <Sheet open={propertiesOpen} onOpenChange={open => {
+    if (!open) commitFocusedNoteProperty()
+    setPropertiesTarget(open ? { chartId: activeChartId, tier: chart.library?.tier } : null)
+  }}><div className="editor-page page-enter">
     <header className="game-page-toolbar editor-toolbar">
       <Tooltip><TooltipTrigger asChild><GameButton size="icon-lg" aria-label={text('退出编辑器', 'Exit editor')} onClick={leaveEditor}><ArrowLeft /></GameButton></TooltipTrigger><TooltipContent side="bottom">{text('退出编辑器', 'Exit editor')}</TooltipContent></Tooltip>
       <h1><i aria-hidden /><span>{chart.title || text('未命名谱面', 'Untitled')}</span></h1>
@@ -260,10 +339,13 @@ export default function ChartEditorPage() {
       <aside className="editor-action-rail editor-action-rail-left" data-scroll-region aria-label={text('常用编辑操作', 'Common editing actions')}>
         <GameButton className="editor-action primary" onClick={() => void toggleEditorPlay()}>{isPlaying ? <Pause /> : <Play />}<b>{isPlaying ? text('暂停', 'Pause') : text('播放', 'Play')}</b></GameButton>
         <GameButton className="editor-action" aria-pressed={tool === 'region'} onClick={() => toggleActionTool('region')}><ScanSearch /><b>{text('区域', 'Region')}</b></GameButton>
+        {propertiesInDrawer && <SheetTrigger asChild><GameButton className="editor-action" disabled={!selectedNotes.length}>
+          <SlidersHorizontal /><b>{text(...notePropertiesCopy.title)}</b>
+        </GameButton></SheetTrigger>}
         <GameButton className="editor-action danger" aria-pressed={tool === 'delete'} onClick={() => toggleActionTool('delete')}><Trash2 /><b>{text('删除', 'Delete')}</b></GameButton>
         <div className="editor-compact-actions">
-          <Tooltip><TooltipTrigger asChild><span><GameButton size="icon-lg" disabled={!selectedNotes.length} onClick={copySelection} aria-label={text('复制选中音符', 'Copy selected notes')}><Copy /></GameButton></span></TooltipTrigger><TooltipContent side="top" sideOffset={9}>{selectedNotes.length ? text(`复制选中的 ${selectedNotes.length} 个音符`, `Copy ${selectedNotes.length} selected notes`) : text('请选择要复制的音符', 'Select notes to copy')}</TooltipContent></Tooltip>
-          <Tooltip><TooltipTrigger asChild><span><GameButton size="icon-lg" disabled={!clipboard?.notes.length} onClick={pasteAtCurrentBeat} aria-label={text('粘贴到当前判定线', 'Paste at the current judgment line')}><ClipboardPaste /></GameButton></span></TooltipTrigger><TooltipContent side="top" sideOffset={9}>{clipboard?.notes.length ? text(`粘贴 ${clipboard.notes.length} 个音符到当前判定线`, `Paste ${clipboard.notes.length} notes at the current judgment line`) : text('复制音符后可粘贴', 'Copy notes before pasting')}</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><span><GameButton size="icon-lg" disabled={!canCopy} onClick={copySelection} aria-label={text('复制选中内容', 'Copy selection')}><Copy /></GameButton></span></TooltipTrigger><TooltipContent side="top" sideOffset={9}>{canCopy ? text('复制选中内容', 'Copy selection') : text('请选择要复制的音符或变速区域', 'Select notes or a region containing speed effects')}</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><span><GameButton size="icon-lg" disabled={!clipboard} onClick={pasteAtCurrentBeat} aria-label={text('粘贴到当前判定线', 'Paste at the current judgment line')}><ClipboardPaste /></GameButton></span></TooltipTrigger><TooltipContent side="top" sideOffset={9}>{clipboard ? text('粘贴到当前判定线', 'Paste at the current judgment line') : text('复制选中内容后可粘贴', 'Copy a selection before pasting')}</TooltipContent></Tooltip>
           <Tooltip><TooltipTrigger asChild><span><GameButton size="icon-lg" disabled={!selectedNotes.length} onClick={mirrorSelection} aria-label={text('镜像选中音符', 'Mirror selected notes')}><FlipHorizontal2 /></GameButton></span></TooltipTrigger><TooltipContent side="top" sideOffset={9}>{selectedNotes.length ? text(`镜像选中的 ${selectedNotes.length} 个音符`, `Mirror ${selectedNotes.length} selected notes`) : text('请选择要镜像的音符', 'Select notes to mirror')}</TooltipContent></Tooltip>
         </div>
         <div className="editor-compact-actions">
@@ -279,7 +361,7 @@ export default function ChartEditorPage() {
             laneWidthPercent={laneWidth}
             chart={chart} currentTime={currentTime} subdivision={subdivision} tool={tool} redMode={redMode} holdStart={holdStart}
             selectedIds={selectedIds} region={region} isPlaying={isPlaying} onSeek={setCurrentTime}
-            onNotesChange={commitNotes} onHoldStart={setHoldStart} onSelectionChange={setSelectedIds}
+            onNotesChange={commitNotes} onHoldStart={setHoldStart} onSelectionChange={selectNotes}
             onRegionLine={chooseRegionLine} onTempoLine={chooseTempoLine} onEffectLine={effectsEditor.onLine} onEffectEdit={effectsEditor.edit}
             onRegionMove={(delta) => setRegion((current) => current && current.end !== null ? { start: current.start + delta, end: current.end + delta } : current)}
             onZoomChange={(editorZoom) => setChart((current) => ({ ...current, settings: { ...current.settings, editorZoom } }))}
@@ -302,7 +384,38 @@ export default function ChartEditorPage() {
         <GameButton className="editor-action" aria-pressed={tool === 'note'} onClick={() => resetToolContext('note')}><span className="note-glyph tap" /><b>NOTE</b></GameButton>
         <GameButton className="editor-action" aria-pressed={tool === 'hold'} onClick={() => resetToolContext('hold')}><span className="note-glyph hold" /><b>HOLD</b></GameButton>
       </aside>
+      {!propertiesInDrawer && <aside className="note-properties note-inspector" aria-labelledby="note-inspector-title" tabIndex={-1} onKeyDown={onPropertiesKeyDown}>
+        <header className="note-properties-header">
+          <div className="note-properties-header-summary">
+            <h2 id="note-inspector-title">{text(...notePropertiesCopy.inspector)}</h2>
+            <p className="note-properties-description">{propertiesDescription}</p>
+            {selectedNoteId}
+          </div>
+        </header>
+        {propertiesPanel}
+      </aside>}
     </div>
+
+    {propertiesInDrawer && <SheetContent side="bottom" showCloseButton={false} overlayClassName="note-properties-overlay"
+      className="note-properties note-properties-drawer data-[side=bottom]:data-open:slide-in-from-bottom-full data-[side=bottom]:data-closed:slide-out-to-bottom-full"
+      onKeyDown={onPropertiesKeyDown}
+      onEscapeKeyDown={event => {
+        if (event.target instanceof HTMLInputElement && event.target.hasAttribute('data-draft')) event.preventDefault()
+      }}>
+      <SheetHeader className="note-properties-header">
+        <div className="note-properties-header-summary">
+          <SheetTitle>{text(...notePropertiesCopy.title)}</SheetTitle>
+          <SheetDescription className="note-properties-description">{propertiesDescription}</SheetDescription>
+          {selectedNoteId}
+        </div>
+        <div className="note-properties-header-actions">
+          <Button variant="ghost" size="icon-sm" disabled={!historyLength} onClick={undo} aria-label={text('撤回', 'Undo')} title={text('撤回', 'Undo')}><Undo2 /></Button>
+          <Button variant="ghost" size="icon-sm" disabled={!futureLength} onClick={redo} aria-label={text('重做', 'Redo')} title={text('重做', 'Redo')}><Redo2 /></Button>
+          <SheetClose asChild><Button variant="ghost" size="icon-sm" aria-label={text(...notePropertiesCopy.close)}><X /></Button></SheetClose>
+        </div>
+      </SheetHeader>
+      {propertiesPanel}
+    </SheetContent>}
 
     <EffectsModule editor={effectsEditor} />
     {noteImportOpen && <Suspense fallback={null}><NoteImportDialog key={activeChartId} onClose={() => setNoteImportOpen(false)} onApplied={() => { setSelectedIds(new Set()); setHoldStart(null); setRegion(null); setTool('note') }} /></Suspense>}
@@ -434,5 +547,5 @@ export default function ChartEditorPage() {
         <DialogFooter>{tempoTime !== null && chart.bpmChanges.some((change) => Math.abs(change.time - tempoTime) < 0.01) && <Button variant="destructive" onClick={() => deleteTempoChange(tempoTime)}>{text('删除 BPM 变化点', 'Delete BPM change')}</Button>}<Button variant="outline" onClick={() => setTempoTime(null)}>{text('取消', 'Cancel')}</Button><Button onClick={saveTempoChange}>{text('保存', 'Save')}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
-  </div>
+  </div></Sheet>
 }

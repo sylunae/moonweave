@@ -1,6 +1,7 @@
 import { normalizeEffects, type ChartEffect } from './effects/scrollSpeed'
 import { emptyDifficultyTrack, libraryMetadata, managedLibraryMetadata, tiers, type DifficultyTrack } from './libraryMetadata'
 import { currentText } from '../../app/currentText'
+import { normalizeNoteAnimation, type NoteAnimation } from './effects/noteAnimation'
 
 export type NoteKind = 'note' | 'hold'
 export type ToolMode = NoteKind | 'delete' | 'region' | 'tempo' | 'effect'
@@ -13,6 +14,9 @@ export interface ChartNote {
   kind: NoteKind
   /** Omitted in legacy charts; red zones may overlap ordinary notes. */
   red?: boolean
+  animation?: NoteAnimation
+  visualOnly?: boolean
+  disabled?: boolean
 }
 
 export interface ChartSettings {
@@ -76,7 +80,15 @@ export const DEFAULT_CHART: Chart = {
 
 export function normalizeChart(input: unknown): Chart {
   if (!input || typeof input !== 'object') throw new Error(currentText('谱面文件格式无效', 'Invalid chart file format'))
-  const value = input as Partial<Chart>
+  const { animations, ...value } = input as Partial<Chart> & { animations?: unknown }
+  const legacyAnimations = new Map<string, unknown>()
+  if (Array.isArray(animations)) {
+    for (const animation of animations) {
+      if (typeof animation?.id === 'string' && !legacyAnimations.has(animation.id) && normalizeNoteAnimation(animation)) {
+        legacyAnimations.set(animation.id, animation)
+      }
+    }
+  }
   const notes = Array.isArray(value.notes) ? value.notes.filter((note): note is ChartNote => {
     if (!note || typeof note !== 'object') return false
     const candidate = note as Partial<ChartNote>
@@ -86,8 +98,10 @@ export function normalizeChart(input: unknown): Chart {
       && (candidate.kind === 'note' || candidate.kind === 'hold')
       && (candidate.kind !== 'hold' || (Number.isFinite(candidate.endTime) && candidate.endTime! > candidate.time!))
   }).map((note) => {
-    const { red, ...rest } = note
-    return { ...rest, lane: Math.round(note.lane), ...(red === true ? { red: true } : {}) }
+    const { red, animation, animationId, visualOnly, disabled, ...rest } = note as ChartNote & { animationId?: string }
+    const motion = normalizeNoteAnimation(animation) ?? normalizeNoteAnimation(legacyAnimations.get(animationId ?? ''))
+    return { ...rest, lane: Math.round(note.lane), ...(red === true ? { red: true } : {}),
+      ...(motion && { animation: motion }), ...(visualOnly === true ? { visualOnly } : {}), ...(disabled === true ? { disabled } : {}) }
   }) : []
   const settings: Partial<ChartSettings> = value.settings && typeof value.settings === 'object' ? value.settings : {}
   const laneWidth = settings.editorLaneWidthPercent
@@ -106,7 +120,10 @@ export function normalizeChart(input: unknown): Chart {
     ...(value.tracks ? { tracks: Object.fromEntries(tiers.flatMap((_, i) => {
       const track = value.tracks?.[i]
       if (!track || typeof track !== 'object') return []
-      const { notes, effects, aiImportHistory } = normalizeChart({ notes: track.notes, effects: track.effects, aiImportHistory: track.aiImportHistory })
+      const { animations, ...fields } = track as DifficultyTrack & { animations?: unknown }
+      const { notes, effects, aiImportHistory } = normalizeChart({
+        notes: fields.notes, effects: fields.effects, animations, aiImportHistory: fields.aiImportHistory,
+      })
       return [[i, { notes, effects, aiImportHistory } satisfies DifficultyTrack]]
     })) } : {}),
     title: typeof value.title === 'string' ? value.title : DEFAULT_CHART.title,

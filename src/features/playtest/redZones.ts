@@ -9,7 +9,7 @@ export const RED_HOLD_GRACE_MS = 80
 /** Immutable merged intervals: O(n log n) preparation, O(log n) point queries. */
 export function createRedZoneIndex(notes: ChartNote[], holdPaddingMs = 0) {
   const lanes: RedInterval[][] = [[], [], [], []]
-  for (const note of notes) if (note.red) {
+  for (const note of notes) if (note.red && !note.visualOnly) {
     const end = note.endTime ?? note.time
     // Negative padding narrows danger; keep at least half of a short hold active.
     // Positive padding protects ordinary hold ticks around the transition.

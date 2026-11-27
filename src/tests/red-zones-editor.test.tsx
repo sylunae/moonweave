@@ -19,6 +19,7 @@ const onRegionLine = vi.fn()
 const onRegionMove = vi.fn()
 const onNotesChange = vi.fn()
 const onSelectionChange = vi.fn()
+const onSeek = vi.fn()
 
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
@@ -37,7 +38,7 @@ const onHoldStart = vi.fn()
 async function render(redMode: boolean, tool: ToolMode = 'note', chartNotes: ChartNote[] = notes, holdStart: { lane: number; time: number } | null = null, selectedIds = new Set<string>()) {
   await act(async () => root.render(<ChartEditor chart={normalizeChart({ bpm: 120, notes: chartNotes })} currentTime={1000} subdivision={4} tool={tool} redMode={redMode}
     holdStart={holdStart} selectedIds={selectedIds} region={null} isPlaying={false}
-    onSeek={vi.fn()} onNotesChange={onNotesChange} onHoldStart={onHoldStart} onSelectionChange={onSelectionChange}
+    onSeek={onSeek} onNotesChange={onNotesChange} onHoldStart={onHoldStart} onSelectionChange={onSelectionChange}
     onRegionLine={onRegionLine} onRegionMove={onRegionMove} onTempoLine={vi.fn()} onEffectLine={vi.fn()} onEffectEdit={vi.fn()}
     onZoomChange={vi.fn()} onSubdivisionChange={vi.fn()} />))
   vi.spyOn(element.querySelector('.lanes')!, 'getBoundingClientRect').mockReturnValue({ width: 400 } as DOMRect)
@@ -84,11 +85,26 @@ it.each(['note', 'delete', 'region'] as const)('never selects, drags or deletes 
 it('selects and deletes the correct note in an exact same-time overlap', async () => {
   const both = [notes[0], { ...notes[0], id: 'red', red: true }]
   await render(true, 'note', both)
+  expect(element.querySelectorAll('.editor-note-body')).toHaveLength(2)
+  expect(element.querySelector('.editor-overlap-warning')).toBeNull()
   await pointer(element.querySelector('.edit-lane')!, 'pointerdown')
   expect(onSelectionChange).toHaveBeenCalledExactlyOnceWith(new Set(['red']))
   await render(true, 'delete', both)
   await pointer(element.querySelector('.red-zone')!, 'pointerdown')
   expect(onNotesChange).toHaveBeenCalledExactlyOnceWith([notes[0]])
+})
+
+it('locates accidental overlaps and clears the warning when the conflict is removed', async () => {
+  const hold: ChartNote = { ...notes[0], kind: 'hold', endTime: 2000 }
+  const overlapping = { ...notes[0], id: 'inside', time: 1500 }
+  await render(false, 'note', [hold, overlapping])
+  const warning = element.querySelector<HTMLButtonElement>('.editor-overlap-warning')!
+  expect(warning.textContent).toBe('2')
+  expect(element.querySelectorAll('.editor-note[title="Overlapping notes in this lane"]')).toHaveLength(2)
+  await act(async () => warning.click())
+  expect(onSeek).toHaveBeenCalledExactlyOnceWith(1500)
+  await render(false, 'note', [hold])
+  expect(element.querySelector('.editor-overlap-warning')).toBeNull()
 })
 
 it('moves only the active mode even if a stale selection contains both modes', async () => {

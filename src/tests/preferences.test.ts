@@ -41,7 +41,7 @@ describe('normalizePreferences', () => {
     expect(normalizePreferences({ playbackRate: 2 }).playbackRate).toBe(defaultPreferences.playbackRate)
   })
 
-  it('defaults track background blur on and preserves a saved off setting', () => {
+  it('defaults track background dimming on and preserves the saved switch state', () => {
     expect(normalizePreferences({ schemaVersion: 1 }).trackBackgroundBlur).toBe(true)
     expect(normalizePreferences({ trackBackgroundBlur: false }).trackBackgroundBlur).toBe(false)
   })

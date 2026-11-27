@@ -2,6 +2,7 @@
 import { expect, it, vi } from 'vitest'
 import { PlaytestRenderer } from '@/features/playtest/PlaytestRenderer'
 import type { ChartNote } from '@/features/chart/types'
+import { motionPreset } from '@/features/chart/effects/noteAnimation'
 
 it.each(['note', 'hold'] as const)('keeps red %s above ordinary holds in one cached batch without frame layout reads', (redKind) => {
   const methods = new Map<PropertyKey, ReturnType<typeof vi.fn>>()
@@ -30,8 +31,8 @@ it.each(['note', 'hold'] as const)('keeps red %s above ordinary holds in one cac
     frame(10)
     expect(noteUploads()).toHaveLength(1)
     const batch = noteUploads()[0][2] as Float32Array
-    expect([batch[4], batch[10]]).toEqual([0, 4]) // Both palettes share one batch.
-    expect(noteUploads()[0][4]).toBe(12)
+    expect([batch[4], batch[12]]).toEqual([0, 4]) // Both palettes share one batch.
+    expect(noteUploads()[0][4]).toBe(16)
     expect(methods.get('drawArraysInstanced')!.mock.calls[0][3]).toBe(2)
     upload.mockClear(); height.mockClear()
     frame(20)
@@ -111,9 +112,9 @@ it('uploads live reverse notes on an empty chart, grows its buffer, and culls th
     recorded.push(...Array.from({ length: 100 }, (_, index): ChartNote => ({ id: String(index), time: 1000, lane: index % 4, kind: 'note' })))
     frame(20)
     expect(methods.get('drawArraysInstanced')).toHaveBeenLastCalledWith(1, 0, 4, 100)
-    expect(methods.get('bufferData')).toHaveBeenCalledWith(1, 100 * 6 * 4, 1)
+    expect(methods.get('bufferData')).toHaveBeenCalledWith(1, 100 * 8 * 4, 1)
     const uploads = methods.get('bufferSubData')!.mock.calls
-    const instances = [...uploads].reverse().find((call) => call[2] instanceof Float32Array && call[2].length === 600)?.[2] as Float32Array
+    const instances = [...uploads].reverse().find((call) => call[2] instanceof Float32Array && call[2].length === 800)?.[2] as Float32Array
     expect(instances[1]).toBe(1000)
     expect(instances[5]).toBe(-1)
     methods.get('drawArraysInstanced')!.mockClear()
@@ -123,4 +124,68 @@ it('uploads live reverse notes on an empty chart, grows its buffer, and culls th
   } finally {
     renderer?.destroy(); vi.restoreAllMocks(); vi.unstubAllGlobals()
   }
+})
+it.each([
+  { kind: 'note' as const, speed: 1 },
+  { kind: 'hold' as const, speed: 0.4 },
+  { kind: 'hold' as const, speed: 0 },
+  { kind: 'hold' as const, speed: -0.4 },
+])('preserves the $kind shape at speed $speed on approach and throughout the hit animation', ({ kind, speed }) => {
+  let frame: FrameRequestCallback = () => {}
+  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { frame = cb; return 1 })
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
+  const draw = vi.fn(), upload = vi.fn()
+  const gl = new Proxy({}, { get: (_, key) => {
+    if (key === 'drawArraysInstanced') return draw
+    if (key === 'bufferSubData') return upload
+    return typeof key === 'string' && /^[A-Z_0-9]+$/.test(key) ? 1 : () => ({})
+  } })
+  const canvas = document.createElement('canvas')
+  vi.spyOn(canvas, 'getContext').mockReturnValue(gl as WebGL2RenderingContext)
+  let time = 950
+  const note: ChartNote = { id: 'n', kind, lane: 1, time: 1000, ...(kind === 'hold' && { endTime: 1500 }),
+    animation: { ...motionPreset('rebound', 2), speed } }
+  const renderer = new PlaytestRenderer({ canvas, notes: [note],
+    bpm: 120, bpmChanges: [], effects: [], offset: 0, duration: 3000, laneTilt: 0, scrollSpeed: 7,
+    autoplay: false, getTime: () => time, getPlaying: () => true, onStats: vi.fn() })
+  try {
+    frame(1)
+    const before = (upload.mock.lastCall![2] as Float32Array).slice(0, 8)
+    const span = kind === 'hold' ? 500 * speed : 0
+    expect(before[3]).toBe(kind === 'hold' ? 2 : 0)
+    expect(before[2] - before[1]).toBeCloseTo(Math.max(0, span))
+    expect(before[6] - before[1]).toBeCloseTo(Math.min(0, span))
+    renderer.animateHit(note, time)
+    if (kind === 'hold') renderer.setHoldActive(note.id, true)
+    else renderer.hideNote(note.id)
+    time = 1070
+    frame(2)
+    expect(draw).toHaveBeenLastCalledWith(1, 0, 4, 1)
+    const data = (upload.mock.lastCall![2] as Float32Array).slice(0, 8)
+    expect(data[7]).toBe(0.5)
+    expect(data[1] - time).toBeGreaterThan(before[1] - 950)
+    expect(data[3]).toBe(before[3])
+    expect(data[2] - data[1]).toBeCloseTo(before[2] - before[1])
+    expect(data[6] - data[1]).toBeCloseTo(before[6] - before[1])
+    expect(data[5]).toBe(kind === 'hold' ? 2 : 0)
+    if (kind === 'hold') {
+      renderer.setHoldActive(note.id, false)
+      frame(3)
+      const released = data.slice()
+      released[5] = 0
+      expect((upload.mock.lastCall![2] as Float32Array).slice(0, 8)).toEqual(released)
+      expect(draw).toHaveBeenLastCalledWith(1, 0, 4, 1)
+
+      renderer.setHoldActive(note.id, true)
+      frame(4)
+      expect((upload.mock.lastCall![2] as Float32Array).slice(0, 8)).toEqual(data)
+      expect(draw).toHaveBeenLastCalledWith(1, 0, 4, 1)
+    }
+    draw.mockClear(); time = 1190; frame(5)
+    expect(draw).not.toHaveBeenCalled()
+    renderer.reset(950); time = 950; frame(6)
+    expect(draw).toHaveBeenCalledTimes(1)
+    expect((upload.mock.lastCall![2] as Float32Array)[7]).toBe(1)
+  } finally { renderer.destroy(); vi.restoreAllMocks(); vi.unstubAllGlobals() }
 })

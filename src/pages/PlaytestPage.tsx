@@ -68,6 +68,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     : null, [getAudio])
   const currentTime = formalSession ? 0 : editor.currentTime
   const runStartTimeRef = useRef(Math.max(0, Math.min(currentTime, chart.duration)))
+  const restartCopy = runStartTimeRef.current > 0 ? playPauseCopy.restartFromEntry : playPauseCopy.restart
   const showToast = editor.showToast
   const { preferences } = usePreferences()
   const { portrait, mobileWeb, canChooseTrackMode } = usePlaytestViewport()
@@ -120,7 +121,8 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   // The largest tap and hold effects are about 352 and 272 CSS pixels.
   const tapSpriteSrc = mobileWeb ? mobileTapSprite : spriteDpr <= 1.45 ? compactTapSprite : defaultTapSprite
   const holdSpriteSrc = mobileWeb || spriteDpr <= 1.4 ? mobileHoldSprite : defaultHoldSprite
-  const notesHaveRed = useMemo(() => chart.notes.some((note) => note.red), [chart.notes])
+  const notes = useMemo(() => chart.notes.filter((note) => !note.disabled), [chart.notes])
+  const notesHaveRed = useMemo(() => notes.some((note) => note.red), [notes])
   preload(tapSpriteSrc, { as: 'image' })
   preload(holdSpriteSrc, { as: 'image' })
   useEffect(() => {
@@ -143,12 +145,11 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   const progressRef = useRef<HTMLElement>(null)
   const backgroundVideoRef = useRef<HTMLVideoElement>(null)
   const rendererRef = useRef<PlaytestRenderer | null>(null)
-  const notes = chart.notes
   const redZones = useMemo(() => createRedZoneIndex(notes), [notes])
   const redDanger = useMemo(() => createRedZoneIndex(notes, -RED_HOLD_GRACE_MS), [notes])
   const holdProtection = useMemo(() => createRedZoneIndex(notes, RED_HOLD_GRACE_MS), [notes])
   const redTracker = useMemo(() => new RedZoneTracker(redDanger), [redDanger])
-  const notesByTime = useMemo(() => notes.filter((note) => !note.red).sort((a, b) => a.time - b.time), [notes])
+  const notesByTime = useMemo(() => notes.filter((note) => !note.red && !note.visualOnly).sort((a, b) => a.time - b.time), [notes])
   const fakeHeads = useMemo(() => new Set(notesByTime.filter((note) => redZones.contains(note.lane, note.time)).map((note) => note.id)), [notesByTime, redZones])
   const fakeNotes = useMemo(() => notesByTime.filter((note) => fakeHeads.has(note.id)), [fakeHeads, notesByTime])
   const notesByLane = useMemo(() => {
@@ -169,7 +170,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
   const autoTapUntilRef = useRef<number[]>([])
   const pressedRef = useRef(new Set<number>())
   const judgedRef = useRef(new Map<string, Judgment>())
-  const holdStartsRef = useRef(new Map<string, Judgment>())
+  const holdStartsRef = useRef(new Map<string, { result: Judgment; hitTime?: number }>())
   const holdTicksRef = useRef(new Map<string, number>())
   const droppedHoldsRef = useRef(new Set<string>())
   const missCursorRef = useRef(0)
@@ -255,7 +256,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
 
   const updateActiveHoldLanes = useCallback((finishedLane?: number) => {
     const lanes = new Set<number>()
-    for (const [id, startedAs] of holdStartsRef.current) {
+    for (const [id, { result: startedAs }] of holdStartsRef.current) {
       const note = noteById.get(id)
       if (startedAs === 'Miss' && !holdTicksRef.current.get(id)) continue
       if (note && pressedRef.current.has(note.lane) && !droppedHoldsRef.current.has(id)) lanes.add(note.lane)
@@ -330,7 +331,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     setVideoBackgroundActive(active)
   }, [chart.backgroundVideoStartTime, duration, hasVideoBackground])
 
-  const resetRun = useCallback((startTime = 0) => {
+  const resetRun = useCallback((startTime: number) => {
     prerollEpochRef.current += 1; cancelAnimationFrame(prerollFrameRef.current)
     judgedRef.current.clear(); holdStartsRef.current.clear(); holdTicksRef.current.clear(); droppedHoldsRef.current.clear()
     redTracker.reset(startTime); redContactRef.current = 0; fakeCursorRef.current = 0
@@ -361,10 +362,11 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     playingRef.current = false; setPlaying(false)
   }, [fakeHeads, fakeNotes, getAudio, holdTicksById, notesByTime, redTracker, syncBackgroundVideoTime, updateProgress])
 
-  const judgeHead = useCallback((note: ChartNote, result: Judgment, timing?: FeedbackTiming) => {
+  const judgeHead = useCallback((note: ChartNote, result: Judgment, now: number, timing?: FeedbackTiming) => {
+    if (note.animation && result !== 'Miss') rendererRef.current?.animateHit(note, now)
     openingTrace?.mark('note-head', { kind: note.kind, lane: note.lane, noteMs: note.time, result })
     if (note.kind === 'hold') {
-      holdStartsRef.current.set(note.id, result); holdTicksRef.current.set(note.id, 0); droppedHoldsRef.current.delete(note.id)
+      holdStartsRef.current.set(note.id, { result, hitTime: result === 'Miss' ? undefined : now }); holdTicksRef.current.set(note.id, 0); droppedHoldsRef.current.delete(note.id)
       rendererRef.current?.setHoldActive(note.id, true); updateActiveHoldLanes()
     } else { judgedRef.current.set(note.id, result); rendererRef.current?.hideNote(note.id) }
     registerJudgment(note.lane, result, note.kind !== 'hold' && result !== 'Miss' ? 'tap' : null, timing)
@@ -375,7 +377,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     while (fakeCursorRef.current < fakeNotes.length && fakeNotes[fakeCursorRef.current].time <= now) {
       const note = fakeNotes[fakeCursorRef.current++]
       if (note.kind === 'hold' && (holdTicksById.get(note.id)?.length ?? 0) > 0) {
-        holdStartsRef.current.set(note.id, 'Perfect'); holdTicksRef.current.set(note.id, 0)
+        holdStartsRef.current.set(note.id, { result: 'Perfect' }); holdTicksRef.current.set(note.id, 0)
         rendererRef.current?.setHoldStarted(note.id)
       } else judgedRef.current.set(note.id, 'Perfect')
       // Keep fake notes visible as they pass the line.
@@ -384,12 +386,12 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       while (missCursorRef.current < notesByTime.length && notesByTime[missCursorRef.current].time <= now) {
         const note = notesByTime[missCursorRef.current++]
         if (fakeHeads.has(note.id)) continue
-        judgeHead(note, 'Perfect')
+        judgeHead(note, 'Perfect', note.time)
         if (note.kind !== 'hold') autoTapUntilRef.current[note.lane] = now + AUTO_TAP_HIGHLIGHT_MS
       }
     }
     let autoHoldMask = 0
-    for (const [id, startedAs] of holdStartsRef.current) {
+    for (const [id, { result: startedAs }] of holdStartsRef.current) {
       const note = noteById.get(id)
       if (!note || judgedRef.current.has(id)) continue
       const endTime = note.endTime ?? note.time
@@ -427,7 +429,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       if (fakeHeads.has(note.id) || judgedRef.current.has(note.id) || holdStartsRef.current.has(note.id)) continue
       registerJudgment(note.lane, 'Miss', null, 'Late')
       if (note.kind === 'hold') {
-        holdStartsRef.current.set(note.id, 'Miss')
+        holdStartsRef.current.set(note.id, { result: 'Miss' })
         holdTicksRef.current.set(note.id, 0)
         droppedHoldsRef.current.add(note.id)
         rendererRef.current?.setHoldStarted(note.id)
@@ -558,9 +560,10 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       onViewportResize: (width, height) => setViewport((current) => current.width === width && current.height === height ? current : { width, height }),
     })
     for (const id of judgedRef.current.keys()) renderer.hideNote(id)
-    for (const id of holdStartsRef.current.keys()) {
+    for (const [id, { hitTime }] of holdStartsRef.current) {
       renderer.setHoldStarted(id)
       const note = noteById.get(id)
+      if (note?.animation && hitTime !== undefined) renderer.animateHit(note, hitTime)
       if (note && pressedRef.current.has(note.lane) && !droppedHoldsRef.current.has(id)) renderer.setHoldActive(id, true)
     }
     for (const lane of pressedRef.current) renderer.setLanePressed(lane, true)
@@ -648,7 +651,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
       startMs: targetTime,
       firstNoteMs: notes.find((note) => note.time >= targetTime)?.time ?? null,
       background: hasCustomBackground ? chart.backgroundType ?? null : null,
-      trackBlur: preferences.trackBackgroundBlur,
+      trackDimming: preferences.trackBackgroundBlur,
     })
     const epoch = ++prerollEpochRef.current
     playingRef.current = true; setPlaying(true)
@@ -697,7 +700,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     if (!candidate) return
     const result: Judgment = closest <= windows[0] ? 'Perfect' : closest <= windows[1] ? 'Good' : 'Miss'
     const timing = result === 'Perfect' ? undefined : now < candidate.time ? 'Early' : 'Late'
-    judgeHead(candidate, result, timing)
+    judgeHead(candidate, result, now, timing)
   }, [duration, getAudio, getRenderTime, improvising, noteById, notesByLane, redDanger, judgeHead, updateActiveHoldLanes, windows])
 
   const pressLane = useCallback((lane: number) => {
@@ -775,10 +778,10 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     if (!completed) void startPlayback()
   }
 
-  const restartFromBeginning = () => {
+  const restartFromPause = () => {
     if (improvising && recordedRef.current.length) return
     setPauseOpen(false)
-    resetRun(0)
+    restart()
     void startPlayback()
   }
 
@@ -872,7 +875,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
     {backgroundUrl && chart.backgroundType === 'image' && <img key={backgroundUrl} className="playtest-background" src={backgroundUrl} alt="" decoding="async" />}
     {backgroundUrl && chart.backgroundType === 'video' && <video key={backgroundUrl} ref={backgroundVideoRef} className="playtest-background" data-active={videoBackgroundActive} src={backgroundUrl} muted loop playsInline preload="metadata" disablePictureInPicture />}
     {preferences.trackBackgroundBlur && hasCustomBackground && (!hasVideoBackground || videoBackgroundActive) &&
-      <div className="playtest-track-background-blur" data-economy={mobileWeb && stats.renderScale <= 0.8} aria-hidden="true" style={{
+      <div className="playtest-track-background-dimming" aria-hidden="true" style={{
         clipPath: `polygon(${trackTopInset}% 0, ${100 - trackTopInset}% 0, ${100 - trackBottomInset}% 100%, ${trackBottomInset}% 100%)`,
       }} />}
     <canvas ref={canvasRef} className="playtest-canvas" aria-label={text('WebGL2 谱面试玩画面', 'WebGL2 chart playtest')} />
@@ -947,7 +950,7 @@ export default function PlaytestPage({ onSettings, settingsOpen = false }: { onS
         <DialogHeader><DialogTitle>{text(playPauseCopy.pause.zh, playPauseCopy.pause.en)}</DialogTitle><DialogDescription>{chart.title}</DialogDescription></DialogHeader>
         <div className="playtest-pause-actions" data-scroll-region>
           <Button disabled={!canStart} onClick={resume}><Play />{text(playPauseCopy.resume.zh, playPauseCopy.resume.en)}</Button>
-          <Button variant="outline" disabled={!canStart || improvising && recordedRef.current.length > 0} onClick={restartFromBeginning}><RotateCcw />{text(playPauseCopy.restart.zh, playPauseCopy.restart.en)}</Button>
+          <Button variant="outline" disabled={!canStart || improvising && recordedRef.current.length > 0} onClick={restartFromPause}><RotateCcw />{text(restartCopy.zh, restartCopy.en)}</Button>
           {onSettings && <Button variant="outline" onClick={onSettings}><Settings />{settingsLabel}</Button>}
           {!formalSession && !improvising && <Button variant={autoPlay ? 'secondary' : 'outline'} aria-pressed={autoPlay} onClick={() => setAutoSelected(!autoPlay)}><Bot />{text(autoPlayCopy.zh, autoPlayCopy.en)}</Button>}
           {openingTrace && <Button variant="outline" onClick={() => openingTrace.download()}>{text(playPauseCopy.openingTrace.zh, playPauseCopy.openingTrace.en)}</Button>}

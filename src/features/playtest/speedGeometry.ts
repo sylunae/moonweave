@@ -6,6 +6,10 @@ export interface VisualNote extends ChartNote {
   sourceId: string
   sourceTime: number
   sourceEndTime: number
+  /** Signed motion indexes the full body range separately from the actual head. */
+  head?: number
+  shift?: number
+  opacity?: number
 }
 
 /** Build once per chart. A hold stays continuous across speed changes and stops. */

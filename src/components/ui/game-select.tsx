@@ -4,12 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 interface GameSelectProps extends ComponentProps<typeof Select> {
   label: string
   className?: string
+  placeholder?: string
   options: ReadonlyArray<readonly [value: string, label: string]>
 }
 
-export function GameSelect({ label, className = '', options, ...props }: GameSelectProps) {
+export function GameSelect({ label, className = '', options, placeholder, ...props }: GameSelectProps) {
   return <Select {...props}>
-    <SelectTrigger className={`game-select ${className}`} aria-label={label}><SelectValue /></SelectTrigger>
+    <SelectTrigger className={`game-select ${className}`} aria-label={label}><SelectValue placeholder={placeholder} /></SelectTrigger>
     <SelectContent position="popper" align="start" sideOffset={4} className="game-select-menu">
       {options.map(([value, title]) => <SelectItem key={value} value={value}>{title}</SelectItem>)}
     </SelectContent>

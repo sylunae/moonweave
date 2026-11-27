@@ -138,9 +138,15 @@ it('waits for native mobile audio to become playable if decoding is unavailable'
   expect(screen.queryByRole('status')).toBeNull()
 })
 
-it.each(['paused', 'preroll', 'playing'])('restarts from the beginning after %s and ignores later editor time updates', async (phase) => {
+it.each([
+  { phase: 'paused', entry: 25000 },
+  { phase: 'preroll', entry: 25000 },
+  { phase: 'playing', entry: 25000 },
+  { phase: 'playing', entry: 0 },
+])('retries from $entry ms after $phase and ignores later editor time updates', async ({ phase, entry }) => {
+  state.editor.currentTime = entry
   const view = render(<PlaytestPage />)
-  expect(audio.currentTime).toBe(25)
+  expect(audio.currentTime).toBe(entry / 1000)
   if (phase !== 'paused') fireEvent.keyDown(window, { code: 'Space' })
   if (phase === 'playing') await act(async () => {
     const pending = [...frames.values()]; frames.clear(); pending.forEach((callback) => callback(1100))
@@ -151,17 +157,18 @@ it.each(['paused', 'preroll', 'playing'])('restarts from the beginning after %s 
   fireEvent.click(screen.getByRole('button', { name: '暂停' }))
   const oldFrames = [...frames.values()]
   state.reset.mockClear(); state.hideNote.mockClear()
-  fireEvent.click(screen.getByRole('button', { name: '重头开始' }))
-  expect(audio.currentTime).toBe(0)
-  expect(state.reset).toHaveBeenLastCalledWith(-1000)
-  expect(state.hideNote).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: entry ? '从试玩起点重试' : '重头开始' }))
+  expect(audio.currentTime).toBe(entry / 1000)
+  expect(state.reset).toHaveBeenLastCalledWith(entry - 1000)
+  if (entry) expect(state.hideNote).toHaveBeenCalledExactlyOnceWith('before')
+  else expect(state.hideNote).not.toHaveBeenCalled()
   const play = vi.mocked(audio.play)
   play.mockClear()
   await act(async () => { oldFrames.forEach((callback) => callback(2000)) })
   expect(play).not.toHaveBeenCalled()
   await act(async () => { [...frames.values()].forEach((callback) => callback(2000)) })
   expect(play).toHaveBeenCalledOnce()
-  expect(audio.currentTime).toBe(0)
+  expect(audio.currentTime).toBe(entry / 1000)
 })
 
 it.each([-1000, 0, 90000])('clamps the editor entry position %s to chart bounds', (entry) => {

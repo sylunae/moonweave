@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto'
 import { libraryMetadata, managedLibraryMetadata, totalNotes } from '../../src/features/chart/libraryMetadata'
-import { normalizeEffects } from '../../src/features/chart/effects/scrollSpeed'
 import { app, BrowserWindow, dialog, ipcMain, protocol, shell } from 'electron'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
@@ -8,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { SYSTEM_LANGUAGES_ARG, type ChartLibraryItem, type ManagedChart, type TitlebarTheme } from '../../src/shared/electron'
 import { defaultThemePalettes } from '../../src/app/theme'
 import { chartPackageExtensions, createChartPackage, isChartPackageFile, readChartPackage } from '../../src/features/chart/chartPackage'
-import { normalizeManagedChart, type Chart } from '../../src/features/chart/types'
+import { normalizeChart, normalizeManagedChart } from '../../src/features/chart/types'
 import { readAnalysisAudio } from './analysisAudio'
 import { discardYoutubeImport, getYoutubeImport, registerYoutubeImport } from './youtubeImport'
 
@@ -75,7 +74,7 @@ function managedChart(record: StoredChart): ManagedChart {
 
 function writeStoredChart(id: string, chart: Record<string, unknown>) {
   ensureLibrary()
-  const record: StoredChart = { id, chart: { ...chart, effects: normalizeEffects(chart.effects) }, updatedAt: Date.now() }
+  const record: StoredChart = { id, chart: { ...normalizeChart(chart) }, updatedAt: Date.now() }
   const target = chartFile(id)
   const temporary = `${target}.${process.pid}.tmp`
   writeFileSync(temporary, JSON.stringify(record, null, 2), 'utf8')
@@ -446,7 +445,7 @@ function registerIpc(): void {
     if (!validId(payload.id) || !payload.chart || typeof payload.chart !== 'object') return null
     const owner = BrowserWindow.fromWebContents(event.sender)
     if (!owner) return null
-    const chart = { ...payload.chart as Chart, effects: normalizeEffects((payload.chart as Chart).effects) }
+    const chart = normalizeChart(payload.chart)
     const title = typeof chart.title === 'string' ? chart.title : 'untitled'
     const suggested = `${title.replace(/[<>:\"/\\|?*]/g, '_') || 'untitled'}.mwchart`
     const result = await dialog.showSaveDialog(owner, { defaultPath: suggested, filters: [{ name: 'Moonweave Chart Package', extensions: ['mwchart'] }, { name: 'Legacy JSON', extensions: ['json'] }] })

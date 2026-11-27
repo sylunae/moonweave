@@ -41,6 +41,35 @@ export function createEditorNoteIndex(notes: ChartNote[]): EditorNoteIndex {
   return { points, holdsByStart, holdsByEnd }
 }
 
+export function findEditorNoteOverlaps(notes: ChartNote[]) {
+  const lanes: ChartNote[][] = Array.from({ length: 8 }, () => [])
+  for (const note of notes) {
+    if (!note.disabled && !note.visualOnly) lanes[note.lane + (note.red ? 4 : 0)].push(note)
+  }
+
+  const ids = new Set<string>()
+  const times = new Set<number>()
+  const epsilon = 0.000_001 // Floating-point noise from snapping and moving groups.
+  for (const lane of lanes) {
+    lane.sort((a, b) => a.time - b.time)
+    let previous: ChartNote | undefined
+    for (const note of lane) {
+      const end = note.kind === 'hold' ? note.endTime ?? note.time : note.time
+      if (previous) {
+        const previousEnd = previous.kind === 'hold' ? previous.endTime ?? previous.time : previous.time
+        if (note.time - previous.time <= epsilon || note.time < previousEnd - epsilon) {
+          ids.add(previous.id)
+          ids.add(note.id)
+          times.add(note.time)
+        }
+        if (previousEnd > end) continue
+      }
+      previous = note
+    }
+  }
+  return { ids, times: [...times].sort((a, b) => a - b) }
+}
+
 /** Returns only notes whose visible geometry intersects the editor viewport. */
 export function visibleEditorNotes(index: EditorNoteIndex, from: number, to: number, visible: ChartNote[] = []) {
   visible.length = 0

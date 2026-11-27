@@ -14,7 +14,7 @@ export interface Preferences {
   reduceMotion: boolean
   playKeys: string[]
   noteScrollSpeed: number
-  trackBackgroundBlur: boolean
+  trackBackgroundBlur: boolean // Keep the saved key for the track background dimming switch.
   playbackRate: number
   trackMode: 'tilted' | 'vertical'
   laneTilt: number

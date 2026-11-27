@@ -1,5 +1,7 @@
 import { defaultThemePalettes } from '@/app/theme'
-import { beatLinesInRange } from '@/features/chart/tempoMap'
+import { beatAtTime, beatLinesInRange } from '@/features/chart/tempoMap'
+import { motionValue, type NoteAnimation } from '@/features/chart/effects/noteAnimation'
+import { MotionGeometry } from './noteMotion'
 import type { ChartEffect } from '@/features/chart/effects/scrollSpeed'
 import { createSpeedGeometry, type VisualNote } from './speedGeometry'
 import type { BpmChange, ChartNote } from '@/features/chart/types'
@@ -7,7 +9,11 @@ import { getPlaytestTrackScale, getPlaytestViewportGeometry, JUDGMENT_LINE_Y, no
 import { NOTE_APPEARANCE, NOTE_GLOW_PADDING } from './noteAppearance'
 import type { PlaytestOpeningTrace } from './openingTrace'
 
-const NOTE_STRIDE = 6
+const NOTE_STRIDE = 8
+// The shader reserves shape 2 for holds that need a visible stem at zero scroll.
+const ANIMATED_HOLD = 2
+const ACTIVE_HOLD = 1
+const ACTIVE_HIT_IMAGE = 2
 const INITIAL_NOTE_BUFFER_FLOATS = 256
 // Admit notes before their padded quad reaches the top edge, especially on
 // shallow perspective where many milliseconds project to only a few pixels.
@@ -74,6 +80,7 @@ layout(location=0) in vec2 aCorner;
 layout(location=1) in vec4 iNote;
 layout(location=2) in float iColor;
 layout(location=3) in float iActive;
+layout(location=4) in vec2 iMotion;
 uniform float uTime;
 uniform float uRealTime;
 uniform float uHorizon;
@@ -85,6 +92,7 @@ out float vScreenYTimesW;
 flat out vec4 vNoteBounds;
 flat out float vColor;
 flat out float vActive;
+flat out vec2 vMotion;
 
 float visualScreenY(float noteTime) {
   float trackTopScale = 1.0 - uTilt * ${TRACK_TOP_SCALE_RANGE};
@@ -128,6 +136,16 @@ void main() {
   float maxHeadHeight = min(54.0, uViewportSize.y * 0.085);
   float headHeight = min(maxHeadHeight, max(12.0, noteWidth * 0.34)) * headScale / uViewportSize.y;
   float headTop = headBottom - headHeight;
+  float lowerY = hold ? max(headBottom, visualScreenY(iMotion.x)) : headBottom;
+  bool clipAtJudgment = iActive == ${ACTIVE_HOLD}.0;
+  if (iNote.w > 1.5) {
+    // A slow or stopped tail can fit entirely inside the head. Keep one
+    // head-height of stem visible, including when a held reverse body is clipped.
+    float visibleLowerY = clipAtJudgment ? min(lowerY, ${JUDGMENT_LINE_Y}) : lowerY;
+    float stemBelow = max(0.0, visibleLowerY - headBottom);
+    tailY = min(tailY, headTop - headHeight + stemBelow);
+  }
+  vMotion = vec2(lowerY, iMotion.y);
   vNoteBounds = vec4(headTop, headBottom, tailY, noteWidth);
   // Pad the same instance quad for the local halo. The solid head still ends
   // at its timing line and the hold body begins exactly at the tail time.
@@ -137,9 +155,9 @@ void main() {
   // Long holds can extend far past the top of the viewport. Once their
   // projected scale crosses zero the left and right vertices swap, turning
   // the quad into large triangles, so trim the off-screen extent.
-  // Held notes also clip at the judgment line, including their halo.
-  float clipBottom = iActive > 0.5 ? ${JUDGMENT_LINE_Y} : 1.05;
-  float bottomY = clamp(headBottom + bottomPadding, -0.05, clipBottom);
+  // Ordinary held notes clip at the judgment line. Hit images can travel past it.
+  float clipBottom = clipAtJudgment ? ${JUDGMENT_LINE_Y} : 1.05;
+  float bottomY = clamp(lowerY + bottomPadding, -0.05, clipBottom);
   float topY = clamp(top - topPadding, -0.05, clipBottom);
   float screenY = mix(bottomY, topY, aCorner.y);
   float perspectiveW = 1.0 / trackScaleAt(screenY);
@@ -162,6 +180,7 @@ in float vScreenYTimesW;
 flat in vec4 vNoteBounds;
 flat in float vColor;
 flat in float vActive;
+flat in vec2 vMotion;
 uniform vec4 uColors[4];
 uniform vec4 uRedColor;
 uniform vec2 uViewportSize;
@@ -177,7 +196,7 @@ void main() {
   vec2 pixel = fwidth(vec2(x, screenY * uViewportSize.y));
   float antialias = max(0.35, 0.55 * max(pixel.x, pixel.y));
   float near = smoothstep(0.0, ${JUDGMENT_LINE_Y}, screenY);
-  float isHeld = max(0.0, vActive);
+  float isHeld = step(0.5, vActive);
   color *= mix(0.89, 1.0, near);
   float glowRadius = mix(6.0, 11.0, near) * scale;
   float glowStrength = mix(0.43, 0.85, near);
@@ -185,7 +204,7 @@ void main() {
   float headTop = vNoteBounds.x;
   float headBottom = vNoteBounds.y;
   float tailY = vNoteBounds.z;
-  float bodyBottom = mix(headTop, headBottom, 0.27);
+  float bodyBottom = vMotion.x > headBottom ? vMotion.x : mix(headTop, headBottom, 0.27);
   // Inset the body so its straight edges meet inside the rounded head.
   float bodyHalfWidth = halfWidth * 0.88;
   vec4 body = vec4(0.0);
@@ -196,8 +215,9 @@ void main() {
       antialias, glowRadius, glowStrength, isHeld);
   }
 
-  if (screenY < headTop - glowRadius / uViewportSize.y) {
+  if (screenY < headTop - glowRadius / uViewportSize.y || screenY > headBottom + glowRadius / uViewportSize.y) {
     outColor = body;
+    outColor.a *= vMotion.y;
     return;
   }
   float height = (headBottom - headTop) * uViewportSize.y;
@@ -205,6 +225,7 @@ void main() {
   vec4 head = shadeNoteHead(color, vec2(x, y), vec2(halfWidth, height * 0.5),
     antialias, glowRadius, glowStrength);
   outColor = noteOver(head, body);
+  outColor.a *= vMotion.y;
 }`
 
 const TRACK_VERTEX = `#version 300 es
@@ -315,6 +336,10 @@ export class PlaytestRenderer {
   private readonly gl: WebGL2RenderingContext
   private readonly notes: ChartNote[]
   private readonly geometry: ReturnType<typeof createSpeedGeometry>
+  private readonly motionBatches: MotionGeometry[] = []
+  private readonly motionByNote = new Map<string, MotionGeometry>()
+  private readonly hitImages = new Map<string, { note: ChartNote; keys: NoteAnimation['keys']; start: number; end: number;
+    head: number; low: number; high: number; offset: number; opacity: number }>()
   private readonly beatPositions: number[]
   private readonly noteProgram: GLProgram
   private readonly trackProgram: GLProgram
@@ -380,7 +405,23 @@ export class PlaytestRenderer {
     this.redColor = [(color >> 16 & 255) / 255, (color >> 8 & 255) / 255, (color & 255) / 255, 1]
     this.renderScale = Math.max(0.72, Math.min(1, options.initialRenderScale ?? 1))
     this.notes = [...options.notes].sort((a, b) => a.time - b.time)
-    this.geometry = createSpeedGeometry(this.notes, options.effects)
+    // Identical approach curves can share one visibility index while each note keeps its own properties.
+    const batches = new Map<string, { animation: NoteAnimation; notes: ChartNote[] }>()
+    const ordinary = this.notes.filter(note => {
+      if (!note.animation) return true
+      const { speed, keys } = note.animation
+      const signature = JSON.stringify([speed, keys.speed, keys.offset, keys.opacity])
+      let batch = batches.get(signature)
+      if (!batch) batches.set(signature, batch = { animation: note.animation, notes: [] })
+      batch.notes.push(note)
+      return false
+    })
+    this.geometry = createSpeedGeometry(ordinary, options.effects)
+    for (const { animation, notes } of batches.values()) {
+      const geometry = new MotionGeometry(animation, notes, this.geometry.map, options)
+      this.motionBatches.push(geometry)
+      for (const { id } of notes) this.motionByNote.set(id, geometry)
+    }
     this.beatPositions = []
     for (const line of beatLinesInRange(options, 0, options.duration, 1)) {
       const position = this.geometry.map.positionAt(line.time)
@@ -435,6 +476,9 @@ export class PlaytestRenderer {
     gl.enableVertexAttribArray(3)
     gl.vertexAttribPointer(3, 1, gl.FLOAT, false, NOTE_STRIDE * 4, 5 * 4)
     gl.vertexAttribDivisor(3, 1)
+    gl.enableVertexAttribArray(4)
+    gl.vertexAttribPointer(4, 2, gl.FLOAT, false, NOTE_STRIDE * 4, 6 * 4)
+    gl.vertexAttribDivisor(4, 1)
     gl.bindVertexArray(null)
     return { vao, instances }
   }
@@ -583,12 +627,18 @@ export class PlaytestRenderer {
 
   private uploadVisibleNotes(time: number, position: number) {
     const { horizon } = this.trackGeometry
-    const candidates = this.geometry.visible(position - horizon * (100 / 86 - 1) - 260, position + horizon * NOTE_ENTRY_OVERSCAN, this.visibleCandidates)
+    const from = position - horizon * (100 / 86 - 1) - 260
+    const to = position + horizon * NOTE_ENTRY_OVERSCAN
+    const candidates = this.geometry.visible(from, to, this.visibleCandidates)
+    if (this.motionBatches.length) {
+      const beat = beatAtTime(this.options, time)
+      for (const batch of this.motionBatches) batch.append(candidates, time, beat, horizon, position, from, to)
+    }
     const recorded = this.options.getRecordedNotes?.()
     const firstRecorded = recorded ? lowerBound(recorded, time - horizon * 1.1) : 0
     let recordedEnd = firstRecorded
     while (recorded && recordedEnd < recorded.length && recorded[recordedEnd].time <= time) recordedEnd++
-    const required = (candidates.length + recordedEnd - firstRecorded) * NOTE_STRIDE
+    const required = (candidates.length + recordedEnd - firstRecorded + this.hitImages.size) * NOTE_STRIDE
     let changed = false
     if (required > this.noteData.length) {
       this.noteData = new Float32Array(Math.max(required, this.noteData.length * 2))
@@ -605,13 +655,28 @@ export class PlaytestRenderer {
     for (let layer = 0; layer < 2; layer++) {
       for (const note of candidates) {
         if (Boolean(note.red) !== (layer === 1)) continue
-        if (this.hiddenNotes.has(note.sourceId) || (note.sourceEndTime < time - 260 && !this.startedHolds.has(note.sourceId))) continue
-        write(note.lane); write(note.time); write(note.endTime ?? note.time)
-        write(note.kind === 'hold' ? 1 : 0); write(note.red ? 4 : note.lane); write(this.activeHolds.has(note.sourceId) ? 1 : 0)
+        if (this.hiddenNotes.has(note.sourceId) || (!note.visualOnly && note.sourceEndTime < time - 260 && !this.startedHolds.has(note.sourceId))) continue
+        const shift = note.shift ?? 0
+        const remaining = note.animation && note.kind === 'hold' && this.startedHolds.has(note.sourceId) && time > note.sourceTime
+          ? this.motionByNote.get(note.sourceId)?.motion.bounds(Math.min(time, note.sourceEndTime), note.sourceEndTime) : undefined
+        write(note.lane); write((remaining?.head ?? note.head ?? note.time) + shift); write((remaining?.high ?? note.endTime ?? note.time) + shift)
+        write(note.kind === 'hold' ? (note.head === undefined ? 1 : ANIMATED_HOLD) : 0)
+        write(note.red ? 4 : note.lane); write(this.activeHolds.has(note.sourceId) ? ACTIVE_HOLD : 0)
+        write((remaining?.low ?? note.time) + shift); write(note.opacity ?? 1)
       }
       if (layer === 0) for (let index = firstRecorded; recorded && index < recordedEnd; index++) {
         const note = recorded[index]
         write(note.lane); write(note.time); write(note.time); write(0); write(note.lane); write(-1)
+        write(note.time); write(1)
+      }
+      if (layer === 0) for (const [id, image] of this.hitImages) {
+        if (time >= image.end) { this.hitImages.delete(id); continue }
+        const elapsed = Math.max(0, time - image.start)
+        const shift = position + (image.offset + motionValue(image.keys.hitOffset, elapsed, 0)) * horizon / 100
+        write(image.note.lane); write(image.head + shift); write(image.high + shift)
+        write(image.note.kind === 'hold' ? ANIMATED_HOLD : 0); write(image.note.lane)
+        write(this.activeHolds.has(id) ? ACTIVE_HIT_IMAGE : 0); write(image.low + shift)
+        write(motionValue(image.keys.hitOpacity, elapsed, image.opacity) / 100)
       }
     }
     const count = cursor / NOTE_STRIDE
@@ -701,8 +766,9 @@ export class PlaytestRenderer {
     const first = Math.max(0, lowerBound(this.notes, time - 34) - 2)
     for (let index = first; index < this.notes.length && this.notes[index].time <= time + 20; index++) {
       const note = this.notes[index]
-      if (note.red || this.autoPlayedNotes.has(note.id)) continue
+      if (note.red || note.visualOnly || this.autoPlayedNotes.has(note.id)) continue
       this.autoPlayedNotes.add(note.id)
+      this.animateHit(note, time)
       this.hideNote(note.id)
       this.options.onAutoplayHit?.(note.lane)
     }
@@ -736,8 +802,8 @@ export class PlaytestRenderer {
         // clear below discards the sample before the frame is presented.
         const samplePosition = position + this.trackGeometry.horizon / 2
         const warmup = new Float32Array([
-          1, samplePosition, samplePosition, 0, 1, 0,
-          2, samplePosition, samplePosition + this.trackGeometry.horizon / 4, 1, 2, 1,
+          1, samplePosition, samplePosition, 0, 1, 0, samplePosition, 1,
+          2, samplePosition, samplePosition + this.trackGeometry.horizon / 4, 1, 2, 1, samplePosition, 1,
         ])
         gl.bindBuffer(gl.ARRAY_BUFFER, this.noteInstances)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, warmup)
@@ -785,6 +851,22 @@ export class PlaytestRenderer {
     this.frame = requestAnimationFrame(this.render)
   }
 
+  animateHit(note: ChartNote, time: number) {
+    const motion = this.motionByNote.get(note.id)?.motion
+    const keys = note.animation?.keys
+    if (!motion || !keys || note.visualOnly || note.red) return
+    const duration = Math.max(keys.hitOffset?.at(-1)?.at ?? 0, keys.hitOpacity?.at(-1)?.at ?? 0)
+    if (!duration) return
+    const beat = beatAtTime(this.options, time)
+    const bounds = motion.bounds(note.time, note.endTime ?? note.time)
+    const origin = motion.positionAt(time)
+    // A moving hit image replaces the normal hold for the rest of this run.
+    if (note.kind === 'hold' && keys.hitOffset?.length) this.hiddenNotes.add(note.id)
+    this.hitImages.set(note.id, { note, keys, start: time, end: time + duration,
+      head: bounds.head - origin, high: bounds.high - origin, low: bounds.low - origin,
+      offset: motionValue(keys.offset, beat, 0), opacity: motionValue(keys.opacity, beat, 100) })
+  }
+
   hideNote(id: string) {
     this.hiddenNotes.add(id)
     this.startedHolds.delete(id)
@@ -810,6 +892,7 @@ export class PlaytestRenderer {
     this.lastTime = time
     this.lastRenderTime = time
     this.hiddenNotes.clear()
+    this.hitImages.clear()
     this.startedHolds.clear()
     this.activeHolds.clear()
     this.pressedLanes.clear()

@@ -10,7 +10,7 @@ export class PlaytestOpeningTrace {
 
   constructor(private readonly readAudio: () => Pick<HTMLMediaElement, 'currentTime'> | null) {}
 
-  start(detail: { startMs: number; firstNoteMs: number | null; background: string | null; trackBlur: boolean }) {
+  start(detail: { startMs: number; firstNoteMs: number | null; background: string | null; trackDimming: boolean }) {
     this.frames = []
     this.events = []
     this.startedAt = performance.now()
